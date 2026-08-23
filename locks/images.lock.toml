@@ -11,3 +11,9 @@ id = "sha256:2a51e455f055874d71cbf030a778e8be19455876bcd57c1845c163fed6fc482f"
 source = "docker.io/binsec/binsec (official), pinned by digest"
 status = "pulled; adapter harness outstanding"
 note = "checkct works via: binsec -sse -checkct -checkct-features memory-access,control-flow,divisor,dividend -sse-script SCRIPT -sse-depth D -sse-timeout T CORE. Needs a per-pair gdb core snapshot with secret buffers marked symbolic (starting from core with @[addr] := nondet as secret). The image has gdb but not gcc, so the core is generated in a build cell. This per-pair harness is the outstanding work."
+
+[image.microwalk]
+id = "sha256:4c516c906c96ea76e68ac97ddd8ce41477c42547606351920fb8011c824cbcd2"
+source = "ghcr.io/microwalk-project/microwalk:3.2.0-pin, pinned by digest"
+status = "pulled; Pin confirmed working on this Arrow Lake CPU; per-target YAML harness outstanding"
+note = "The flagged Pin-on-Arrow-Lake risk did NOT materialise: pin instruments /bin/true and traces (exit 0). Microwalk needs a per-target YAML pipeline (trace/preprocess/analyse) and a target library exposing its plugin API; that harness is the outstanding work. The address-data mechanism these pairs carry is already detected by TIMECOP (a secret-indexed access on poisoned data), so the address cell is scored without Microwalk."

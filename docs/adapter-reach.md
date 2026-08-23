@@ -82,3 +82,19 @@ same leak) is already established by dudect, varlat and timecop, so Binsec is a
 breadth addition rather than a blocker. It is recorded here as pulled and
 documented, with the per-pair snapshot harness as outstanding work, rather than
 half-built.
+
+## Microwalk: Pin works here, per-target YAML harness outstanding
+
+The flagged risk was Intel Pin's support on this Arrow Lake CPU. It does not
+materialise: the pinned `ghcr.io/microwalk-project/microwalk:3.2.0-pin` image runs
+Pin against `/bin/true`, enters trace-prefix mode and exits 0. So the address-trace
+family is reachable on this host.
+
+What is outstanding is Microwalk's per-target harness: a YAML pipeline
+(trace / preprocess / analyse) plus a target library exposing its plugin API to
+generate inputs and drive the binary. That is real integration work, comparable to
+Binsec's per-pair snapshot. It is recorded as outstanding rather than half-built,
+because the address-data mechanism the corpus's address pair carries is already
+detected by TIMECOP (a secret-indexed access on poisoned data reports UninitValue),
+so the address cell is scored today without Microwalk. Microwalk would add a second,
+differential-address-trace lens on the same cell.

@@ -23,6 +23,7 @@ check:
 	$(PY) bin/selfcheck.py
 	$(PY) bin/export.py --profile anon --check
 	$(PY) bin/regen.py
+	$(PY) bin/paper_check.py
 
 test:
 	$(PY) -m pytest -q

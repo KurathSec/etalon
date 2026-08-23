@@ -28,5 +28,7 @@
     }
   ],
   "headline": "dudect detects the nonce bit-length leak (strong t-statistic on the leaking arm, below dudect's own 500 threshold on the constant-time arm). TIMECOP is non-discriminating on the same pair: it flags the secret-dependent branch in the leaking arm AND flags OpenSSL's generic EC_POINT_mul in the patched arm, either a real residual scalar-dependent branch in that path or a memcheck over-report. A timing tool and a taint tool diverging on the same recall-eligible leak is exactly the comparison the corpus makes measurable.",
-  "note": "recall over the one buildable, scoreable representative of the nonce-leakage class. Minerva and TPM-FAIL occupy the same class as observation-only pairs, to which code-running analysers are inapplicable; ecdsa-nonce (declared a replicate of Minerva) is the tier-A reproduction that an installed analyser can be scored against."
+  "note": "recall over the one buildable, scoreable representative of the nonce-leakage class. Minerva and TPM-FAIL occupy the same class as observation-only pairs, to which code-running analysers are inapplicable; ecdsa-nonce (declared a replicate of Minerva) is the tier-A reproduction that an installed analyser can be scored against.",
+  "pilot": true,
+  "pilot_note": "This dudect/timecop run is the exploratory pilot that established the adapter contract, applicability lattice and verdict vocabulary. It predates PR-1 and is not covered by it; its findings are hypotheses to be re-measured under PR-1's protocol. See preregistration/PR-1-recall.md."
 }

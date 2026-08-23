@@ -1,0 +1,8 @@
+{
+  "_meaning": "These digests fix the content of PR-1 at seal time. A later reader checks here whether the protocol was written before the observations it governs. The sealing commit is the timestamp of record.",
+  "_sealed_at_git_commit": "2026-08-23T22:29:07+08:00",
+  "PR-1-recall.md": {
+    "bytes": 7154,
+    "sha256": "b8a7a80ed9f0dcdafd0989173e246ed8c0472ba2d56791c12eb4b1745329bbb4"
+  }
+}

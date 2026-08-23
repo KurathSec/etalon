@@ -203,6 +203,11 @@ def as_tex(report: dict) -> str:
         else:
             out.append(tex_macro(name, str(value)))
 
+    # Analysers actually registered and scored (data/tools.toml).
+    tp = REPO / "data" / "tools.toml"
+    if tp.exists():
+        emit("nTools", len(tomllib.loads(tp.read_text()).get("tool", {})))
+
     c = report["corpus"]
     emit("nPairs", c["pairs_total"])
     emit("nPairsCorpus", c["pairs_corpus"])
@@ -245,11 +250,15 @@ def as_tex(report: dict) -> str:
         if obs:
             out.append(tex_macro(f"recall{tool.capitalize()}{obs}",
                                  r["recall"].replace("/", "\\,of\\,")))
-    # tier-C detection outcomes (the crossover): dudect miss / varlat catch
+    # tier-C detection outcomes (the crossover), per pair and tool, so the paper
+    # can name e.g. dudect missed while varlat and binsec detected KyberSlash.
+    outcome_word = {"detected": "detected", "missed": "missed",
+                    "non_discriminating": "non-discriminating",
+                    "budget_exhausted": "inconclusive", "error": "errored"}
     for r in recall_doc.get("tier_c_detections", []):
-        if r["pair"] == "kyberslash":
-            out.append(tex_macro(f"kyberslash{r['tool'].capitalize()}",
-                                 "detected" if r["outcome"] == "detected" else "missed"))
+        pair_key = "".join(ch for ch in r["pair"] if ch.isalpha())
+        out.append(tex_macro(f"{pair_key}{r['tool'].capitalize()}",
+                             outcome_word.get(r["outcome"], r["outcome"])))
 
     # The KyberSlash microarchitecture finding, measured on rented Graviton3 and
     # committed at results/kyberslash_graviton.json. These are acquired

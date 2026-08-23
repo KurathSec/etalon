@@ -1,0 +1,142 @@
+#!/usr/bin/env python3
+"""Score installed analysers over the corpus and report recall per leak class.
+
+This is the number the whole project exists to produce. For each (tool, pair,
+arm) the adapter emits a normalised verdict; applicability is computed from the
+tool's declared capabilities against the pair's class; and recall is the fraction
+of applicable, recall-eligible vulnerable arms on which the tool reports a leak
+that discriminates from the patched arm.
+
+Every step that could inflate the number is guarded:
+  - inapplicable pairs are excluded from the denominator, not counted as misses
+  - a tool that flags the patched arm too is non-discriminating, neither a hit
+    nor a clean miss, and is reported as its own count
+  - budget_exhausted and error are printed, never silently folded into clean
+  - recall is per named class with its n, never a single aggregate percentage
+  - tier C pairs never enter a denominator
+
+Usage: bin/score.py [--json]
+Exit codes: 0 scored, 2 could not run.
+"""
+from __future__ import annotations
+
+import argparse
+import importlib.util
+import json
+import pathlib
+import sys
+import tomllib
+
+REPO = pathlib.Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO / "src"))
+
+
+def load_adapter(name: str):
+    spec = importlib.util.spec_from_file_location(
+        f"adapter_{name}", REPO / "src" / "corpus" / "score" / "adapters" / f"{name}.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+def applicable(tool: dict, pair_class: dict, has_harness: bool) -> tuple[bool, str]:
+    """Compute applicability, returning (ok, reason-if-not)."""
+    if pair_class["observable"] not in tool["observes"]:
+        return False, f"channel: tool observes {tool['observes']}, leak is {pair_class['observable']}"
+    if tool.get("requires_harness") == "two_class" and not has_harness:
+        return False, "no runnable two-class harness for this pair (scored on observations only)"
+    return True, ""
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--json", action="store_true")
+    a = ap.parse_args()
+
+    tools = tomllib.loads((REPO / "data" / "tools.toml").read_text())["tool"]
+    pairs = sorted(p.parent for p in (REPO / "pairs").glob("*/pair.toml"))
+
+    rows = []
+    for tool_name, tool in tools.items():
+        adapter = load_adapter(tool_name)
+        for pair in pairs:
+            man = tomllib.loads((pair / "pair.toml").read_text())
+            role = man["pair"].get("role")
+            tier = man["pair"].get("tier")
+            cls = {k: v for k, v in man["class"].items() if k != "rationale"}
+            has_harness = (pair / "harness" / "dudect.toml").exists() and \
+                any((pair / "src").glob("*.c"))
+
+            ok, reason = applicable(tool, cls, has_harness)
+            row = {"tool": tool_name, "pair": pair.name, "role": role,
+                   "tier": tier, "class": cls}
+            if not ok:
+                row.update({"applicable": False, "reason": reason})
+                rows.append(row)
+                continue
+
+            # Run the adapter on both arms.
+            vuln = adapter.score(pair, "vulnerable")
+            patch = adapter.score(pair, "patched")
+            hit = vuln["status"] == "leak_reported"
+            fp = patch["status"] == "leak_reported"
+            if hit and not fp:
+                outcome = "detected"        # red on the bug, green on the fix
+            elif hit and fp:
+                outcome = "non_discriminating"  # flags both arms
+            elif vuln["status"] in ("budget_exhausted", "error"):
+                outcome = vuln["status"]
+            else:
+                outcome = "missed"
+            row.update({"applicable": True, "outcome": outcome,
+                        "vulnerable_status": vuln["status"],
+                        "patched_status": patch["status"],
+                        "vulnerable_max_t": vuln.get("max_t"),
+                        "patched_max_t": patch.get("max_t")})
+            rows.append(row)
+
+    # Recall per (tool, class), over applicable recall-eligible corpus pairs only.
+    from collections import defaultdict
+    denom = defaultdict(list)
+    for r in rows:
+        if not r.get("applicable"):
+            continue
+        if r["role"] != "corpus" or r["tier"] not in ("A", "B"):
+            continue
+        key = (r["tool"], "/".join(f"{k}={v}" for k, v in sorted(r["class"].items())))
+        denom[key].append(r["outcome"])
+
+    recall = []
+    for (tool, cls), outcomes in sorted(denom.items()):
+        hits = sum(1 for o in outcomes if o == "detected")
+        recall.append({"tool": tool, "class": cls,
+                       "detected": hits, "n": len(outcomes),
+                       "recall": f"{hits}/{len(outcomes)}"})
+
+    report = {"rows": rows, "recall_per_class": recall,
+              "note": "recall over applicable, recall-eligible (tier A or B) corpus "
+                      "pairs only; sentinels, tier C, and inapplicable pairs excluded"}
+
+    (REPO / "results" / "verdicts.jsonl").write_text(
+        "".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+
+    if a.json:
+        print(json.dumps(report, indent=2))
+    else:
+        print("=== per (tool, pair) ===")
+        for r in rows:
+            if not r.get("applicable"):
+                print(f"  {r['tool']:<8} {r['pair']:<22} INAPPLICABLE  {r['reason']}")
+            else:
+                print(f"  {r['tool']:<8} {r['pair']:<22} {r['outcome']:<18} "
+                      f"vuln={r['vulnerable_status']} patched={r['patched_status']}")
+        print("\n=== recall per class (applicable, tier A/B corpus pairs) ===")
+        if not recall:
+            print("  none yet: no applicable recall-eligible pair for any tool")
+        for r in recall:
+            print(f"  {r['tool']:<8} {r['recall']:<6} {r['class']}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,7 @@
+# KyberSlash is scored on its ground-truth cell: the -Os build where gcc emits
+# the data-dependent division. At other levels the compiler reciprocates it away,
+# so a dudect result there would measure the compiler, not the checker.
+driver = "dudect_coeff_driver.c"
+extra_sources = []
+header = "kyber_slash.h"
+opt = "Os"

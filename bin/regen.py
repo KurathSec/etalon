@@ -110,10 +110,16 @@ def census_section() -> dict:
 
 def verdict_section() -> dict:
     rows = read_jsonl(REPO / "results" / "verdicts.jsonl")
-    by_status = {}
-    for r in rows:
-        by_status[r.get("status", "unset")] = by_status.get(r.get("status", "unset"), 0) + 1
-    return {"verdict_rows": len(rows), "by_status": by_status}
+    applicable = [r for r in rows if r.get("applicable")]
+    inapplicable = [r for r in rows if r.get("applicable") is False]
+    outcomes = {}
+    for r in applicable:
+        o = r.get("outcome", "unset")
+        outcomes[o] = outcomes.get(o, 0) + 1
+    return {"scored_rows": len(rows),
+            "applicable": len(applicable),
+            "inapplicable": len(inapplicable),
+            "outcomes": outcomes if outcomes else NA}
 
 
 def cost_section() -> dict:
@@ -209,7 +215,13 @@ def as_tex(report: dict) -> str:
     emit("nUncoveredCells", len(cen["uncovered_cells"]))
 
     v = report["verdicts"]
-    emit("nVerdictRows", v["verdict_rows"])
+    emit("nScoredRows", v["scored_rows"])
+    emit("nApplicable", v["applicable"])
+    emit("nInapplicable", v["inapplicable"])
+    outs = v.get("outcomes") or {}
+    if isinstance(outs, dict):
+        emit("nDetected", outs.get("detected", 0))
+        emit("nMissed", outs.get("missed", 0))
 
     co = report["cost"]
     emit("nCostRows", co["cost_rows"])

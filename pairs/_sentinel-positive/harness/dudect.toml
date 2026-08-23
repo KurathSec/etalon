@@ -1,0 +1,5 @@
+# How dudect scores this pair: which driver, which arm sources, which header.
+driver = "dudect_driver.c"
+extra_sources = ["work.c"]
+header = "tag.h"
+opt = "O2"

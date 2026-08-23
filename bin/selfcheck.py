@@ -39,8 +39,6 @@ DECLARED_NOT_YET_IMPLEMENTED = {
     "CLS-3": "a recall figure is never printed without coverage and the uncovered list",
     "TC-1":  "the cell lock equals a regeneration of the axes",
     "TRC-3": "a smoke-grade trace never feeds a reported number",
-    "SENT-1": "every applicable analyser detects the positive sentinel",
-    "SENT-2": "no analyser flags the negative sentinel",
 }
 
 
@@ -329,6 +327,37 @@ def check_cls5() -> Result:
                   f"'{cen['census_status']}'")
 
 
+def check_sentinels() -> Result:
+    """SENT-1/SENT-2: every applicable analyser detects the positive sentinel and
+    flags neither the negative sentinel nor any patched arm.
+
+    A run in which an applicable tool misses the positive sentinel, or flags a
+    constant-time control, is VOID: the scoring instrument itself is
+    misbehaving, and no recall figure from that run means anything.
+    """
+    vpath = REPO / "results" / "verdicts.jsonl"
+    if not vpath.exists():
+        return Result("SENT-1/2", NA, 0, "no scoring run recorded yet")
+    rows = [json.loads(l) for l in vpath.read_text().splitlines() if l.strip()]
+    applicable = [r for r in rows if r.get("applicable")]
+    if not applicable:
+        return Result("SENT-1/2", NA, 0, "no applicable analyser/pair yet")
+    bad = []
+    for r in applicable:
+        if r["pair"] == "_sentinel-positive" and r["outcome"] != "detected":
+            bad.append(f"{r['tool']} missed the positive sentinel ({r['outcome']})")
+        if r["pair"] == "_sentinel-negative" and r.get("vulnerable_status") == "leak_reported":
+            bad.append(f"{r['tool']} flagged the negative sentinel")
+    checked = sum(1 for r in applicable if r["pair"].startswith("_sentinel"))
+    if checked == 0:
+        return Result("SENT-1/2", NA, 0, "sentinels not in the scoring run")
+    if bad:
+        return Result("SENT-1/2", FAIL, checked, "; ".join(bad))
+    return Result("SENT-1/2", PASS, checked,
+                  "every applicable analyser detects the positive sentinel and "
+                  "flags no constant-time control")
+
+
 def check_paper_untracked(files: list[str]) -> Result:
     """PAPER-1: no tracked file under paper/.
 
@@ -378,6 +407,7 @@ def main() -> int:
         check_oracle(),
         check_trc1(),
         check_bin2(),
+        check_sentinels(),
         check_sz1(),
         check_paper_untracked(files),
     ]

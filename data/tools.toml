@@ -1,0 +1,26 @@
+# The analysers under measurement, and what each can see.
+#
+# Applicability is computed from these declarations, not adjudicated. A tool that
+# cannot observe a pair's leak channel, or cannot read the level at which the
+# leak exists, is inapplicable to that pair by construction, and inapplicable is
+# excluded from the denominator rather than counted as a miss. Getting this wrong
+# is how a recall number becomes dishonest.
+
+schema = "tools/1"
+
+[tool.dudect]
+version = "dc269651"
+image   = "localhost/ct-toolchain/dudect:1"
+technique = "statistical"
+level     = "binary"
+# dudect times execution, so it observes latency. It cannot see an
+# address-only leak that does not change timing, and it cannot be pointed at a
+# hardware module with no binary to run.
+observes  = ["latency"]
+secret_model = "two_class_sampling"
+architectures = ["x86_64"]
+# dudect needs a runnable harness that feeds two input classes. A pair scored
+# only on recorded observations (Minerva, TPM-FAIL) has no such harness here, so
+# dudect is not applicable to it: there is no program for dudect to run.
+requires_harness = "two_class"
+platform_sensitive = true

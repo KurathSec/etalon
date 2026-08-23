@@ -103,6 +103,11 @@ def main() -> int:
     lock, failures = {}, []
     for pair in pairs:
         man = tomllib.loads((pair / "pair.toml").read_text())
+        # Observation-based pairs declare no cells and have nothing to build.
+        # They are scored on recorded traces, not on a binary, so they never
+        # appear in the binary lock.
+        if not man.get("toolchain", {}).get("cells_required"):
+            continue
         symbol = man["build"][0]["entry_symbol"]
         sites = man.get("site") or []
         classes = sites[0].get("instruction_class", []) if sites else []
@@ -138,6 +143,8 @@ def main() -> int:
             return 2
         committed = json.loads(lock_path.read_text())
         drift = []
+        # Only compare pairs actually rebuilt this run. A pair absent from the
+        # fresh build (because it declares no cells) is not drift.
         for pair_name, cells in lock.items():
             for cell, arms in cells.items():
                 for arm, info in arms.items():

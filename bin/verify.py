@@ -42,6 +42,15 @@ def load_module(path: pathlib.Path):
 def verify_pair(pair_dir: pathlib.Path) -> dict:
     name = pair_dir.name
     manifest = tomllib.loads((pair_dir / "pair.toml").read_text())
+
+    # A tier C pair has no reproduced oracle yet: its acquisition needs hardware
+    # that is not in hand. It is reported as NOT_RUN, distinct from PASS and from
+    # FAIL, so it neither claims a verification it cannot make nor counts as a
+    # broken one.
+    tier = manifest["pair"].get("tier")
+    if tier == "C" or manifest["oracle"].get("predicate") == "not-yet-reproduced":
+        return {"pair": name, "tier": tier, "status": "NOT_RUN",
+                "checks": {}, "reason": "tier C: acquisition not reproduced here"}
     reps = manifest["acquisition"]["reps"]
 
     verifier = json.loads((pair_dir / "recover" / "fixtures" / "verifier.json").read_text())
@@ -126,6 +135,9 @@ def main() -> int:
     else:
         for r in results:
             print(f"\n{r['pair']}  (tier {r['tier']})  -> {r['status']}")
+            if r["status"] == "NOT_RUN":
+                print(f"  {r['reason']}")
+                continue
             for arm, c in r["checks"].items():
                 if c.get("status") == "MISSING":
                     print(f"  {arm:<11} MISSING trace")
@@ -136,12 +148,15 @@ def main() -> int:
                          if "min_separation_sigma" in c else "")
                 print(f"  {arm:<11} {c['control']}  recovered key {verb} "
                       f"({want})  -> {c['status']}{extra}")
-    failed = [r for r in results if r["status"] != "PASS"]
+    failed = [r for r in results if r["status"] == "FAIL"]
+    verified = [r for r in results if r["status"] == "PASS"]
+    not_run = [r for r in results if r["status"] == "NOT_RUN"]
     # Under --json, stdout must be only JSON. Appending a human summary to it
     # made the output unparsable for every caller, which is how the controls
     # reported that the oracle "produced no parsable result" while the oracle
     # itself was passing.
-    summary = f"verify: {len(results) - len(failed)}/{len(results)} pair(s) verified"
+    summary = (f"verify: {len(verified)} verified, {len(failed)} failed, "
+               f"{len(not_run)} not run (tier C)")
     print(summary, file=sys.stderr if a.json else sys.stdout)
     return 1 if failed else 0
 

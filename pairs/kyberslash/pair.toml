@@ -1,0 +1,134 @@
+schema = "pair/1"
+
+[pair]
+id      = "kyberslash"
+title   = "KyberSlash1: secret-dependent division in the Kyber reference code"
+role    = "corpus"
+status  = "active"
+tier    = "C"
+added   = "2026-08-23"
+synthetic = false
+summary = """
+The Kyber reference implementation reduces a secret-dependent coefficient to a
+message bit by dividing by KYBER_Q, which is 3329 and not a power of two. On a
+target whose integer division has data-dependent latency, decapsulation time
+leaks the secret. This pair isolates that function, coeff_to_bit, verbatim from
+the pinned pre-fix commit, against the multiply-shift the fix introduced.
+
+Tier C. The published key recovery runs only on Arm Cortex-A7 and Cortex-M4 with
+the cycle counter, and this repository has no cross toolchain and no qemu-user,
+so the recovery cannot be run here yet. The pair is therefore NOT recall-eligible
+and never enters a denominator. What it does contribute today is fully portable:
+the build across compiler cells, and the evidence of whether the division
+survives as a variable-latency instruction, which is the corpus's central
+toolchain-pinning claim.
+"""
+
+[class]
+observable   = "latency"
+secret_role  = "key-material"
+origin       = "hardware-implicit"
+granularity  = "word"
+exploit_path = "direct-recovery"
+rationale = """
+This is the sharp case and the reason the corpus exists. origin is
+hardware-implicit: the C source contains no branch and no secret-indexed load,
+and on a target with a constant-time divider the same source is constant time.
+The violation is introduced by instruction selection, which is exactly why the
+pair pins a toolchain rather than shipping a .c file.
+
+observable is latency and not addresses. The instruction sequence is identical
+whatever the operand, and only the divider's latency varies, so a differential
+address-trace analyser is blind to it by construction. That is the contrast the
+whole corpus is built to make measurable.
+"""
+
+[provenance]
+upstream_repo   = "pq-crystals/kyber"
+upstream_commit = "a621b8dde405cc507cbcfc5f794570a4f98d69cc"
+vulnerable_commit = "a621b8dde405cc507cbcfc5f794570a4f98d69cc"
+disclosed       = "2023-12-15"
+doi             = ["10.46586/tches.v2025.i2.209-234"]
+advisory        = ["CVE-2024-37880"]
+licence         = "CC0-1.0"
+redistributable = true
+note = """
+The reference implementation is public domain (CC0). The leak site is taken
+verbatim from ref/poly.c at the pinned pre-fix commit; the KyberSlash artifact
+(artifacts.iacr.org/tches/2025/a9) pins the same commit for its own vulnerable
+build. CVE-2024-37880 is the KyberSlash assignment.
+"""
+
+[[build]]
+arm = "vulnerable"
+source = "src/vulnerable.c"
+entry_symbol = "coeff_to_bit"
+secret_input = "the coefficient t, secret-dependent on the decapsulation path"
+
+[[build]]
+arm = "patched"
+source = "src/patched.c"
+entry_symbol = "coeff_to_bit"
+secret_input = "identical, reduced by multiply-shift instead of division"
+note = "functionally equal to the vulnerable arm over the whole input range, verified exhaustively"
+
+[[site]]
+arm = "vulnerable"
+file = "src/vulnerable.c"
+symbol = "coeff_to_bit"
+mechanism = "division of a secret-dependent value by KYBER_Q, a non-power-of-two"
+instruction_class = ["div", "idiv", "divl", "divw", "udiv", "sdiv", "__udivsi3", "__divsi3", "__aeabi_idiv", "__aeabi_uidiv"]
+
+[toolchain]
+cells_required = ["gcc-12.2.0-Os-x86_64-linux-gnu"]
+# MEASURED, not assumed: on gcc 12.2.0 x86-64 the secret-dependent division
+# survives as an idiv only at -Os. At -O0, -O2 and -O3 the compiler replaces it
+# with a reciprocal multiply on its own, so the vulnerable SOURCE compiles to
+# constant-time CODE there. The ground-truth cell is therefore -Os, and the
+# other levels are recorded by BIN-2 as the toolchain-pinning finding: the same
+# source is constant time under a different build. This is the corpus's central
+# claim, produced as a measurement.
+[toolchain.axes.opt]
+values = ["O0", "O2", "O3", "Os"]
+reason = """
+The central sweep for this pair. Whether a compiler emits a hardware division or
+replaces it with a reciprocal multiply is exactly what determines whether the
+leak exists in the built binary, and it varies by optimisation level. A leak
+present at one level and absent at another is the strongest demonstration that a
+source-only benchmark measures the compiler.
+"""
+
+[acquisition]
+origin    = "none"
+platform  = "Arm Cortex-A7 / Cortex-M4 with cycle counter (not available here)"
+procedure = "not yet reproduced"
+counter   = "cortex-a7-pmccntr"
+reps      = 0
+grade     = "smoke"
+note = "Tier C: acquisition needs Arm hardware this host does not have. Recorded as not reproduced rather than assumed."
+
+[recovery]
+entry   = "not yet implemented"
+runtime = "image"
+inputs  = []
+note = "The published recovery is Arm-only. Ordering a Raspberry Pi 2 converts this pair to tier A; until then it contributes build evidence only."
+
+[oracle]
+verifier   = "recover/fixtures/verifier.json"
+predicate  = "not-yet-reproduced"
+expected_vulnerable = "recovered"
+expected_patched    = "not-recovered"
+note = "Expectations are declared for when the Arm acquisition exists. The oracle does not run for a tier C pair, and verify.py skips it because its trace files are absent."
+
+[cost]
+effort_hours = 2
+portable_hours = 2
+note = "Portable clock only. The acquisition clock is unmeasured because the hardware is not in hand, which is exactly what the two-clock KT3 split is for."
+
+[divergence]
+from_deployment = """
+The deployment was full decapsulation in a shipped library on Arm; this isolates
+coeff_to_bit and builds it on x86. The measured question here is only whether the
+division instruction is emitted, which is a property of the compiler and target
+and is faithfully reproduced. The exploit itself is not reproduced here.
+"""

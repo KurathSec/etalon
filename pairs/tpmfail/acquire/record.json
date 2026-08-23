@@ -1,0 +1,28 @@
+{
+  "traces": [
+    {
+      "arm": "vulnerable",
+      "path": "traces/vulnerable.csv.z",
+      "sha256_raw": "d46b4bf61f17dadad6a50cdbb126d5fb8a6e3256bc178a28cb92f099cdf4d13d",
+      "sha256_file": "88a18732f1c53068e8bc06ac685e3a16fc9251a1a7ae0ea4e4735a213075e050",
+      "bytes_raw": 2085102,
+      "bytes_file": 1207720,
+      "n_signatures": 15000,
+      "format": "minerva-csv"
+    },
+    {
+      "arm": "patched",
+      "path": "traces/patched.csv.z",
+      "sha256_raw": "2fd7df7944edb5dd0dc740c72ad23a663948ae0660a4c17c1e02a4734fd0dc40",
+      "sha256_file": "1034101a43666bb52c0964d4823157158977fc4156675ae057b154b0a5c17ab8",
+      "bytes_raw": 2070101,
+      "bytes_file": 1154799,
+      "n_signatures": 15000,
+      "format": "minerva-csv",
+      "note": "constant-time TPM, timing channel neutralised; ORC-2 requires recovery to fail"
+    }
+  ],
+  "origin": "upstream",
+  "source": "crocs-muni/minerva data_tpmfail_stm.csv, STM hardware TPM, from vernamlab/TPM-FAIL",
+  "note": "Tier B. Observations are upstream's; the recovery and the verification are ours. The full dataset has at least 50000 signatures; the committed CI instance is a subset that still recovers, which is the required relationship between the CI and full instances."
+}

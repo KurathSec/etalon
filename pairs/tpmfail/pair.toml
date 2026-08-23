@@ -1,0 +1,120 @@
+schema = "pair/1"
+
+[pair]
+id      = "tpmfail"
+title   = "TPM-FAIL: ECDSA nonce leakage in an STM hardware TPM"
+role    = "corpus"
+status  = "active"
+tier    = "B"
+added   = "2026-08-23"
+synthetic = false
+summary = """
+An STMicroelectronics hardware TPM, Common Criteria EAL4+ certified, leaks the
+bit-length of the ECDSA nonce through signing time observable over the software
+interface. The private key falls out by the same lattice reconstruction as
+Minerva. This is the second recall-eligible pair, and it contrasts with Minerva
+on origin: the leak is in a hardware module that no source-, IR- or binary-level
+analyser can be pointed at.
+"""
+
+[class]
+observable   = "latency"
+secret_role  = "nonce"
+origin       = "api-level"
+granularity  = "bit"
+exploit_path = "lattice-hnp"
+rationale = """
+origin is api-level, and this is the whole reason the pair is in the corpus
+alongside Minerva. The implementation is a hardware TPM: there is no source, no
+IR and no binary for any constant-time analyser to read, and the leak is only
+observable through the device's signing interface. This is the class that bounds
+what a source-or-binary corpus can ever cover, and a checker that reads code is
+inapplicable to it by construction rather than by weakness. Recording that
+inapplicability honestly is exactly what the applicability lattice is for.
+
+Same secret_role and exploit_path as Minerva, different origin, so it is a
+distinct census cell and not undeclared replication.
+"""
+
+[provenance]
+upstream_repo   = "crocs-muni/minerva"
+upstream_commit = "8182d0006c434257ecb3689b2b4506b02e70303a"
+disclosed       = "2019-11-12"
+doi             = ["10.5555/3489212.3489436"]
+advisory        = ["CVE-2019-16863"]
+licence         = "MIT"
+redistributable = true
+note = """
+The observations originate from the TPM-FAIL paper (Moghimi, Sunar, Eisenbarth,
+Heninger, USENIX Security 2020) and are redistributed via the crocs-muni/minerva
+data directory under its MIT licence. CVE-2019-16863 is the STMicroelectronics
+TPM assignment. The DOI is the USENIX Security 2020 proceedings entry; it is
+recorded as best-effort and is not the load-bearing identifier, the CVE is.
+"""
+
+[[build]]
+arm = "vulnerable"
+source = "STM hardware TPM, observed over its interface"
+entry_symbol = "TPM_CC_Sign (ECDSA)"
+secret_input = "the per-signature ECDSA nonce, generated inside the TPM"
+note = "a hardware module, so there is no build and the binary controls are NA for this pair"
+
+[[build]]
+arm = "patched"
+source = "constant-time signing, modelled"
+entry_symbol = "TPM_CC_Sign (ECDSA)"
+secret_input = "identical nonces, timing channel neutralised"
+
+[toolchain]
+cells_required = []
+note = "No toolchain cell: a hardware module cannot be rebuilt, so this pair is scored purely on observations and makes no toolchain-pinning claim."
+
+[acquisition]
+origin    = "upstream"
+platform  = "STMicroelectronics TPM, measured by Moghimi et al., redistributed via crocs-muni/minerva"
+procedure = "acquire/finalise.py"
+counter   = "signing-command latency, upstream"
+reps      = 1
+grade     = "evidence"
+note = "Tier B: observations upstream, recovery and verification ours."
+
+[recovery]
+entry   = "recover/recover.py"
+runtime = "image"
+image   = "localhost/ct-toolchain/minerva-recover:1"
+inputs  = ["traces/vulnerable.csv.z"]
+vendored_attack = "vendor/attack, crocs-muni/minerva at 8182d000, MIT"
+ci_instance   = 15000
+full_instance = 383458
+note = """
+The STM chip is the harder of the Minerva-family targets: the paper needed on the
+order of forty thousand observations against it. The committed CI instance is
+fifteen thousand, which still recovers here, and is a subset of the roughly
+383000 available.
+"""
+
+[oracle]
+verifier   = "recover/fixtures/verifier.json"
+predicate  = "ecdsa-pubkey-match"
+expected_vulnerable = "recovered"
+expected_patched    = "not-recovered"
+
+[cost]
+effort_hours = 1
+portable_hours = 1
+acquisition_hours = 0
+note = "Nearly free: the machinery is Minerva's, the dataset ships in the same upstream repository, only the curve, hash and instance size differ."
+
+[divergence]
+from_deployment = """
+The vulnerable arm is a real measurement of the deployed STM TPM. The patched arm
+is modelled, as for Minerva: a constant-time TPM would produce signing latencies
+with no bit-length correlation, and a constant column is a faithful stand-in for
+the recovery's purposes rather than a measurement of a fixed device.
+"""
+
+[[divergence.structured]]
+axis       = "patched arm"
+deployed   = "a constant-time TPM, measured"
+reproduced = "the same signatures with a constant latency column"
+effect     = "sound for showing the attack loses its information; not a measurement of a fixed device"

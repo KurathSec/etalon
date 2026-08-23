@@ -134,10 +134,14 @@ def check_oracle() -> Result:
     checks = sum(len(x["checks"]) for x in results)
     bad = [f"{x['pair']}/{arm}" for x in results
            for arm, c in x["checks"].items() if c.get("status") != "PASS"]
+    not_run = [x["pair"] for x in results if x.get("status") == "NOT_RUN"]
     if bad:
         return Result("ORC-1/2", FAIL, checks, "failed: " + ", ".join(bad))
-    return Result("ORC-1/2", PASS, checks,
-                  f"{len(results)} pair(s), every recovery succeeded and failed where required")
+    run = [x for x in results if x.get("status") != "NOT_RUN"]
+    detail = f"{len(run)} pair(s) verified, every recovery succeeded and failed where required"
+    if not_run:
+        detail += f"; {len(not_run)} tier C not run ({', '.join(not_run)})"
+    return Result("ORC-1/2", PASS, checks, detail)
 
 
 def check_trc1() -> Result:
@@ -226,26 +230,43 @@ def check_bin2() -> Result:
     if not lock_path.exists():
         return Result("BIN-2", NA, 0, "no binaries built yet")
     lock = json.loads(lock_path.read_text())
-    checked, undeclared, bad = 0, 0, []
-    for pair, cells in sorted(lock.items()):
-        for cell, arms in sorted(cells.items()):
+    # BIN-2 requires the leak to be emitted in each pair's DECLARED cells, the
+    # cells the pair pins as ground truth. A cell outside that set where the leak
+    # does not appear is not a control failure: it is the corpus's central
+    # finding, that the same source is constant time under a different build, and
+    # it is reported rather than flagged. Getting this backwards would make the
+    # machinery reject its own headline result.
+    checked, undeclared, bad, findings = 0, 0, [], []
+    for path in sorted((REPO / "pairs").glob("*/pair.toml")):
+        man = tomllib.loads(path.read_text())
+        pair = path.parent.name
+        required = set(man.get("toolchain", {}).get("cells_required", []))
+        for cell, arms in sorted(lock.get(pair, {}).items()):
             v = arms.get("vulnerable", {}).get("leak_class_instructions")
             q = arms.get("patched", {}).get("leak_class_instructions")
             if v is None or q is None:
                 undeclared += 1
                 continue
-            checked += 1
-            if not v > q:
-                bad.append(f"{pair}/{cell}: vulnerable={v} not greater than patched={q}")
+            emitted = v > q
+            if cell in required:
+                checked += 1
+                if not emitted:
+                    bad.append(f"{pair}/{cell}: declared cell but leak not emitted "
+                               f"(vulnerable={v}, patched={q})")
+            elif not emitted:
+                findings.append(f"{pair}/{cell}")
     if checked == 0:
-        return Result("BIN-2", NA, 0,
-                      f"{undeclared} cell(s) declare no instruction_class, so nothing "
-                      f"was measured; that is NA and not a pass")
+        return Result("BIN-2", NA, undeclared,
+                      f"no declared cell has an instruction_class to measure")
     if bad:
         return Result("BIN-2", FAIL, checked, "; ".join(bad))
-    return Result("BIN-2", PASS, checked,
-                  f"leak emitted in all {checked} measured cell(s); "
-                  f"{undeclared} cell(s) NA, no declared class")
+    detail = f"leak emitted in all {checked} declared cell(s)"
+    if findings:
+        detail += (f"; and NOT emitted in {len(findings)} non-declared cell(s) "
+                   f"({', '.join(findings)}), which is the toolchain-pinning finding")
+    if undeclared:
+        detail += f"; {undeclared} cell(s) NA"
+    return Result("BIN-2", PASS, checked, detail)
 
 
 def check_cls2() -> Result:

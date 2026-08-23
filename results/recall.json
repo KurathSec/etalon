@@ -57,6 +57,26 @@
   ],
   "tier_c_detections": [
     {
+      "tool": "binsec",
+      "pair": "hqc-reject",
+      "outcome": "detected"
+    },
+    {
+      "tool": "dudect",
+      "pair": "hqc-reject",
+      "outcome": "budget_exhausted"
+    },
+    {
+      "tool": "timecop",
+      "pair": "hqc-reject",
+      "outcome": "detected"
+    },
+    {
+      "tool": "binsec",
+      "pair": "kyberslash",
+      "outcome": "detected"
+    },
+    {
       "tool": "dudect",
       "pair": "kyberslash",
       "outcome": "missed"
@@ -65,8 +85,13 @@
       "tool": "varlat",
       "pair": "kyberslash",
       "outcome": "detected"
+    },
+    {
+      "tool": "timecop",
+      "pair": "ladderleak",
+      "outcome": "non_discriminating"
     }
   ],
-  "crossover_finding": "C1 confirmed. dudect detects the nonce timing leaks (latency and address-data classes, 1/1 each) but MISSES the division-timing leak (KyberSlash) on this x86 divider. varlat DETECTS KyberSlash (the idiv on secret data, an instruction-level detection independent of measured time). timecop cannot see the variable-latency class at all, and is non-discriminating on the nonce pairs because it also flags OpenSSL's constant-time scalar multiplication. Three analysers, three different blind spots, measured on real deployed leaks. KyberSlash is tier C, so the varlat detection is a recorded outcome, not a recall-denominator entry; the crossover is nonetheless real.",
-  "note": "Recall over applicable tier-A/B corpus pairs, per named class with its n. varlat has no tier-A/B recall entry because its detections are on tier-C KyberSlash; its harnesses for the tier-A ecdsa pairs are not built (recorded as inapplicable-no-harness, not a miss)."
+  "crossover_finding": "C1 confirmed, now on four analysers. dudect detects both nonce timing leaks (latency and address-data, 1/1 each) but MISSES the KyberSlash division on this fast x86 divider and is inconclusive (budget_exhausted) on the rejection sampler. varlat and binsec both DETECT KyberSlash where dudect misses it, by different means: varlat instruments the idiv on secret data, binsec proves the secret-dependent dividend symbolically without measuring time. timecop is non-discriminating on the OpenSSL nonce pairs and on the ladder, flagging the constant-time patched arm too, and is blind by construction to the variable-latency division class, yet it detects the pure-C rejection-sampling branch that dudect could not decide. binsec, being symbolic, cannot enter the OpenSSL scalar multiplications or the observation-only pairs, so it contributes tier-C detections rather than recall rows. Four analysers, four distinct capability profiles, on real deployed leaks certified by key recovery. KyberSlash and the rejection sampler are tier C, so those detections are recorded outcomes, not recall-denominator entries; the crossovers are nonetheless real.",
+  "note": "Recall over applicable tier-A/B corpus pairs, per named class with its n. varlat and binsec have no tier-A/B recall entry: their detections are on the tier-C KyberSlash and rejection-sampling pairs, and the tier-A/B pairs are either OpenSSL scalar multiplications (intractable for binsec's symbolic execution and not built as a varlat harness) or observation-only (Minerva, TPM-FAIL), recorded as inapplicable rather than as misses."
 }

@@ -58,3 +58,21 @@ secret_model = "annotation"
 architectures = ["x86_64"]
 requires_harness = "poison"
 platform_sensitive = false
+
+[tool.binsec]
+version = "binsec-checkct"
+image   = "docker.io/binsec/binsec@sha256:2a51e455f055874d71cbf030a778e8be19455876bcd57c1845c163fed6fc482f"
+technique = "symbolic-relse"
+level     = "binary"
+# Binsec/Rel2 relational symbolic execution. Proves or refutes constant time over
+# the explored inputs rather than sampling time. With control-flow it sees a
+# secret-dependent branch; with memory-access, a secret-dependent address; with
+# the experimental divisor/dividend features, a variable-latency division on
+# secret operands, which is the KyberSlash class. It marks secrets by symbol name
+# in an SSE script, so a pair needs a binsec driver exposing them as globals.
+observes  = ["control-flow", "address-data", "latency"]
+detects_mechanisms = ["secret-branch", "address-data", "variable-latency-op"]
+secret_model = "symbolic-annotation"
+architectures = ["x86_64"]
+requires_harness = "sse_script"
+platform_sensitive = false

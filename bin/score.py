@@ -112,30 +112,47 @@ def main() -> int:
                         "patched_max_t": patch.get("max_t")})
             rows.append(row)
 
-    # Recall per (tool, class), over applicable recall-eligible corpus pairs only.
+    # Recall per (tool, class) over applicable recall-eligible corpus pairs, and
+    # the tier-C detections that inform the crossover but never a denominator.
     from collections import defaultdict
     denom = defaultdict(list)
+    tier_c = []
     for r in rows:
-        if not r.get("applicable"):
+        if not r.get("applicable") or r["role"] != "corpus":
             continue
-        if r["role"] != "corpus" or r["tier"] not in ("A", "B"):
-            continue
-        key = (r["tool"], "/".join(f"{k}={v}" for k, v in sorted(r["class"].items())))
-        denom[key].append(r["outcome"])
+        if r["tier"] in ("A", "B"):
+            key = (r["tool"], "/".join(f"{k}={v}" for k, v in sorted(r["class"].items())))
+            denom[key].append((r["pair"], r["outcome"]))
+        elif r["tier"] == "C":
+            tier_c.append({"tool": r["tool"], "pair": r["pair"], "outcome": r["outcome"]})
 
     recall = []
-    for (tool, cls), outcomes in sorted(denom.items()):
-        hits = sum(1 for o in outcomes if o == "detected")
+    for (tool, cls), pair_outcomes in sorted(denom.items()):
+        hits = sum(1 for _, o in pair_outcomes if o == "detected")
         recall.append({"tool": tool, "class": cls,
-                       "detected": hits, "n": len(outcomes),
-                       "recall": f"{hits}/{len(outcomes)}"})
+                       "detected": hits, "n": len(pair_outcomes),
+                       "recall": f"{hits}/{len(pair_outcomes)}",
+                       "outcomes": [[p, o] for p, o in pair_outcomes]})
+    tier_c.sort(key=lambda d: (d["pair"], d["tool"]))
 
     report = {"rows": rows, "recall_per_class": recall,
+              "tier_c_detections": tier_c,
               "note": "recall over applicable, recall-eligible (tier A or B) corpus "
                       "pairs only; sentinels, tier C, and inapplicable pairs excluded"}
 
     (REPO / "results" / "verdicts.jsonl").write_text(
         "".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+
+    # Refresh the round record's numeric fields in place, keeping the curated
+    # prose. recall.json is what bin/regen.py reads for the per-class and tier-C
+    # macros, so it must regenerate from the same run rather than drift by hand.
+    rpath = REPO / "results" / "recall.json"
+    doc = json.loads(rpath.read_text()) if rpath.exists() else {}
+    doc.setdefault("round", "PR-1")
+    doc.setdefault("supersedes_pilot", True)
+    doc["recall_per_class"] = recall
+    doc["tier_c_detections"] = tier_c
+    rpath.write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8")
 
     if a.json:
         print(json.dumps(report, indent=2))

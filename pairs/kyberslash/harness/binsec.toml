@@ -1,0 +1,12 @@
+# binsec scores KyberSlash at its -Os ground-truth cell. The dividend feature
+# reports the secret-dependent division symbolically; the patched multiply-shift
+# emits no division and is proven secure. This is a symbolic detection of the
+# same class varlat catches by instrumentation and dudect misses on this divider.
+driver = "binsec_coeff_driver.c"
+header = "kyber_slash.h"
+opt = "Os"
+secret_globals = ["secret"]
+public_globals = []
+entry = "main"
+halt = "exit"
+features = "memory-access,control-flow,divisor,dividend"

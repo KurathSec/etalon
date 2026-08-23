@@ -1,0 +1,14 @@
+# binsec scores the rejection sampler by marking the secret threshold and holding
+# the RNG concrete, so the accept test b < thr is a secret-dependent branch. The
+# reject loop is unbounded, so exploration is incomplete; the vulnerable leak is
+# still found, and an incomplete patched arm is reported INCONCLUSIVE.
+driver = "binsec_reject_driver.c"
+header = "reject.h"
+opt = "O2"
+secret_globals = ["secret"]
+public_globals = []
+entry = "main"
+halt = "exit"
+features = "memory-access,control-flow"
+depth = 3000
+sse_timeout = 60

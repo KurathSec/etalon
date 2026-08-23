@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "etalon"
+version = "0.0.1"
+description = "A known-answer recall corpus for constant-time analysers."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+
+# No runtime dependencies, by design. A reviewer must be able to run the oracle
+# from a cold clone with a stock interpreter, no lockfile resolution and no
+# compiled extension. The portable half of the oracle is the deliverable, and a
+# dependency is one more thing that can fail to install two years from now.
+dependencies = []
+
+[project.scripts]
+corpus = "corpus.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/corpus"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

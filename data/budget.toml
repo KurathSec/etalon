@@ -1,0 +1,13 @@
+# Size budgets, enforced as a control rather than hoped for.
+#
+# git-lfs is absent from the machine this was built on, and a corpus that
+# quietly grows into needing it has changed its own installation requirements
+# without anyone deciding to. So the budgets are checked, and a pair that
+# exceeds one has exactly two legal moves: subsample and demonstrate that the
+# recovery still succeeds from the subsample, which produces a better artifact
+# anyway, or move the full set to a release asset and commit only the instance
+# CI runs.
+schema = "budget/1"
+max_file_bytes = 33554432   # 32 MiB; GitHub warns at 50 MB and rejects at 100 MB
+max_pair_bytes = 67108864   # 64 MiB committed per pair
+max_repo_bytes = 536870912  # 512 MiB tracked in total

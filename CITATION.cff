@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this corpus, please cite it."
+title: "etalon: a known-answer recall corpus for constant-time analysers"
+abstract: >-
+  Deployed timing side-channel leaks reproduced as vulnerable and patched builds,
+  each carrying a key recovery whose output verifies under a published public key,
+  so that constant-time analysers can be scored against labels no analyser
+  produced.
+type: software
+license: MIT
+repository-code: "FILL: repository URL, at publication"
+authors:
+  # FILL before publication. Left as a placeholder deliberately rather than
+  # guessed: this file is one of the five that bin/export.py rewrites for the
+  # anonymous archive, so its contents are load-bearing for double-blind review
+  # and must be correct rather than plausible.
+  - given-names: "FILL"
+    family-names: "FILL"
+    orcid: "FILL"

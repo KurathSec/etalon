@@ -1,0 +1,71 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  firewall:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # The vocabulary firewall runs before anything else. It is the one check
+      # whose failure cannot be fixed after the fact: this repository becomes
+      # public at publication, and publication exposes every commit, so a term
+      # that reaches a commit is already published even though the repository
+      # is private today.
+      - name: vocabulary firewall over tracked files
+        run: python3 bin/namecheck.py
+
+      - name: vocabulary firewall over commit messages
+        run: python3 bin/namecheck.py --commits origin/main..HEAD || python3 bin/namecheck.py --commits HEAD~1..HEAD
+
+      # A firewall that is never exercised is a firewall that silently lapses.
+      - name: the firewall fires on a planted canary
+        run: python3 -m pytest tests/unit/test_namecheck.py -q
+
+      # Anonymisation is a build target, so the anonymous archive is built on
+      # every push and cannot rot between now and submission. This is the
+      # difference from discovering at submission time that the name is
+      # everywhere.
+      - name: the anonymous archive builds and its residue scan is clean
+        run: python3 bin/export.py --profile anon --check
+
+      # The oracle. This is the deliverable, and the constraint it proves is
+      # that it runs on a stock runner with no containers, no analysers and no
+      # hardware. If this job ever needs any of those, the platform-bound and
+      # portable halves have leaked into each other.
+      - name: the oracle verifies from a cold clone
+        run: python3 bin/verify.py
+
+      - name: controls
+        run: python3 bin/selfcheck.py
+
+      # Every quotable number regenerates from committed data, or there is no
+      # write-up. An empty aggregation prints NA and never 0.
+      - name: numbers regenerate
+        run: python3 bin/regen.py
+
+      # The paper is not tracked here. If it ever is, every number in it has
+      # escaped the regeneration gate.
+      - name: paper directory holds no tracked file
+        run: |
+          if [ -n "$(git ls-files paper/)" ]; then
+            echo "paper/ contains tracked files:"; git ls-files paper/; exit 1
+          fi
+          echo "paper/ is untracked, as required"
+
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 -m pytest -q

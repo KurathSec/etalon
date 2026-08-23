@@ -1,0 +1,28 @@
+{
+  "traces": [
+    {
+      "arm": "vulnerable",
+      "path": "traces/vulnerable.csv.z",
+      "sha256_raw": "1f33a3d809c54d57f3e4743c4e5f0f8dfc1bc7a6b620be385fb8efa1b4a288f3",
+      "sha256_file": "fe00b6d038ffb00834dce26d32a252602f14624e329898ba5ffcbd3f73d02d14",
+      "bytes_raw": 828235,
+      "bytes_file": 481093,
+      "n_signatures": 6000,
+      "format": "minerva-csv"
+    },
+    {
+      "arm": "patched",
+      "path": "traces/patched.csv.z",
+      "sha256_raw": "871dd96017539a755cded90acebcb4983e33b63e7bcd3f5f2af0369fdb948829",
+      "sha256_file": "ee00333517f429f4ec36f799717be1f4492230f68eb9ceeb14b919e19c519b01",
+      "bytes_raw": 828235,
+      "bytes_file": 462331,
+      "n_signatures": 6000,
+      "format": "minerva-csv",
+      "note": "the Minerva fix makes scalar multiplication constant-time, so the timing column no longer encodes the nonce bit-length. Modelled here by a constant time value. ORC-2 requires the recovery to fail on this."
+    }
+  ],
+  "origin": "upstream",
+  "source": "crocs-muni/minerva data_gcrypt.csv, libgcrypt ECDSA secp256r1 SHA-1",
+  "note": "Tier B. Observations are upstream's; the recovery and the verification are ours. The full dataset has at least 50000 signatures; the committed CI instance is a subset that still recovers, which is the required relationship between the CI and full instances."
+}

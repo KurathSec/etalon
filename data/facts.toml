@@ -1,0 +1,43 @@
+# Numbers about the field rather than about this corpus.
+#
+# They are here, with a source each, for the same reason the corpus numbers are
+# generated: a figure typed straight into the body is a figure nobody can
+# re-derive, and this programme has already lost one headline result that way.
+# Each entry travels into the paper as a macro, and the comment beside it in the
+# generated file carries the source.
+
+[fact.nToolsIndexed]
+value = 55
+source = "crocs-muni.github.io/ct-tools, which states: There are currently 55 tools in the table. Retrieved 2026-08-23."
+
+[fact.nScoutLeaks]
+value = 98
+source = "ePrint 2026/776 abstract: detected all 98 timing leaks in the benchmark and automatically classified 97 as confirmed findings."
+
+[fact.nScoutConfirmed]
+value = 97
+source = "ePrint 2026/776, same sentence."
+
+[fact.nPqdssInstances]
+value = 302
+source = "arXiv 2509.04010: 302 instances of 15 primitives."
+
+[fact.nPqdssPrimitives]
+value = 15
+source = "arXiv 2509.04010."
+
+[fact.nPqdssIssues]
+value = 26
+source = "arXiv 2509.04010: 26 issues reported to developers, 5 fixed at time of writing."
+
+[fact.nPqdssFixed]
+value = 5
+source = "arXiv 2509.04010."
+
+[fact.nGeimerTools]
+value = 5
+source = "Geimer et al., CCS 2023: five tools studied in depth, Abacus, Binsec/Rel, ctgrind, dudect, Microwalk-CI."
+
+[fact.nUsectTools]
+value = 6
+source = "Fourne et al., USENIX Security 2024: a usability study over six constant-time analysis tools."

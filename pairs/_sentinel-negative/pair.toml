@@ -1,0 +1,88 @@
+schema = "pair/1"
+
+[pair]
+id      = "_sentinel-negative"
+title   = "Constant-time tag comparison, on both arms"
+role    = "sentinel-negative"
+status  = "active"
+tier    = "A"
+added   = "2026-08-23"
+synthetic = true
+summary = """
+Both arms are the constant-time comparison. There is no leak anywhere in this
+pair, by construction.
+
+It does two jobs. For the scoring harness it is the negative control: an
+analyser that flags this is producing a false positive on the easiest possible
+input, and control SENT-2 voids the run. For the oracle it is the control on the
+recovery itself: the same recovery that succeeds against the positive sentinel
+must fail here, on both arms. Without that, a recovery that happened to be
+guessing well would be indistinguishable from one that reads the side channel.
+"""
+
+[class]
+observable   = "latency"
+secret_role  = "key-material"
+origin       = "source-level"
+granularity  = "byte"
+exploit_path = "direct-recovery"
+rationale = """
+The facet tuple is deliberately identical to the positive sentinel's. The two
+differ only in whether the leak is present, which is what makes the pair a
+matched control rather than a different experiment. Control CLS-2 would flag a
+shared tuple between two corpus pairs as undeclared replication; both of these
+are fixtures rather than corpus items, so they are outside that check and
+outside every denominator.
+"""
+
+[provenance]
+upstream_repo   = "none, written for this repository"
+licence         = "MIT"
+redistributable = true
+
+[[build]]
+arm = "vulnerable"
+source = "src/vulnerable.c"
+entry_symbol = "check_tag"
+secret_input = "the 16-byte tag, drawn from /dev/urandom at acquisition time"
+note = "named `vulnerable` for symmetry with every other pair; it is not vulnerable"
+
+[[build]]
+arm = "patched"
+source = "src/patched.c"
+entry_symbol = "check_tag"
+secret_input = "identical"
+
+[toolchain]
+cells_required = ["gcc-12.2.0-O2-x86_64-linux-gnu"]
+
+[acquisition]
+origin    = "ours"
+platform  = "x86_64 host, single performance core, pinned with taskset"
+procedure = "acquire/acquire.sh"
+counter   = "rdtscp"
+reps      = 60
+grade     = "evidence"
+
+[recovery]
+entry   = "recover/recover.py"
+runtime = "pure"
+inputs  = ["traces/vulnerable.bin.z"]
+
+[oracle]
+verifier   = "recover/fixtures/verifier.json"
+predicate  = "sha256-preimage"
+expected_vulnerable = "not-recovered"
+expected_patched    = "not-recovered"
+note = """
+Both expectations are negative, which is the whole point of the fixture. The
+verifier is published exactly as for a real pair, so the recovery gets its 256
+free candidate tests at the final byte and still must fail, because the first
+fifteen bytes are noise.
+"""
+
+[cost]
+effort_hours = 1
+
+[divergence]
+from_deployment = "Nothing was deployed. This is a fixture."

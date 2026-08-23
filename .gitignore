@@ -1,0 +1,17 @@
+# Reproduced from pins, never committed. Scoped to the repository root: a pair
+# may vendor a small, license-clean piece of upstream attack code that its
+# recovery genuinely needs (pinned by commit), and that must be committed or the
+# pair is not reproducible from a clone.
+/vendor/
+# Built binaries, OCI archives, scratch. Regenerated, hashed in locks/.
+cache/
+# Export output.
+dist/
+# The paper is not tracked here. CI asserts this directory holds no tracked
+# file, so a double-blind submission cannot leak through the repository and
+# every quoted number has to come from bin/regen.py instead of from prose.
+paper/
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/

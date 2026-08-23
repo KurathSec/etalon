@@ -1,0 +1,10 @@
+# A toolchain cell. Pinned by base digest and by an explicit compiler version,
+# because FROM debian:bookworm plus apt-get install gcc is a date, not a pin.
+ARG BASE_DIGEST
+FROM docker.io/library/debian@${BASE_DIGEST}
+ARG GCC_PKG=gcc
+ENV DEBIAN_FRONTEND=noninteractive SOURCE_DATE_EPOCH=0
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ${GCC_PKG} libc6-dev make binutils file \
+ && rm -rf /var/lib/apt/lists/*
+WORKDIR /work

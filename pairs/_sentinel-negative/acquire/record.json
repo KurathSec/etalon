@@ -1,0 +1,42 @@
+{
+  "traces": [
+    {
+      "arm": "vulnerable",
+      "path": "traces/vulnerable.bin.z",
+      "sha256_raw": "37b2f76f7ee80b193df496bb9da2d13420392a2776af5a93b7512c179eb94f91",
+      "sha256_file": "4f6ca65e81025de0da41f64987056d2dd8a947710a68de2c9b232da5635a283e",
+      "bytes_raw": 983040,
+      "bytes_file": 394015,
+      "shape": [
+        16,
+        256,
+        60
+      ],
+      "dtype": "u32le",
+      "unit": "cycles"
+    },
+    {
+      "arm": "patched",
+      "path": "traces/patched.bin.z",
+      "sha256_raw": "7ca9294ec5e6766a6827707a61e0401a44698c73da1f4aa2dc1c4f0f23f7cefb",
+      "sha256_file": "3852b992fa253ed5613c9f7f7071713077865ea300b2f8ecadbdf2a44fd98d92",
+      "bytes_raw": 983040,
+      "bytes_file": 391863,
+      "shape": [
+        16,
+        256,
+        60
+      ],
+      "dtype": "u32le",
+      "unit": "cycles"
+    }
+  ],
+  "platform": {
+    "kernel": "7.1.8-200.fc44.x86_64",
+    "machine": "x86_64",
+    "cpu_pinned_to": 2,
+    "note": "This host has three core frequency tiers and turbo cannot be disabled without root, so measurements are pinned to one performance core. The pair is synthetic and its signal is amplified far above the noise floor, so this is sufficient here and would not be for a real pair."
+  },
+  "cell_image_id": "20a72fa9b4f163f03b63f99e5cb9f739f2facb181eb5916bdacebe7868b8b923",
+  "reps": 60
+}

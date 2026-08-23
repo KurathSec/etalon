@@ -1,0 +1,12 @@
+{
+  "scheme": "ecdsa-pubkey-match",
+  "curve": "secp256r1",
+  "hash": "sha1",
+  "public_key": "04671684e54913e6caa9c3418eb842cb28a388ffbe78e30511cd8bda73b89c5fd41f93a4f7eb6d384f9c7f857292e330a981b2ef09ee1bd794734cfb2eb9d166d2",
+  "signed_data": "05b6fa3ae8214c4b3c1c1ede0eeb61b4091c50af20c0c462944b1763bced1b02eb6b12a2d6ea95472d6726e121260e99149ede1ff8254caf031af30074c4e72a",
+  "note": "A recovered scalar d verifies if d*G equals this public key. This is upstream's own success test and needs only public material. The private key that produced this key is not stored anywhere in this repository.",
+  "consistency_check": {
+    "private_key_sha256": "0002785cc4a623dbb9db0f6b8260c6d87bde902e05657b8b3da8431ce4db7be4",
+    "note": "digest only, so the verifier can be shown consistent with the key upstream published without the key itself travelling"
+  }
+}

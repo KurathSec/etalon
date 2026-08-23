@@ -1,0 +1,56 @@
+# Forbidden vocabulary for this repository, held as digests.
+#
+# The terms are not stored here in plaintext, and neither are the reasons. A
+# public repository that lists the words it must not contain, with an
+# explanation of why each one matters, is itself the thing those words were
+# being kept out of. Digests preserve the check and remove the reasons.
+#
+# They do not make the terms unrecoverable: unsalted sha256 over short natural
+# language is confirmable by guessing, and an audit recovered several of these
+# from a word list in about a second. The durable guarantee here is the check
+# itself, which keeps the terms out of the tree.
+#
+# GENERATED. Do not hand-edit. The plaintext source and its generator live
+# outside this repository; regenerate rather than adding an entry here.
+#
+# How the check works: each line is split on non-word characters, lowercased,
+# and every 1-gram to 3-gram is hashed and looked up. So a multi-word or
+# hyphenated term matches however it is spelled or spaced.
+
+algorithm = "sha256"
+ngram_max = 3
+
+digests = [
+  "28bc5a0321a176b7dddaa7dcd60667c22f781010defe168f9e98c91440982659",
+  "5f781176afb67342cbb57a7aa483c075ef1927d3003c547c048a071316f6c2bb",
+  "6f3d1be01da1937da6dd79c53682e23c66af821a8891ed0320d72ba62a6a170f",
+  "7f6c861e3728b034bfaed3af3a4069403aab5f566a3dcf3fe1141da4c6c89ff8",
+  "86b05035f337bab6bbd3ef7e1c4463330ba2cc82f42fe5a9638366d83c560f9e",
+  "921a7ec0fd3710fb454106c1cabc99be727b93263ef090aaf63501ebd44332a2",
+  "96047affa58a7a1a51c3880ca92c272016b3af88fd87530cca11140845ae0564",
+  "9d795d7930fbd673bd6638432299dc2eeb39653710cc1e8a51f074e792f9883e",
+  "a6b2cbeb7f34e8016cd93172571ff245881c907185f69326b176b32cb5aa972b",
+  "afbb8e1ec119fdfb6805926f3f11efb549608ef9c350a8b386d941b4879fcd2d",
+  "bf74c26535d810f95fa3eaa8122d1d2467535c6a964f430101817aafa20176c4",
+  "c870d25ccea9f1ef6cfa287e645f7d8a3d5a8c9861c06cfee76ba635732157b5",
+]
+
+# Rules that name nothing and therefore stay readable.
+
+[[rule]]
+id = "R-1"
+regex = '\brulings?\b'
+note = "reserved term for a numbered adjudicated decision; this project uses scope rule and source repair"
+
+[[rule]]
+id = "R-2"
+literal = "\u2014"
+note = "em-dash, banned in prose, in code and in commit messages"
+
+[skip]
+# Holding the terms as digests removed the need to exempt this file and the
+# checker: neither contains a term any more. What remains is exempt because it
+# plants the harmless canary on purpose.
+paths = [
+  "tests/unit/test_namecheck.py",
+]

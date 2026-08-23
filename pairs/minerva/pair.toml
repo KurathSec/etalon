@@ -1,0 +1,136 @@
+schema = "pair/1"
+
+[pair]
+id      = "minerva"
+title   = "Minerva: ECDSA nonce bit-length leakage in libgcrypt"
+role    = "corpus"
+status  = "active"
+tier    = "B"
+added   = "2026-08-23"
+synthetic = false
+summary = """
+libgcrypt's ECDSA on secp256r1 leaks the bit-length of the per-signature nonce
+through scalar-multiplication time. A few thousand signatures with known messages
+suffice to recover the full private key by lattice reduction of a hidden number
+problem instance. This is the first recall-eligible pair in the corpus.
+
+The vulnerable arm is upstream's collected libgcrypt dataset. The patched arm is
+the same signatures with the timing channel neutralised, which is what a
+constant-time scalar multiplication produces; on it the lattice attack has no
+information and fails, which is what control ORC-2 requires.
+"""
+
+[class]
+observable   = "latency"
+secret_role  = "nonce"
+origin       = "source-level"
+granularity  = "bit"
+exploit_path = "lattice-hnp"
+rationale = """
+This is the deliberate contrast to the KyberSlash class. observable is latency,
+but unlike KyberSlash the secret is a nonce rather than key material and the
+exploit path is a lattice reconstruction rather than direct recovery, so the two
+pairs occupy different cells and the first result across both is already a
+tool-by-class comparison rather than a single number.
+
+secret_role is nonce and not key-material: what leaks is the ephemeral scalar,
+and the private key falls out of many such leaks through the hidden number
+problem. exploit_path is lattice-hnp, which is what makes this the pair that uses
+the recorded lattice background.
+"""
+
+[provenance]
+upstream_repo   = "crocs-muni/minerva"
+upstream_commit = "8182d0006c434257ecb3689b2b4506b02e70303a"
+disclosed       = "2019-10-01"
+doi             = ["10.46586/tches.v2020.i4.281-308"]
+advisory        = ["CVE-2019-13627"]
+licence         = "MIT"
+redistributable = true
+note = """
+The DOI is the Minerva TCHES 2020 paper (verified against Crossref; the
+10.13154 prefix recorded elsewhere in this programme does not resolve, IACR moved
+to 10.46586). CVE-2019-13627 is the libgcrypt assignment. The vulnerable-arm
+observations are upstream's data_gcrypt.csv, redistributable under the upstream
+MIT licence; the full dataset is not vendored, only the committed CI instance.
+"""
+
+[[build]]
+arm = "vulnerable"
+source = "upstream libgcrypt ECDSA, observed"
+entry_symbol = "ecc scalar multiplication"
+secret_input = "the per-signature ECDSA nonce, generated internally by libgcrypt"
+note = "there is no source build here: the pair is scored on observations, so BIN-1 and BIN-2 do not apply and are reported NA for it"
+
+[[build]]
+arm = "patched"
+source = "constant-time scalar multiplication, modelled"
+entry_symbol = "ecc scalar multiplication"
+secret_input = "identical nonces, timing channel neutralised"
+
+[toolchain]
+cells_required = []
+note = """
+No toolchain cell. This pair is scored on recorded observations rather than on a
+binary we build, so it declares no cells and the binary controls do not apply to
+it. That is itself a recorded property: the observation-based tier cannot make
+the toolchain-pinning claim that the build-based tier can, and the paper must say
+so rather than imply every pair is pinned.
+"""
+
+[acquisition]
+origin    = "upstream"
+platform  = "libgcrypt on Linux, measured by crocs-muni"
+procedure = "acquire/finalise.py"
+counter   = "wall-clock nanoseconds, upstream"
+reps      = 1
+grade     = "evidence"
+note = "Tier B: the observations are upstream's, the recovery and verification are ours."
+
+[recovery]
+entry   = "recover/recover.py"
+runtime = "image"
+image   = "localhost/ct-toolchain/minerva-recover:1"
+inputs  = ["traces/vulnerable.csv.z"]
+vendored_attack = "vendor/attack, crocs-muni/minerva at 8182d000, MIT"
+ci_instance   = 6000
+full_instance = 50000
+note = """
+runtime is image, not pure: lattice reduction needs fpylll, which is not stdlib.
+This is the honest fallback the plan names, and it costs this pair the runs-
+anywhere property that the division-timing pairs keep. The committed CI instance
+is 6000 signatures, a subset of the at-least-50000 available, and it recovers.
+"""
+
+[oracle]
+verifier   = "recover/fixtures/verifier.json"
+predicate  = "ecdsa-pubkey-match"
+expected_vulnerable = "recovered"
+expected_patched    = "not-recovered"
+note = """
+A recovered scalar verifies iff it reproduces the published public key on the
+curve, which is upstream's own success test and uses only public material. The
+private key on the upstream header line is never an input to recovery; it is used
+once at acquisition to confirm the verifier is consistent, then discarded.
+"""
+
+[cost]
+effort_hours = 4
+portable_hours = 4
+acquisition_hours = 0
+note = "Tier B, so acquisition cost is zero: the observations were imported. Portable effort is the adaptation of the recovery and the split of the oracle."
+
+[divergence]
+from_deployment = """
+The vulnerable arm is a real measurement of deployed libgcrypt, so its divergence
+from the wild is small. The patched arm is modelled rather than measured: a true
+constant-time build would produce a timing column with no bit-length correlation,
+and setting the column to a constant is a faithful stand-in for the recovery's
+purposes but is not itself a measurement of the patched library.
+"""
+
+[[divergence.structured]]
+axis       = "patched arm"
+deployed   = "a constant-time libgcrypt build, measured"
+reproduced = "the same signatures with a constant timing column"
+effect     = "sound for showing the attack loses its information; not a measurement of the fixed library's timing"

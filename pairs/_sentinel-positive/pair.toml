@@ -1,0 +1,120 @@
+schema = "pair/1"
+
+[pair]
+id      = "_sentinel-positive"
+title   = "Secret-dependent early exit in a tag comparison"
+role    = "sentinel-positive"
+status  = "active"
+tier    = "A"
+added   = "2026-08-23"
+synthetic = true
+summary = """
+A tag comparison that returns as soon as a byte differs, so its running time is
+a function of how many leading bytes of the candidate match the secret. The
+patched arm visits every byte and accumulates without branching.
+
+This is a fixture, not a corpus item. Its job is to be detected: an analyser
+that cannot flag this cannot be trusted on anything harder, so a run in which
+any applicable analyser misses it is VOID rather than a result. Because the leak
+was written rather than found, it is `synthetic` and `role` is not `corpus`, and
+control CLS-4 therefore never lets it into a recall denominator.
+"""
+
+[class]
+observable   = "latency"
+secret_role  = "key-material"
+origin       = "source-level"
+granularity  = "byte"
+exploit_path = "direct-recovery"
+rationale = """
+origin is source-level and not hardware-implicit: the early exit is written in
+the C, and no instruction selection or optimisation pass is needed to produce
+it. That is deliberate for a positive control. It should be the easiest thing in
+the repository to detect, so that a miss is unambiguous evidence about the
+analyser rather than an interesting finding about the leak.
+
+observable is latency rather than address-data because the work per byte is
+identical in both arms and no secret-dependent memory access occurs; what varies
+is only how many times the loop body runs.
+"""
+
+[provenance]
+upstream_repo   = "none, written for this repository"
+licence         = "MIT"
+redistributable = true
+note = """
+No CVE, no advisory, no DOI, because nothing here was deployed or disclosed.
+That absence is exactly what control CLS-4 keys on to keep fixtures out of the
+measured population.
+"""
+
+[[build]]
+arm   = "vulnerable"
+source = "src/vulnerable.c"
+entry_symbol = "check_tag"
+secret_input = "the 16-byte tag, drawn from /dev/urandom at acquisition time"
+
+[[build]]
+arm   = "patched"
+source = "src/patched.c"
+entry_symbol = "check_tag"
+secret_input = "identical to the vulnerable arm, same key, same acquisition run"
+
+[[site]]
+arm        = "vulnerable"
+file       = "src/vulnerable.c"
+symbol     = "check_tag"
+mechanism  = "return on a comparison against secret data, so the loop trip count is secret dependent"
+instruction_class = ["je", "jne", "jz", "jnz"]
+
+[toolchain]
+cells_required = ["gcc-12.2.0-O2-x86_64-linux-gnu"]
+note = """
+The cell is a container image pinned by base digest plus an explicit compiler
+version. The host compiler is a different major version entirely, which is the
+point: ground truth is keyed to the build, not to the source.
+"""
+
+[acquisition]
+origin    = "ours"
+platform  = "x86_64 host, single performance core, pinned with taskset"
+procedure = "acquire/acquire.sh"
+counter   = "rdtscp"
+reps      = 60
+grade     = "evidence"
+note = """
+cpuset is not delegated to this user's cgroup slice, so --cpuset-cpus is
+unavailable under rootless podman and pinning happens with taskset inside the
+container instead.
+"""
+
+[recovery]
+entry    = "recover/recover.py"
+runtime  = "pure"
+inputs   = ["traces/vulnerable.bin.z"]
+note = "stdlib only, no container, no hardware, no network"
+
+[oracle]
+verifier   = "recover/fixtures/verifier.json"
+predicate  = "sha256-preimage"
+expected_vulnerable = "recovered"
+expected_patched    = "not-recovered"
+note = """
+The key is drawn from /dev/urandom during acquisition and destroyed immediately
+after its digest is published. Nothing committed here derives it. An earlier
+version of the harness generated it from a seed constant in the source, which
+made the oracle circular: a recovery could have computed the answer without
+reading a single timing and would still have verified.
+"""
+
+[cost]
+effort_hours = 3
+note = "KT3 is a schema field so it cannot be left to memory. This is a fixture, so it prices the format rather than a corpus item."
+
+[divergence]
+from_deployment = """
+Nothing was deployed. The work per byte comparison is also amplified far above
+what a real early-exit comparison costs, so that the signal clears the noise
+floor of a machine with three core frequency tiers and no root. Both facts are
+why this pair is a control and never a measurement.
+"""

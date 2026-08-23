@@ -1,0 +1,30 @@
+# Every identity-bearing string in this repository, in one file.
+#
+# This is the inversion of the usual approach. A project that lets its own name
+# spread through imports, CLI names, container tags and result filenames has to
+# discover and rewrite them all at submission time; the sibling project in this
+# programme found its name in 51 tracked files when it came to do that. Here the
+# name is forbidden vocabulary everywhere except the files listed below, so an
+# anonymous archive is a build target rather than a rename job.
+#
+# The import package is deliberately generic (`corpus`), as are the CLI module
+# path, the environment variable prefix and the container image namespace. Those
+# four choices are what make the guarantee cheap.
+
+schema = "identity/1"
+
+project_name      = "etalon"
+anon_project_name = "ctbench"
+package           = "corpus"
+env_prefix        = "CORPUS_"
+image_namespace   = "localhost/ct-toolchain"
+
+# The only tracked files permitted to contain any string above. Control ANON-1
+# fails the build if one appears anywhere else, including in a path.
+allowed_in = [
+  "README.md",
+  "LICENSE",
+  "CITATION.cff",
+  "pyproject.toml",
+  "data/identity.toml",
+]

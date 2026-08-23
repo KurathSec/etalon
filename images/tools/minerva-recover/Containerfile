@@ -1,0 +1,21 @@
+# Recovery environment for the nonce-leakage pairs.
+#
+# runtime = "image", not "pure": lattice reduction needs fpylll, which is not
+# stdlib. Containerising is the plan's named fallback for a pair whose recovery
+# cannot be pure, and the pair manifest records that cost rather than hiding it.
+#
+# ec.py is fetched here at the pinned upstream commit rather than vendored into
+# the repository, because upstream's ec.py incorporates tinyec, which is GPL v3,
+# and this repository's own tree is MIT. Keeping the GPL-derived module in the
+# image and out of the tracked tree keeps the licence boundary clean while the
+# recovery stays reproducible: the commit is pinned, so the fetched file is
+# fixed. The author's own attack.py (MIT) is vendored in the pair.
+FROM docker.io/library/debian@sha256:abd67ffcfa541b485a3dff59865ab629aa048a6c613e639d36e7456b0b229241
+ENV DEBIAN_FRONTEND=noninteractive
+ARG MINERVA_COMMIT=8182d0006c434257ecb3689b2b4506b02e70303a
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends python3 python3-fpylll ca-certificates curl \
+ && curl -sSL -o /opt/ec.py \
+      "https://raw.githubusercontent.com/crocs-muni/minerva/${MINERVA_COMMIT}/poc/attack/ec.py" \
+ && apt-get purge -y curl && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+WORKDIR /work

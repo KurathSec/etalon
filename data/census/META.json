@@ -1,0 +1,8 @@
+{
+  "census_status": "seed",
+  "n_rows": 7,
+  "n_included": 6,
+  "n_excluded": 1,
+  "intended_population": "timing-attack CVEs in the NVD, March 2003 to December 2022 (Kholoosi, Babar and Yilmaz, arXiv 2308.11862), plus the constant-time literature since",
+  "warning": "A seed census makes coverage look better than it is. Any coverage figure derived from this file must carry census_status beside it."
+}

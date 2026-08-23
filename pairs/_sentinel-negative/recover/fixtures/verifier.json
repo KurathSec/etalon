@@ -1,0 +1,6 @@
+{
+  "scheme": "sha256-preimage",
+  "note": "A recovered candidate verifies if its SHA-256 equals this digest. The digest reveals nothing about the key, so the committed traces are the only channel that carries it.",
+  "tag_len": 16,
+  "sha256": "91332f130d40b7656fdba5521ee8ebe13ef7c656e6490c4b349ea9a67a8d0c11"
+}

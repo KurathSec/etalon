@@ -1,0 +1,41 @@
+# The leak-class vocabulary.
+#
+# A flat list of class names is ungovernable: it has no denominator, and whoever
+# adds the twelfth pair gets to invent the twelfth class. Classes are tuples
+# over five facets drawn from the closed vocabularies below. A value not listed
+# here is a hard error, so the taxonomy cannot drift into free text.
+#
+# Coverage is then computable rather than asserted: data/census/entries.jsonl
+# holds one row per published timing result with its facet tuple, and the corpus
+# covers some fraction of the attested cells. That fraction has an n and the
+# uncovered cells are named.
+
+schema = "classes/1"
+
+[facet.observable]
+values = ["latency", "address-data", "address-code", "cache-set", "port-contention"]
+note = """
+What an adversary distinguishes. First, because it decides which family of tool
+can see the leak at all. A differential address-trace analyser is structurally
+blind wherever addresses are constant and only latency varies, and that is a
+property of the mechanism rather than a weakness of the tool.
+"""
+
+[facet.secret_role]
+values = ["key-material", "nonce", "plaintext", "padding-decision", "message"]
+
+[facet.origin]
+values = ["source-level", "compiler-introduced", "hardware-implicit", "api-level"]
+note = """
+Where the violation enters. `hardware-implicit` is the case where the same
+source is constant time on a different instruction set, so the violation is
+introduced by instruction selection rather than by the programmer or by an
+optimisation pass. That case is the reason toolchain pinning is a corpus
+requirement and not a packaging nicety.
+"""
+
+[facet.granularity]
+values = ["bit", "byte", "word", "branch", "whole-operation"]
+
+[facet.exploit_path]
+values = ["direct-recovery", "lattice-hnp", "bleichenbacher", "statistical"]

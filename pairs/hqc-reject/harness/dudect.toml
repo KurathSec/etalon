@@ -1,0 +1,4 @@
+driver = "dudect_reject_driver.c"
+extra_sources = []
+header = "reject.h"
+opt = "O2"

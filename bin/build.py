@@ -107,10 +107,12 @@ def main() -> int:
     lock, failures = {}, []
     for pair in pairs:
         man = tomllib.loads((pair / "pair.toml").read_text())
-        # Observation-based pairs declare no cells and have nothing to build.
-        # They are scored on recorded traces, not on a binary, so they never
-        # appear in the binary lock.
-        if not man.get("toolchain", {}).get("cells_required"):
+        # build.py only handles pairs whose declared cells are gcc/clang
+        # instruction-level cells it knows. Pairs that declare no cells, or that
+        # declare a different toolchain cell (the OpenSSL-linked ecdsa pairs,
+        # scored on recorded traces), are not built here.
+        req = man.get("toolchain", {}).get("cells_required") or []
+        if not any(c in CELLS for c in req):
             continue
         symbol = man["build"][0]["entry_symbol"]
         sites = man.get("site") or []

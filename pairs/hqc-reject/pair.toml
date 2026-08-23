@@ -1,0 +1,104 @@
+schema = "pair/1"
+
+[pair]
+id      = "hqc-reject"
+title   = "HQC/BIKE-style secret-dependent rejection sampling"
+role    = "corpus"
+status  = "active"
+tier    = "C"
+added   = "2026-08-23"
+synthetic = false
+summary = """
+A rejection sampler that draws until a value falls below a secret per-position
+threshold, so the number of draws, and the running time, leaks the secret. This
+is the rejection-sampling timing-leak class (Guo, Hlauschek, Johansson, Lahr,
+Nilsson, Schroeder, "Don't Reject This", TCHES 2022; the HQC CVE-2025-52473
+family). Built here and detectable by installed analysers.
+
+Tier C: the leak is real and the mechanism is published-exploitable, but a
+per-pair full key recovery is not committed. Absolute threshold recovery from
+timing needs careful calibration; rather than ship a recovery that does not
+robustly reproduce, the pair is scored for detection and covers its census cell,
+and never enters a recall denominator.
+"""
+
+[class]
+observable   = "latency"
+secret_role  = "key-material"
+origin       = "source-level"
+granularity  = "whole-operation"
+exploit_path = "direct-recovery"
+mechanism_classes = ["secret-branch", "timing-observation"]
+rationale = """
+The direct-recovery / latency / whole-operation cell, distinct from the nonce
+classes: the secret is key material and the leak is the running time of a whole
+rejection-sampling operation, not a nonce bit or a single instruction. secret-
+branch because the accept test branches on the secret threshold each draw.
+"""
+
+[provenance]
+upstream_repo   = "reproduction of the HQC/BIKE rejection-sampling leak class"
+disclosed       = "2022-06-01"
+doi             = ["10.46586/tches.v2022.i3.223-263"]
+advisory        = ["CVE-2025-52473"]
+licence         = "MIT"
+redistributable = true
+note = "A reproduction of the rejection-sampling timing-leak class. The DOI is Don't Reject This (TCHES 2022); the CVE is the HQC compiler-introduced variant."
+
+[[build]]
+arm = "vulnerable"
+source = "src/vulnerable.c"
+entry_symbol = "sample_pos"
+secret_input = "the per-position threshold; the draw count is 256/threshold"
+
+[[build]]
+arm = "patched"
+source = "src/patched.c"
+entry_symbol = "sample_pos"
+secret_input = "identical; a constant number of draws with oblivious select"
+
+[[site]]
+arm = "vulnerable"
+file = "src/vulnerable.c"
+symbol = "sample_pos"
+mechanism = "loop repeats until a draw falls below the secret threshold: a secret-dependent draw count"
+
+[toolchain]
+cells_required = ["gcc-12.2.0-O2-x86_64-linux-gnu"]
+note = "Built in the gcc cell. The leak is a source-level secret-dependent loop, present at every optimisation level."
+
+[acquisition]
+origin    = "none"
+platform  = "not acquired: tier C, detection-scored"
+procedure = "not committed"
+counter   = "rdtscp"
+reps      = 0
+grade     = "smoke"
+note = "Tier C: no committed traces or recovery. The leak is scored for detection by dudect and timecop."
+
+[recovery]
+entry   = "not committed"
+runtime = "image"
+inputs  = []
+note = "A robust absolute-threshold recovery from timing needs calibration engineering not committed here; the published class-level exploit (Don't Reject This) certifies the mechanism."
+
+[oracle]
+verifier   = "recover/fixtures/verifier.json"
+predicate  = "not-yet-reproduced"
+expected_vulnerable = "recovered"
+expected_patched    = "not-recovered"
+note = "Declared for when a recovery is committed. The oracle does not run for a tier-C pair."
+
+[cost]
+effort_hours = 4
+portable_hours = 4
+note = "Portable clock. The recovery was attempted and reached partial (4 of 8 bytes); a robust full recovery is deferred, so the pair is tier C."
+
+[divergence]
+from_deployment = """
+The deployed leak was in HQC/BIKE's own rejection sampler; this reproduces the
+mechanism (a secret-dependent draw count) with a self-contained sampler. The
+per-draw work is amplified so the signal is measurable on a fast x86 core. The
+mechanism and its detectability are faithful; the recovery of the deployed
+attack is the published one, not committed here.
+"""

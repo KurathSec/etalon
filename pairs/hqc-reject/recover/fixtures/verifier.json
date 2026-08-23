@@ -1,0 +1,1 @@
+{"scheme":"not-yet-reproduced","note":"tier C: the rejection-sampling recovery (Guo et al., Do not Reject This, TCHES 2022) is the published class-level exploit; a per-pair key recovery is not committed here. The leak is certified by its published-exploitable mechanism and by analyser detection, and the pair never enters a recall denominator."}

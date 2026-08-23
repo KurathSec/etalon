@@ -69,17 +69,24 @@ All dates in this file are UTC.
 The instrument works end to end and has produced results. The corpus holds seven
 corpus pairs and two synthetic sentinels; four pairs are recall-eligible (their
 key recovery runs and verifies here), three are tier C, built and scored for
-detection but with no committed recovery. Three analysers are built as
-digest-pinned images: a statistical timing test, a dynamic-taint checker, and the
-patched Valgrind that detects variable-latency instructions. Twelve controls pass
-and the oracle verifies six pairs.
+detection but with no committed recovery. Four analysers are built as
+digest-pinned images: a statistical timing test, a dynamic-taint checker, the
+patched Valgrind that detects variable-latency instructions, and a relational
+symbolic execution engine. A fifth, a differential address-trace analyser, is
+validated end to end on a pure-C address leak but its per-pair integration is
+outstanding. Twelve controls pass and the oracle verifies six pairs.
 
 Two measured findings so far. A tool-by-class matrix in which each analyser has a
 different blind spot: the timing test detects both nonce classes and misses the
-division-timing leak on x86, while the patched Valgrind detects that same leak,
-and the taint checker cannot see the variable-latency class at all. And a
-toolchain-pinning result: the same vulnerable source emits a hardware division
-only at certain (vendor, optimisation) cells, and two compilers disagree on which.
+division-timing leak on x86, while the patched Valgrind and the symbolic engine
+both detect that same leak, each by a different mechanism, and the taint checker
+cannot see the variable-latency class at all; on the rejection sampler the taint
+checker and the symbolic engine detect the secret-dependent branch the timing test
+could not decide within budget. And a toolchain-pinning result, now measured
+across two compilers and three microarchitectures: the same vulnerable source
+emits a hardware division only at certain (vendor, optimisation) cells, two
+compilers disagree on which, and a rented Graviton3 confirms the leak extends to
+microarchitecture.
 
 Coverage is six of eleven attested leak-class cells. The census is declared
 `expanded`, not complete, so an aggregate recall figure stays gated; recall is
@@ -89,3 +96,10 @@ Corrected 2026-08-23 (UTC): this section used to say, in full, "Early. Nothing
 here is a result yet." That was written at scaffold time and was true then. It
 survived unchanged through the work that produced the pairs, the adapters and the
 matrix above, which is the drift this correction records.
+
+Corrected 2026-08-24 (UTC): the analyser count above read three; a fourth, the
+symbolic engine (Binsec/Rel2), is now built and scored, and the toolchain finding
+gained its microarchitecture axis, so the figures in the two paragraphs above are
+updated in place. A fifth analyser, a differential address-trace tool (Microwalk),
+is validated end to end but not yet integrated per pair, and produces no scored
+rows. The paper draft is now six pages with a verified bibliography.

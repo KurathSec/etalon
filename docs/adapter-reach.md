@@ -76,6 +76,18 @@ gated and are reported.
 
 ## Binsec/Rel2: image pinned, per-pair harness outstanding
 
+**Corrected 2026-08-24 (UTC): the harness is now built and scoring, and the two
+assumptions below about how it works were wrong.** Binsec marks secrets by symbol
+name in an SSE script (`secret global s`), not by address in a gdb core snapshot,
+so no core is generated: a per-pair binsec driver exposes the secret and public
+inputs as named globals and the tool analyses the ELF directly. It scores the
+positive sentinel (insecure on the early-exit branch, secure on the patched arm),
+KyberSlash (the dividend feature reports the secret-dependent division
+symbolically, without measuring time, where the timing test misses it on this
+x86 divider), and the rejection sampler. The image build has no gcc, so the ELF
+is built in the gcc cell and analysed in the binsec cell over a shared work dir.
+The two paragraphs below are kept as the pre-build record.
+
 The official Binsec image is pulled and pinned by digest (`locks/images.lock.toml`),
 and its constant-time check is `binsec -sse -checkct -checkct-features
 memory-access,control-flow,divisor,dividend -sse-script SCRIPT -sse-depth D
@@ -97,6 +109,21 @@ documented, with the per-pair snapshot harness as outstanding work, rather than
 half-built.
 
 ## Microwalk: Pin works here, per-target YAML harness outstanding
+
+**Corrected 2026-08-24 (UTC): the pipeline is now validated end to end, and the
+adapter and wrapper are built; per-pair corpus integration remains outstanding.**
+On a pure-C secret-indexed table access, the control-flow-leakage analysis reports
+one memory-access leak in the traced target on the vulnerable arm and zero on a
+branchless constant-time version, clean discrimination (`-Wl,-z,now` removes the
+lazy-binding first-testcase artifact). The wrapper protocol is documented
+(`PinNotifyTestcaseStart/End/StackPointer/Allocation` plus a stdin `t <id>` /
+path / `e 0` loop), and `src/corpus/score/adapters/microwalk.py` runs the trace,
+preprocess and analysis stages. Outstanding, and why Microwalk is not in
+`data/tools.toml` and produces no scored rows: the tag-compare target hangs under
+Pin, runs late in this session went flaky with a socket broken-pipe under churned
+rootless podman, and the OpenSSL tier-A address target (the high-value cell) is
+unbuilt. The image is pinned and Pin is confirmed working. The paragraphs below
+are kept as the pre-validation record.
 
 The flagged risk was Intel Pin's support on this Arrow Lake CPU. It does not
 materialise: the pinned `ghcr.io/microwalk-project/microwalk:3.2.0-pin` image runs

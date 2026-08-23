@@ -5,3 +5,9 @@ schema = "images/1"
 id = "d02b66ce8b006dd3ed50d9560e488c9d7f899ca1e2a8a20c7da015e6c7996582"
 built_from = "images/tools/varlat/Containerfile"
 valgrind = "3.22.0+varlat, GPL patch vendored"
+
+[image.binsec]
+id = "sha256:2a51e455f055874d71cbf030a778e8be19455876bcd57c1845c163fed6fc482f"
+source = "docker.io/binsec/binsec (official), pinned by digest"
+status = "pulled; adapter harness outstanding"
+note = "checkct works via: binsec -sse -checkct -checkct-features memory-access,control-flow,divisor,dividend -sse-script SCRIPT -sse-depth D -sse-timeout T CORE. Needs a per-pair gdb core snapshot with secret buffers marked symbolic (starting from core with @[addr] := nondet as secret). The image has gdb but not gcc, so the core is generated in a build cell. This per-pair harness is the outstanding work."

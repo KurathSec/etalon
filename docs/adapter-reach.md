@@ -60,3 +60,25 @@ tell that the detector measures the modelling and not the code.
 Until one of these exists, the corpus reports no recall over the deployed
 recall-eligible pairs, and the machinery refuses to print one. That refusal is
 the instrument working.
+
+## Binsec/Rel2: image pinned, per-pair harness outstanding
+
+The official Binsec image is pulled and pinned by digest (`locks/images.lock.toml`),
+and its constant-time check is `binsec -sse -checkct -checkct-features
+memory-access,control-flow,divisor,dividend -sse-script SCRIPT -sse-depth D
+-sse-timeout T CORE`. Two things make the per-pair harness real work, and they are
+recorded rather than glossed:
+
+1. Binsec analyses a **core snapshot**, not a source file. Each pair needs a gdb
+   `generate-core-file` at the analysis entry, and the image has gdb but not gcc,
+   so the binary is built in a cell and the core generated separately.
+2. The secret buffers are marked symbolic in an SSE script by **address**
+   (`starting from core with @[addr, n] := nondet as secret`), so the script is
+   specific to each pair's memory layout.
+
+This is the plan's own estimated multi-day item. The crossover finding the corpus
+exists to show (a timing tool and a taint tool with different blind spots on the
+same leak) is already established by dudect, varlat and timecop, so Binsec is a
+breadth addition rather than a blocker. It is recorded here as pulled and
+documented, with the per-pair snapshot harness as outstanding work, rather than
+half-built.

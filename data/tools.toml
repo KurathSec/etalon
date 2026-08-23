@@ -42,3 +42,19 @@ secret_model = "annotation"
 architectures = ["x86_64"]
 requires_harness = "poison"
 platform_sensitive = false
+
+[tool.varlat]
+version = "valgrind-3.22.0+varlat"
+image   = "localhost/ct-toolchain/varlat:1"
+technique = "patched-valgrind"
+level     = "binary"
+# The KyberSlash patched Valgrind. Detects variable-latency instructions (idiv/div)
+# on secret data, which is the class dudect misses on a fast x86 divider, AND, being
+# memcheck-based, secret-dependent branches. This is the tool the KT2 investigation
+# was about; it is what makes the division-timing class detectable on x86.
+observes  = ["latency", "address-code"]
+detects_mechanisms = ["variable-latency-op", "secret-branch"]
+secret_model = "annotation"
+architectures = ["x86_64"]
+requires_harness = "poison"
+platform_sensitive = false

@@ -1,0 +1,5 @@
+# varlat scores KyberSlash at its ground-truth -Os cell where the idiv is emitted.
+driver = "varlat_coeff_driver.c"
+extra_sources = []
+header = "kyber_slash.h"
+opt = "Os"

@@ -1,0 +1,27 @@
+# The KyberSlash patched Valgrind (varlat): detects variable-latency instructions
+# (idiv/div and preliminary others) operating on secret/uninitialised data. It
+# flags the leaking INSTRUCTION at the x86-64 level, independent of whether this
+# CPU's divider actually leaks in measured time, so it detects KyberSlash on x86
+# where a statistical timing test (dudect) misses it.
+#
+# Built from the valgrind 3.22.0 release tarball pinned by sha256 (sourceware git
+# rate-limits clones), plus the GPL-2.0-or-later varlat patch vendored under
+# vendor/varlat/. Base pinned to the same bookworm digest as the build cells so
+# the analysed binary links a contemporary glibc.
+FROM docker.io/library/debian@sha256:abd67ffcfa541b485a3dff59865ab629aa048a6c613e639d36e7456b0b229241
+ENV DEBIAN_FRONTEND=noninteractive SOURCE_DATE_EPOCH=0
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      gcc libc6-dev libc6-dbg make bzip2 patch pkg-config util-linux ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+COPY vendor-varlat/valgrind-3.22.0.tar.bz2 /tmp/valgrind-3.22.0.tar.bz2
+COPY vendor-varlat/valgrind.sha256 /tmp/valgrind.sha256
+COPY vendor-varlat/valgrind-3.22.0-varlat.patch /tmp/varlat.patch
+RUN cd /tmp && sha256sum -c valgrind.sha256 \
+ && tar xf valgrind-3.22.0.tar.bz2 && cd valgrind-3.22.0 \
+ && patch -p1 < /tmp/varlat.patch \
+ && ./configure --prefix=/opt/varlat \
+ && make -j"$(nproc)" && make install \
+ && cd /tmp && rm -rf valgrind-3.22.0 valgrind-3.22.0.tar.bz2 varlat.patch
+ENV PATH=/opt/varlat/bin:$PATH
+WORKDIR /work

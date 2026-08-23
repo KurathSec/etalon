@@ -1,0 +1,7 @@
+# Analyser and cell image ids, frozen for PR-1.
+schema = "images/1"
+
+[image.varlat]
+id = "d02b66ce8b006dd3ed50d9560e488c9d7f899ca1e2a8a20c7da015e6c7996582"
+built_from = "images/tools/varlat/Containerfile"
+valgrind = "3.22.0+varlat, GPL patch vendored"

@@ -192,6 +192,7 @@ def as_tex(report: dict) -> str:
             out.append(tex_macro(name, str(value)))
             if 0 <= value < len(WORDS):
                 out.append(tex_macro(name + "Word", WORDS[value]))
+                out.append(tex_macro(name + "WordCap", WORDS[value].capitalize()))
         elif hasattr(value, "defined"):
             # A rate carries its n, and an undefined one is NA and never 0.
             if value.defined:
@@ -212,16 +213,22 @@ def as_tex(report: dict) -> str:
     emit("nCensusEntries", cen["census_entries"])
     emit("nAttestedCells", cen["attested_cells"])
     emit("coverage", cen["covered_cells"])
+    # The coverage numerator as its own macro, so "six of eleven" is generated
+    # rather than the six being retyped beside the generated eleven.
+    emit("nCoveredCells", cen["covered_cells"].numerator)
     emit("nUncoveredCells", len(cen["uncovered_cells"]))
 
     v = report["verdicts"]
     emit("nScoredRows", v["scored_rows"])
     emit("nApplicable", v["applicable"])
     emit("nInapplicable", v["inapplicable"])
-    outs = v.get("outcomes") or {}
-    if isinstance(outs, dict):
-        emit("nDetected", outs.get("detected", 0))
-        emit("nMissed", outs.get("missed", 0))
+    # Detected and missed are real counts when applicable rows exist, and NA when
+    # none do. A default 0 over an empty applicable set is exactly the mean([])
+    # defect this module refuses: it would read as "measured, found nothing".
+    outs = v.get("outcomes")
+    has_applicable = isinstance(outs, dict)
+    emit("nDetected", outs.get("detected", 0) if has_applicable else None)
+    emit("nMissed", outs.get("missed", 0) if has_applicable else None)
 
     co = report["cost"]
     emit("nCostRows", co["cost_rows"])
@@ -230,22 +237,37 @@ def as_tex(report: dict) -> str:
     # project exists to produce. They render as real fractions, not NA, once a
     # scoring run exists; the HEADLINE gate is separate and still governs whether
     # an aggregate recall figure may be stated.
-    import json as _json
     rp = REPO / "results" / "recall.json"
-    if rp.exists():
-        rec = _json.loads(rp.read_text()).get("recall_per_class", [])
-        for r in rec:
-            tool = r["tool"]
-            obs = "Latency" if "observable=latency" in r["class"] else "Address" if "observable=address-data" in r["class"] else ""
-            if obs:
-                out.append(tex_macro(f"recall{tool.capitalize()}{obs}",
-                                     r["recall"].replace("/", "\\,of\\,")))
+    recall_doc = json.loads(rp.read_text()) if rp.exists() else {}
+    for r in recall_doc.get("recall_per_class", []):
+        tool = r["tool"]
+        obs = "Latency" if "observable=latency" in r["class"] else "Address" if "observable=address-data" in r["class"] else ""
+        if obs:
+            out.append(tex_macro(f"recall{tool.capitalize()}{obs}",
+                                 r["recall"].replace("/", "\\,of\\,")))
     # tier-C detection outcomes (the crossover): dudect miss / varlat catch
-    tc = _json.loads(rp.read_text()).get("tier_c_detections", []) if rp.exists() else []
-    for r in tc:
+    for r in recall_doc.get("tier_c_detections", []):
         if r["pair"] == "kyberslash":
             out.append(tex_macro(f"kyberslash{r['tool'].capitalize()}",
-                                 "detected" if r["outcome"]=="detected" else "missed"))
+                                 "detected" if r["outcome"] == "detected" else "missed"))
+
+    # The KyberSlash microarchitecture finding, measured on rented Graviton3 and
+    # committed at results/kyberslash_graviton.json. These are acquired
+    # observations, regenerable only on an aarch64 host, echoed here so the paper
+    # quotes no hand-typed measurement. Point measurements, so no n travels.
+    gp = REPO / "results" / "kyberslash_graviton.json"
+    if gp.exists():
+        g = json.loads(gp.read_text())
+        step = g["results"]["kyberslash_operand_range_step"]
+        e2e = g["results"]["end_to_end_coeff_to_bit_Os"]
+        codegen = g["results"]["codegen"]["udiv_in_coeff_to_bit"]
+        snr = int(round(step["step_ticks"] / step["noise_floor_ticks"], -2))
+        out.append(tex_macro("gravHost", "AWS Graviton3 (Neoverse\\,V1)"))
+        out.append(tex_macro("gravOsUdiv", str(codegen["Os"])))
+        out.append(tex_macro("gravStepTicks", f"{step['step_ticks']:.3f}"))
+        out.append(tex_macro("gravSNR", str(snr)))
+        out.append(tex_macro("gravDeltaTicks", f"{e2e['secret_dependent_delta_ticks']:.3f}"))
+        out.append(tex_macro("gravDeltaPercent", f"{e2e['delta_percent_of_call']:.1f}\\%"))
 
     # Facts about the field, not about this corpus. They are still generated,
     # because a hand-typed 55 is a number nobody can re-derive either.

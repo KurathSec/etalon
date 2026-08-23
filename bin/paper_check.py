@@ -124,15 +124,24 @@ def main() -> int:
         if shutil.which("pdfinfo"):
             info = subprocess.run(["pdfinfo", str(pdf)],
                                   capture_output=True, text=True).stdout
-            leaked = []
-            for field in ("Author", "Title", "Subject", "Keywords"):
+            fields = ("Title", "Author", "Subject", "Keywords", "Creator", "Producer")
+            vals = {}
+            for field in fields:
                 m = re.search(rf"^{field}:[ \t]*(.*?)[ \t]*$", info, re.M)
-                val = (m.group(1).strip() if m else "")
-                if val and val.lower() not in ("anonymous", "anonymous submission"):
-                    leaked.append(f"{field}={val!r}")
+                vals[field] = (m.group(1).strip() if m else "")
+            leaked = []
+            # The author must not carry a real name. The title, keywords and
+            # subject are public paper content and may be non-empty; the creator
+            # and producer are tool strings. No field may carry an identifying
+            # name, which the identity scan checks over all of them.
+            a = vals["Author"].lower()
+            if a and a not in ("anonymous", "anonymous submission"):
+                leaked.append(f"Author={vals['Author']!r}")
+            leaked += _scan_identity({f"metadata:{k}": v
+                                      for k, v in vals.items() if v})
             ok = not leaked
             print(f"  pdf-meta   {'PASS' if ok else 'FAIL'}  "
-                  f"{'metadata empty or anonymous' if ok else ', '.join(leaked)}")
+                  f"{'author anonymous, no identity in metadata' if ok else ', '.join(leaked)}")
             if not ok:
                 fails.append("pdf metadata")
     else:

@@ -1,0 +1,13 @@
+{
+	"attack": {
+		"type": "full",
+		"skip": 50,
+		"start": 3000,
+		"step": 200,
+		"num": 7000,
+		"seed": null
+	},
+	"max_threads": 2,
+	"dimension": 90,
+	"betas": [15, 20, 30, 40, 45, 48, 51, 53, 55]
+}

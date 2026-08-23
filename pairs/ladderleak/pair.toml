@@ -1,0 +1,104 @@
+schema = "pair/1"
+
+[pair]
+id      = "ladderleak"
+title   = "LadderLeak: secret-dependent branch in a scalar-multiplication ladder"
+role    = "corpus"
+status  = "active"
+tier    = "C"
+added   = "2026-08-24"
+synthetic = false
+summary = """
+A Montgomery-ladder scalar multiplication that branches on each nonce bit,
+taking a different code path per bit. The sequence of taken branches, a
+control-flow (address-code) leak, depends on the secret nonce. This is the
+LadderLeak class (Aranha, Novaes, Takahashi, Tibouchi, Yarom, CCS 2020), which
+recovers an ECDSA key from less than one bit of nonce leakage.
+
+Tier C. The faithful LadderLeak attack observes the branch pattern
+microarchitecturally, not wall-clock timing, and the published exploit is the
+class-level certification. A per-pair committed recovery is not included; the
+pair is scored for detection of the control-flow leak, which a taint tool and a
+differential control-flow tool both catch, and it covers the address-code cell.
+"""
+
+[class]
+observable   = "address-code"
+secret_role  = "nonce"
+origin       = "source-level"
+granularity  = "bit"
+exploit_path = "lattice-hnp"
+mechanism_classes = ["secret-branch"]
+rationale = """
+observable is address-code: the distinguishing mechanism is a secret-dependent
+BRANCH (control flow), not a memory address or an instruction latency. This is
+the LadderLeak / address-code census cell, distinct from the address-data pair
+(a data access) and the latency pairs. A taint tool sees the branch on the
+poisoned nonce; a differential control-flow tool sees the divergent paths.
+"""
+
+[provenance]
+upstream_repo   = "reproduction of the LadderLeak control-flow leak class"
+disclosed       = "2020-05-01"
+doi             = ["10.1145/3372297.3417268"]
+advisory        = ["CVE-2020-13895"]
+licence         = "MIT"
+redistributable = true
+note = "A reproduction of the LadderLeak mechanism (CCS 2020). The CVE is a representative ECDSA ladder-leak assignment; the DOI is the LadderLeak paper."
+
+[[build]]
+arm = "vulnerable"
+source = "src/vulnerable.c"
+entry_symbol = "scalar_mul"
+secret_input = "the ECDSA nonce; each ladder step branches on a nonce bit"
+
+[[build]]
+arm = "patched"
+source = "src/patched.c"
+entry_symbol = "scalar_mul"
+secret_input = "identical; OpenSSL constant-time mul, no secret-dependent branch"
+
+[[site]]
+arm = "vulnerable"
+file = "src/vulnerable.c"
+symbol = "scalar_mul"
+mechanism = "per-step branch on a secret nonce bit: control flow leaks the bit"
+
+[toolchain]
+cells_required = ["gcc-O2-openssl"]
+note = "Built in the OpenSSL cell. Not built by the instruction-level build pipeline; scored for control-flow detection."
+
+[acquisition]
+origin    = "none"
+platform  = "not acquired: tier C, detection-scored"
+procedure = "not committed"
+counter   = "n/a"
+reps      = 0
+grade     = "smoke"
+note = "Tier C: the leak is control-flow, observed microarchitecturally in the real attack. Scored here for detection by a taint tool."
+
+[recovery]
+entry   = "not committed"
+runtime = "image"
+inputs  = []
+note = "The published LadderLeak exploit (CCS 2020) certifies the mechanism; a per-pair committed recovery is not included, and a timing-lattice recovery is not the faithful attack for a control-flow leak."
+
+[oracle]
+verifier   = "recover/fixtures/verifier.json"
+predicate  = "not-yet-reproduced"
+expected_vulnerable = "recovered"
+expected_patched    = "not-recovered"
+note = "Declared for when a control-flow-based recovery is committed. The oracle does not run for a tier-C pair."
+
+[cost]
+effort_hours = 3
+portable_hours = 3
+note = "Portable clock. The pair reproduces the control-flow leak and its detection; the recovery is the published class-level attack, not committed."
+
+[divergence]
+from_deployment = """
+The deployed LadderLeak was in a real ECDSA ladder; this reproduces the
+secret-dependent-branch mechanism with OpenSSL EC primitives. The control-flow
+leak and its detectability are faithful. The real attack observes the branch
+pattern via microarchitecture; this pair does not commit that acquisition.
+"""

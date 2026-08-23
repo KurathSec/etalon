@@ -226,6 +226,19 @@ def as_tex(report: dict) -> str:
     co = report["cost"]
     emit("nCostRows", co["cost_rows"])
 
+    # Per-class recall, from the recorded scoring run. These are the numbers the
+    # project exists to produce. They render as real fractions, not NA, once a
+    # scoring run exists; the HEADLINE gate is separate and still governs whether
+    # an aggregate recall figure may be stated.
+    import json as _json
+    rp = REPO / "results" / "recall.json"
+    if rp.exists():
+        rec = _json.loads(rp.read_text()).get("recall_per_class", [])
+        for r in rec:
+            tool = r["tool"]
+            out.append(tex_macro(f"recall{tool.capitalize()}Nonce",
+                                 r["recall"].replace("/", "\\,of\\,")))
+
     # Facts about the field, not about this corpus. They are still generated,
     # because a hand-typed 55 is a number nobody can re-derive either.
     facts = tomllib.loads((REPO / "data" / "facts.toml").read_text()) \

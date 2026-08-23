@@ -6,7 +6,7 @@ FROM docker.io/library/debian@sha256:abd67ffcfa541b485a3dff59865ab629aa048a6c613
 ENV DEBIAN_FRONTEND=noninteractive SOURCE_DATE_EPOCH=0
 ARG DUDECT_COMMIT=dc269651fb2567e46755cfb2a13d3875592968b5
 RUN apt-get update \
- && apt-get install -y --no-install-recommends gcc libc6-dev make curl ca-certificates util-linux \
+ && apt-get install -y --no-install-recommends gcc libc6-dev libssl-dev make curl ca-certificates util-linux \
  && curl -sSL -o /usr/include/dudect.h \
       "https://raw.githubusercontent.com/oreparaz/dudect/${DUDECT_COMMIT}/src/dudect.h" \
  && apt-get purge -y curl && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*

@@ -1,0 +1,126 @@
+schema = "pair/1"
+
+[pair]
+id      = "ecdsa-nonce"
+title   = "ECDSA nonce bit-length leakage, reproduced and acquired here"
+role    = "corpus"
+status  = "active"
+tier    = "A"
+added   = "2026-08-23"
+synthetic = false
+replicate  = true
+replicates = "minerva"
+summary = """
+A reproduction of the Minerva mechanism (CVE-2019-13627): an ECDSA scalar
+multiplication over secp256r1 whose loop count is the nonce's bit-length, so its
+running time leaks the bit-length. The elliptic-curve arithmetic is OpenSSL's;
+the leaking scalar multiplication is written for this pair.
+
+Unlike the imported Minerva and TPM-FAIL datasets, this pair is BUILT and
+ACQUIRED here: signatures are timed on this host with rdtsc, so it is tier A, and
+the same leaking function is what the analysers score. This is the pair that lets
+an installed constant-time analyser be scored against a recall-eligible leak, and
+it is the reason a recall number is reportable at all.
+"""
+
+[class]
+observable   = "latency"
+secret_role  = "nonce"
+origin       = "source-level"
+granularity  = "bit"
+exploit_path = "lattice-hnp"
+mechanism_classes = ["secret-branch", "timing-observation"]
+rationale = """
+Same class as Minerva (latency / nonce / source-level / bit / lattice-hnp), and
+deliberately so: this is the buildable, scoreable representative of that class.
+Its mechanism is a secret-dependent loop bound, which is both a control-flow
+difference a taint tool detects and a timing difference a statistical tool
+detects, so both analyser families are applicable to it, unlike the
+observation-only Minerva and TPM-FAIL pairs.
+"""
+
+[provenance]
+upstream_repo   = "reproduction of the Minerva mechanism"
+disclosed       = "2019-10-01"
+doi             = ["10.46586/tches.v2020.i4.281-308"]
+advisory        = ["CVE-2019-13627"]
+licence         = "MIT"
+redistributable = true
+note = """
+A reproduction of a real deployed leak (CVE-2019-13627, the libgcrypt Minerva
+assignment), not a verbatim copy of libgcrypt. The mechanism is faithful, the
+build is ours, and the divergence from the deployed original is recorded below.
+The DOI is the Minerva paper.
+"""
+
+[[build]]
+arm = "vulnerable"
+source = "src/vulnerable.c"
+entry_symbol = "scalar_mul"
+secret_input = "the per-signature ECDSA nonce k; the loop runs BN_num_bits(k) times"
+
+[[build]]
+arm = "patched"
+source = "src/patched.c"
+entry_symbol = "scalar_mul"
+secret_input = "identical nonces; the loop runs a constant number of times"
+note = "same key as the vulnerable arm, so the oracle can require recovery to fail here"
+
+[[site]]
+arm = "vulnerable"
+file = "src/vulnerable.c"
+symbol = "scalar_mul"
+mechanism = "loop bound BN_num_bits(k) depends on the secret nonce"
+instruction_class = ["secret-branch"]
+
+[toolchain]
+cells_required = ["gcc-O2-openssl"]
+note = "Built in the OpenSSL cell. The leak is a source-level loop bound, present at every optimisation level, so this pair does not carry the toolchain-sensitivity finding that the division pair does."
+
+[acquisition]
+origin    = "ours"
+platform  = "x86-64 host, single performance core, rdtsc, taskset-pinned"
+procedure = "acquire/acquire.sh"
+counter   = "rdtscp"
+sigs      = 6000
+reps      = 1
+grade     = "evidence"
+note = "Tier A: signatures signed and timed here. The leak is amplified so the bit-length signal clears rdtsc noise on a fast x86 core; see divergence."
+
+[recovery]
+entry   = "recover/recover.py"
+runtime = "image"
+image   = "localhost/ct-toolchain/minerva-recover:1"
+inputs  = ["traces/vulnerable.csv.z"]
+vendored_attack = "vendor/attack, crocs-muni/minerva at 8182d000, MIT"
+ci_instance   = 6000
+full_instance = 6000
+note = "The vendored Minerva lattice attack, unchanged. It recovers the key here from signatures acquired on this host."
+
+[oracle]
+verifier   = "recover/fixtures/verifier.json"
+predicate  = "ecdsa-pubkey-match"
+expected_vulnerable = "recovered"
+expected_patched    = "not-recovered"
+
+[cost]
+effort_hours = 5
+portable_hours = 5
+acquisition_hours = 1
+note = "Tier A, so acquisition has a real cost: building the leaking implementation and timing it. This is the KT3 measurement for a tier-A pair."
+
+[divergence]
+from_deployment = """
+The deployed leak was in libgcrypt's own scalar multiplication; this reproduces
+the mechanism with OpenSSL EC primitives and a custom leaking loop. The per-bit
+work is amplified so the bit-length signal exceeds rdtsc noise on a fast modern
+core; the deployed target was a slower one where the unamplified signal sufficed.
+The leak is the same (work proportional to nonce bit-length); the constant is
+larger.
+"""
+
+[[divergence.structured]]
+axis       = "leak amplitude"
+deployed   = "unamplified, on a slower core where it sufficed"
+reproduced = "amplified per-bit work so the signal clears noise on a fast core"
+effect     = "the mechanism and its exploitability are faithful; the magnitude is tuned to this host"

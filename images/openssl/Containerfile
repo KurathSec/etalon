@@ -1,0 +1,11 @@
+# Toolchain cell with OpenSSL EC/BIGNUM, for the reproduced nonce-leakage pair.
+# The elliptic-curve arithmetic is OpenSSL's (correct and constant-time); the
+# LEAK is in a custom scalar multiplication written for this pair, so the pair
+# reproduces the Minerva mechanism (CVE-2019-13627) with a build we control and
+# acquire here rather than importing observations. Tier A.
+FROM docker.io/library/debian@sha256:abd67ffcfa541b485a3dff59865ab629aa048a6c613e639d36e7456b0b229241
+ENV DEBIAN_FRONTEND=noninteractive SOURCE_DATE_EPOCH=0
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends gcc libc6-dev libssl-dev valgrind util-linux binutils file \
+ && rm -rf /var/lib/apt/lists/*
+WORKDIR /work

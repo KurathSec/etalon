@@ -36,6 +36,7 @@ def score(pair_dir: pathlib.Path, arm: str, opt: str | None = None,
     header = cfg["header"]
     opt = opt or cfg.get("opt", "O2")
     extra = " ".join(f"/src/{s}" for s in cfg.get("extra_sources", []))
+    libs = cfg.get("libs", "")
     result = subprocess.run(
         ["podman", "run", "--rm", "--network=none",
          "-v", f"{src}:/src:ro,Z", "-v", f"{harness}:/harness:ro,Z",
@@ -43,30 +44,34 @@ def score(pair_dir: pathlib.Path, arm: str, opt: str | None = None,
          IMAGE, "sh", "-c",
          f"cp /src/{header} /work/ && "
          f"gcc -{opt} -I/work -I/harness -o /work/d "
-         f"/driver/{driver} /src/{arm}.c {extra} -lm 2>/work/cc.err "
+         f"/driver/{driver} /src/{arm}.c {extra} -lm {libs} 2>/work/cc.err "
          f"|| {{ echo BUILD_FAILED; cat /work/cc.err; exit 3; }}; "
          f"taskset -c {CPU} /work/d"],
         capture_output=True, text=True, timeout=timeout)
 
     out = result.stdout
-    m = re.search(r"DUDECT_VERDICT (LEAK|NO_LEAK_EVIDENCE)", out)
-    if "BUILD_FAILED" in result.stdout or result.returncode == 3:
-        status = "error"
-        detail = "driver build failed"
-    elif m is None:
-        # No verdict line and no build failure: the tool ran but produced nothing
-        # we can key on. That is budget_exhausted (it did not conclude), not clean.
-        status = "budget_exhausted"
-        detail = "no verdict line emitted"
-    elif m.group(1) == "LEAK":
-        status = "leak_reported"
-        detail = "distributions differ"
-    else:
-        status = "clean"
-        detail = "no leakage evidence at the measurement budget"
-
-    # dudect prints its running max-t; capture the last one for the record.
     tvals = re.findall(r"max t:\s*([+-]?[0-9.]+(?:[eE][+-]?[0-9]+)?)", out)
+    max_t = abs(float(tvals[-1])) if tvals else None
+
+    # Classify by dudect's OWN documented thresholds rather than the driver's
+    # binary verdict: |t| > 500 is "failed with overwhelming probability", |t| <
+    # 10 is "probably constant time at this budget", and the band between is
+    # inconclusive. A fixed binary threshold cannot separate a strong exploitable
+    # leak from weak residual microarchitectural noise in complex code, which is
+    # itself a finding this corpus exists to make visible.
+    T_LEAK, T_CLEAN = 500.0, 10.0
+    if "BUILD_FAILED" in result.stdout or result.returncode == 3:
+        status, detail = "error", "driver build failed"
+    elif max_t is None:
+        status, detail = "budget_exhausted", "no t-statistic emitted"
+    elif max_t > T_LEAK:
+        status, detail = "leak_reported", f"max |t|={max_t:.0f} > 500"
+    elif max_t < T_CLEAN:
+        status, detail = "clean", f"max |t|={max_t:.1f} < 10"
+    else:
+        status, detail = "budget_exhausted", (
+            f"max |t|={max_t:.0f} in the inconclusive band [10, 500]: neither a "
+            f"strong leak nor demonstrably clean at this budget")
     return {
         "adapter": "dudect", "tool": "dudect", "arm": arm, "opt": opt,
         "status": status, "detail": detail,

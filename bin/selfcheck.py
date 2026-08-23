@@ -275,19 +275,31 @@ def check_cls2() -> Result:
     denominator than it has independent evidence for.
     """
     seen, bad, n = {}, [], 0
+    manifests = {}
     for path in sorted((REPO / "pairs").glob("*/pair.toml")):
         d = tomllib.loads(path.read_text())
         if d.get("pair", {}).get("role") != "corpus":
             continue
+        manifests[path.parent.name] = d
+    for name, d in sorted(manifests.items()):
         n += 1
         cls = d.get("class", {})
-        key = tuple(sorted((k, v) for k, v in cls.items() if k not in ("rationale", "mechanism_classes")))
+        key = tuple(sorted((k, v) for k, v in cls.items()
+                           if k not in ("rationale", "mechanism_classes")))
         if key in seen:
-            if not d["pair"].get("replicate"):
-                bad.append(f"{path.parent.name} duplicates {seen[key]} "
-                           f"without declaring replicate = true")
+            other = seen[key]
+            # The replication is declared if EITHER pair names the other. The
+            # reproduction (ecdsa-nonce) declaring replicate=minerva is the
+            # natural direction, and the check must not depend on which pair it
+            # happened to visit first.
+            this_ok = d["pair"].get("replicate") and d["pair"].get("replicates") == other
+            other_ok = (manifests[other]["pair"].get("replicate") and
+                        manifests[other]["pair"].get("replicates") == name)
+            if not (this_ok or other_ok):
+                bad.append(f"{name} and {other} share a facet tuple; neither "
+                           f"declares replicate = true naming the other")
         else:
-            seen[key] = path.parent.name
+            seen[key] = name
     if n == 0:
         return Result("CLS-2", NA, 0, "no corpus pairs yet, only fixtures")
     if bad:

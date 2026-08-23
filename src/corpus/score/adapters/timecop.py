@@ -32,6 +32,7 @@ def score(pair_dir: pathlib.Path, arm: str, opt: str | None = None,
     driver = cfg["driver"]; header = cfg["header"]
     opt = opt or cfg.get("opt", "O2")
     extra = " ".join(f"/src/{s}" for s in cfg.get("extra_sources", []))
+    libs = cfg.get("libs", "")
     result = subprocess.run(
         ["podman", "run", "--rm", "--network=none",
          "-v", f"{src}:/src:ro,Z", "-v", f"{harness}:/harness:ro,Z",
@@ -39,7 +40,7 @@ def score(pair_dir: pathlib.Path, arm: str, opt: str | None = None,
          IMAGE, "sh", "-c",
          f"cp /src/{header} /work/ && "
          f"gcc -{opt} -g -I/work -I/harness -o /work/d "
-         f"/driver/{driver} /src/{arm}.c {extra} 2>/work/cc.err "
+         f"/driver/{driver} /src/{arm}.c {extra} {libs} 2>/work/cc.err "
          f"|| {{ echo BUILD_FAILED; cat /work/cc.err; exit 3; }}; "
          f"taskset -c {CPU} valgrind --tool=memcheck --xml=yes "
          f"--xml-file=/work/vg.xml --error-exitcode=0 /work/d >/dev/null 2>/work/vg.err; "

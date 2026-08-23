@@ -236,8 +236,16 @@ def as_tex(report: dict) -> str:
         rec = _json.loads(rp.read_text()).get("recall_per_class", [])
         for r in rec:
             tool = r["tool"]
-            out.append(tex_macro(f"recall{tool.capitalize()}Nonce",
-                                 r["recall"].replace("/", "\\,of\\,")))
+            obs = "Latency" if "observable=latency" in r["class"] else "Address" if "observable=address-data" in r["class"] else ""
+            if obs:
+                out.append(tex_macro(f"recall{tool.capitalize()}{obs}",
+                                     r["recall"].replace("/", "\\,of\\,")))
+    # tier-C detection outcomes (the crossover): dudect miss / varlat catch
+    tc = _json.loads(rp.read_text()).get("tier_c_detections", []) if rp.exists() else []
+    for r in tc:
+        if r["pair"] == "kyberslash":
+            out.append(tex_macro(f"kyberslash{r['tool'].capitalize()}",
+                                 "detected" if r["outcome"]=="detected" else "missed"))
 
     # Facts about the field, not about this corpus. They are still generated,
     # because a hand-typed 55 is a number nobody can re-derive either.

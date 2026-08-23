@@ -1,8 +1,9 @@
 {
-  "census_status": "seed",
-  "n_rows": 7,
-  "n_included": 6,
-  "n_excluded": 1,
+  "census_status": "expanded",
+  "n_rows": 13,
+  "n_included": 11,
+  "n_excluded": 2,
   "intended_population": "timing-attack CVEs in the NVD, March 2003 to December 2022 (Kholoosi, Babar and Yilmaz, arXiv 2308.11862), plus the constant-time literature since",
-  "warning": "A seed census makes coverage look better than it is. Any coverage figure derived from this file must carry census_status beside it."
+  "warning": "A seed census makes coverage look better than it is. Any coverage figure derived from this file must carry census_status beside it.",
+  "status_note": "Expanded from the 7-entry seed to a broader, verified enumeration across the facet space (padding oracles, cache-set, statistical, cross-era). It is 'expanded', NOT 'complete': a truly complete census would enumerate the full NVD timing-CVE record (Kholoosi et al., arXiv 2308.11862), which is a larger undertaking. Because status is not 'complete', CLS-3 continues to withhold an aggregate headline recall figure; per-class recall is reported regardless. Completing the census would LOWER coverage (more attested cells), which is the honest direction."
 }

@@ -1,0 +1,5 @@
+driver = "dudect_ecdsa_driver.c"
+extra_sources = []
+header = "scalarmul.h"
+opt = "O2"
+libs = "-lcrypto"

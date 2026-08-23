@@ -1,0 +1,34 @@
+{
+  "traces": [
+    {
+      "arm": "vulnerable",
+      "path": "traces/vulnerable.csv.z",
+      "sha256_raw": "e5234b54a36638234b63213a7008b548eceaf751b31797c243e9299ae0bc6bca",
+      "sha256_file": "cc05953449cc4c96f7be52489ea67cc9972dfef6734f24ce96f8f549cf2d0fd9",
+      "bytes_raw": 834261,
+      "bytes_file": 482785,
+      "n_signatures": 6000,
+      "format": "minerva-csv"
+    },
+    {
+      "arm": "patched",
+      "path": "traces/patched.csv.z",
+      "sha256_raw": "0c6989cb27b0c4cf45b8f5a8ddd82664bb6d9be7e7cfaca9552a392feaaf1d55",
+      "sha256_file": "cdc7cf77313f8a0329f02f3ef7e2f67bb05d10d988bb852a2d36bfe01a653193",
+      "bytes_raw": 816261,
+      "bytes_file": 471016,
+      "n_signatures": 6000,
+      "format": "minerva-csv"
+    }
+  ],
+  "origin": "ours",
+  "tier": "A",
+  "source": "reproduced here: leaking scalar multiplication over secp256r1, signed and timed on this host with rdtsc",
+  "platform": {
+    "kernel": "7.1.8-200.fc44.x86_64",
+    "machine": "x86_64",
+    "cpu_pinned_to": 2
+  },
+  "cell_image_id": "72c46206604e28905b402de7f63a3662e3c7923c9b6fb197d6ac29594ab20eba",
+  "sigs": 6000
+}

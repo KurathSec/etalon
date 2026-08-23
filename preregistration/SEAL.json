@@ -1,8 +1,9 @@
 {
   "_meaning": "These digests fix the content of PR-1 at seal time. A later reader checks here whether the protocol was written before the observations it governs. The sealing commit is the timestamp of record.",
-  "_sealed_at_git_commit": "2026-08-23T22:29:07+08:00",
+  "_sealed_at_git_commit": "2026-08-23T23:11:21+08:00",
+  "_reseal_note": "Resealed after removing the project name from the title (ANON-1); no PR-1-governed scoring had run, so the predates-observations property holds.",
   "PR-1-recall.md": {
-    "bytes": 7154,
-    "sha256": "b8a7a80ed9f0dcdafd0989173e246ed8c0472ba2d56791c12eb4b1745329bbb4"
+    "bytes": 7147,
+    "sha256": "2537a4e46dc4beb15e3e0320df0a3231d1f7761867ed5735ddf33e96a2c30d04"
   }
 }

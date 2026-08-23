@@ -1,0 +1,126 @@
+schema = "pair/1"
+
+[pair]
+id      = "ecdsa-address"
+title   = "ECDSA nonce leakage via secret-indexed table access"
+role    = "corpus"
+status  = "active"
+tier    = "A"
+added   = "2026-08-23"
+synthetic = false
+mechanism_note = "carries both an address leak (declared) and a timing leak (recovery)"
+summary = """
+A windowed ECDSA scalar multiplication over secp256r1 that indexes a precomputed
+table by successive secret nonce digits, so the sequence of memory addresses it
+accesses depends on the secret. This is the address-trace leak class, the family
+DATA and Microwalk detect, and the class that the OpenSSL 1.0.1u nonce leak
+(Weiser et al., USENIX Security 2020) occupies. Built, acquired and recovered
+here on x86: tier A.
+
+The pair carries two leaks by design. The secret-indexed table access is the
+declared mechanism, an address leak a differential address-trace tool detects.
+A bit-length-dependent cost is also present so the key recovery works through the
+same lattice attack as the other nonce pairs, which is faithful to windowed
+implementations that leak through both channels.
+"""
+
+[class]
+observable   = "address-data"
+secret_role  = "nonce"
+origin       = "source-level"
+granularity  = "bit"
+exploit_path = "lattice-hnp"
+mechanism_classes = ["address-data", "secret-branch", "timing-observation"]
+rationale = """
+observable is address-data: the distinguishing mechanism is a secret-indexed
+memory access, not a variable-time instruction. This is the OpenSSL-1.0.1u
+census cell and the reason the pair exists, to cover the address-leak class that
+the timing-only pairs do not. It carries secret-branch and timing-observation
+mechanisms too, so a taint tool and a timing tool are also applicable, but its
+defining channel is the address.
+"""
+
+[provenance]
+upstream_repo   = "reproduction of the OpenSSL 1.0.1u nonce-leak class"
+disclosed       = "2020-08-01"
+doi             = ["10.5555/3489212.3489301"]
+advisory        = ["CVE-2019-13627"]
+licence         = "MIT"
+redistributable = true
+note = """
+A reproduction of the address-leak nonce class (the OpenSSL 1.0.1u leak analysed
+by Weiser, Schrammel, Bodner and Spreitzer, USENIX Security 2020, and the same
+CVE family as Minerva). The mechanism is faithful, the build is ours, and the
+divergence is recorded below. The DOI is a best-effort proceedings identifier;
+the CVE is the load-bearing one.
+"""
+
+[[build]]
+arm = "vulnerable"
+source = "src/vulnerable.c"
+entry_symbol = "scalar_mul"
+secret_input = "the ECDSA nonce; the table is indexed by its window digits"
+
+[[build]]
+arm = "patched"
+source = "src/patched.c"
+entry_symbol = "scalar_mul"
+secret_input = "identical nonces; OpenSSL constant-time mul, no secret index"
+
+[[site]]
+arm = "vulnerable"
+file = "src/vulnerable.c"
+symbol = "scalar_mul"
+mechanism = "table indexed by secret nonce digits: a secret-dependent memory address"
+instruction_class = ["secret-index"]
+
+[toolchain]
+cells_required = ["gcc-O2-openssl"]
+note = "Built in the OpenSSL cell. The leak is a source-level secret-indexed access, present at every optimisation level."
+
+[acquisition]
+origin    = "ours"
+platform  = "x86-64 host, single performance core, rdtsc, taskset-pinned"
+procedure = "acquire/acquire.sh"
+counter   = "rdtscp"
+sigs      = 6000
+reps      = 1
+grade     = "evidence"
+note = "Tier A: signed and timed here. Amplified bit-length cost so the recovery channel clears rdtsc noise; see divergence."
+
+[recovery]
+entry   = "recover/recover.py"
+runtime = "image"
+image   = "localhost/ct-toolchain/minerva-recover:1"
+inputs  = ["traces/vulnerable.csv.z"]
+vendored_attack = "vendor/attack, crocs-muni/minerva at 8182d000, MIT"
+ci_instance   = 6000
+full_instance = 6000
+note = "The vendored Minerva lattice attack, unchanged. Recovers the key here from the timing channel."
+
+[oracle]
+verifier   = "recover/fixtures/verifier.json"
+predicate  = "ecdsa-pubkey-match"
+expected_vulnerable = "recovered"
+expected_patched    = "not-recovered"
+
+[cost]
+effort_hours = 3
+portable_hours = 3
+acquisition_hours = 1
+note = "Reused the ecdsa-nonce machinery; the new work is the secret-indexed leak and the address-mechanism harnesses."
+
+[divergence]
+from_deployment = """
+The deployed OpenSSL 1.0.1u leak was in the library's own windowed multiplication;
+this reproduces the secret-indexed-access mechanism with a custom windowed loop
+over OpenSSL EC primitives. A bit-length-dependent cost is added so the recovery
+works on a fast x86 core, as in the ecdsa-nonce pair. The address leak and its
+detectability are faithful; the timing amplitude is tuned to this host.
+"""
+
+[[divergence.structured]]
+axis       = "leak channel"
+deployed   = "a windowed multiplication leaking through cache addresses"
+reproduced = "a secret-indexed table access (address) plus an amplified bit-length cost (recovery)"
+effect     = "the address mechanism and its detectability are faithful; the timing amplitude is tuned"

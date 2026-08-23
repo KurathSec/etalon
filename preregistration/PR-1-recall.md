@@ -1,4 +1,4 @@
-# Pre-registration PR-1: recall of constant-time analysers over the etalon corpus
+# Pre-registration PR-1: recall of constant-time analysers over the corpus
 
 Written before the next scoring round, and sealed in `preregistration/SEAL.json`. It fixes,
 before the observations it governs, the analyser set, the verdict mapping for each analyser,

@@ -281,7 +281,7 @@ def check_cls2() -> Result:
             continue
         n += 1
         cls = d.get("class", {})
-        key = tuple(sorted((k, v) for k, v in cls.items() if k != "rationale"))
+        key = tuple(sorted((k, v) for k, v in cls.items() if k not in ("rationale", "mechanism_classes")))
         if key in seen:
             if not d["pair"].get("replicate"):
                 bad.append(f"{path.parent.name} duplicates {seen[key]} "

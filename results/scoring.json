@@ -1,0 +1,31 @@
+{
+  "tools": [
+    "dudect",
+    "timecop"
+  ],
+  "measured_on": "Intel Core Ultra 9 285H, x86-64, single P-core",
+  "applicable_outcomes": [
+    {
+      "tool": "dudect",
+      "pair": "_sentinel-positive",
+      "outcome": "detected"
+    },
+    {
+      "tool": "dudect",
+      "pair": "kyberslash",
+      "outcome": "missed"
+    },
+    {
+      "tool": "timecop",
+      "pair": "_sentinel-positive",
+      "outcome": "detected"
+    }
+  ],
+  "key_findings": [
+    "Two structurally different analysers, a statistical timing test (dudect) and a dynamic-taint checker (timecop), both detect the secret-dependent branch control and stay clean on the constant-time controls.",
+    "timecop is INAPPLICABLE to KyberSlash by construction: it detects secret-branch but not variable-latency-op. This is the exact capability gap that made the KyberSlash authors patch valgrind, and here it is a computed fact from the tool's declared capabilities, not an assertion.",
+    "dudect is applicable to KyberSlash's channel but MISSES it on x86-64: the 16-bit division's latency variation is below threshold on this divider. The published attack needs the Arm Cortex-A7."
+  ],
+  "applicability_is_computed": "Applicability keys on the MECHANISM a pair exhibits (secret-branch, variable-latency-op, timing-observation) against the mechanisms a tool detects, not on the attacker's observable channel. A timing tool and a taint tool see the same branch through different lenses, so both are applicable to it; neither is applicable to an observation-only pair with no runnable program.",
+  "recall_status": "No recall over the deployed recall-eligible pairs is reportable: both such pairs (Minerva, TPM-FAIL) are observation-only, so every code-running analyser is inapplicable to them, and the only pair with a detectable in-binary mechanism (KyberSlash) is tier C. This is a real structural gap, recorded rather than papered over: closing it needs either Arm acquisition or an adapter that applies a statistical test to recorded traces."
+}

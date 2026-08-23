@@ -30,6 +30,7 @@ secret_role  = "key-material"
 origin       = "hardware-implicit"
 granularity  = "word"
 exploit_path = "direct-recovery"
+mechanism_classes = ["variable-latency-op"]
 rationale = """
 This is the sharp case and the reason the corpus exists. origin is
 hardware-implicit: the C source contains no branch and no secret-indexed load,

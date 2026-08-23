@@ -26,6 +26,7 @@ secret_role  = "nonce"
 origin       = "source-level"
 granularity  = "bit"
 exploit_path = "lattice-hnp"
+mechanism_classes = ["timing-observation"]
 rationale = """
 This is the deliberate contrast to the KyberSlash class. observable is latency,
 but unlike KyberSlash the secret is a nonce rather than key material and the

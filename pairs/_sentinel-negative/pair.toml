@@ -26,6 +26,7 @@ secret_role  = "key-material"
 origin       = "source-level"
 granularity  = "byte"
 exploit_path = "direct-recovery"
+mechanism_classes = []
 rationale = """
 The facet tuple is deliberately identical to the positive sentinel's. The two
 differ only in whether the leak is present, which is what makes the pair a

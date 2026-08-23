@@ -23,6 +23,7 @@ secret_role  = "nonce"
 origin       = "api-level"
 granularity  = "bit"
 exploit_path = "lattice-hnp"
+mechanism_classes = ["timing-observation"]
 rationale = """
 origin is api-level, and this is the whole reason the pair is in the corpus
 alongside Minerva. The implementation is a hardware TPM: there is no source, no

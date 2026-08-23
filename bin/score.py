@@ -39,12 +39,25 @@ def load_adapter(name: str):
     return m
 
 
-def applicable(tool: dict, pair_class: dict, has_harness: bool) -> tuple[bool, str]:
-    """Compute applicability, returning (ok, reason-if-not)."""
-    if pair_class["observable"] not in tool["observes"]:
-        return False, f"channel: tool observes {tool['observes']}, leak is {pair_class['observable']}"
-    if tool.get("requires_harness") == "two_class" and not has_harness:
-        return False, "no runnable two-class harness for this pair (scored on observations only)"
+def applicable(tool: dict, pair_mechanisms: list, has_harness: bool) -> tuple[bool, str]:
+    """Compute applicability from mechanism, not from the attacker's channel.
+
+    A pair's `observable` is what an attacker measures; it is not what an
+    analyser reads. dudect (timing) and timecop (taint) both detect a
+    secret-dependent branch, through different lenses, so applicability keys on
+    the mechanism the pair exhibits against the mechanisms the tool detects.
+
+    A pair with no analyser-detectable mechanism (a pure timing-observation set,
+    with no runnable program) is inapplicable to a tool that needs to run code.
+    """
+    detects = set(tool.get("detects_mechanisms", []))
+    mech = set(pair_mechanisms)
+    if not mech:
+        return False, "pair exhibits no mechanism a code-running analyser detects (constant-time control, or observation-only)"
+    if not (mech & detects):
+        return False, f"mechanism: tool detects {sorted(detects)}, pair exhibits {sorted(mech)}"
+    if not has_harness:
+        return False, "no runnable harness for this pair (scored on recorded observations)"
     return True, ""
 
 
@@ -63,11 +76,15 @@ def main() -> int:
             man = tomllib.loads((pair / "pair.toml").read_text())
             role = man["pair"].get("role")
             tier = man["pair"].get("tier")
-            cls = {k: v for k, v in man["class"].items() if k != "rationale"}
-            has_harness = (pair / "harness" / "dudect.toml").exists() and \
-                any((pair / "src").glob("*.c"))
+            cls = {k: v for k, v in man["class"].items()
+                   if k not in ("rationale", "mechanism_classes")}
+            mech = man["class"].get("mechanism_classes", [])
+            # A pair is runnable by this tool if it ships source and a config for
+            # this tool's harness family.
+            harness_cfg = pair / "harness" / f"{tool_name}.toml"
+            has_harness = harness_cfg.exists() and any((pair / "src").glob("*.c"))
 
-            ok, reason = applicable(tool, cls, has_harness)
+            ok, reason = applicable(tool, mech, has_harness)
             row = {"tool": tool_name, "pair": pair.name, "role": role,
                    "tier": tier, "class": cls}
             if not ok:

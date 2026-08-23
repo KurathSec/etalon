@@ -17,6 +17,7 @@ level     = "binary"
 # address-only leak that does not change timing, and it cannot be pointed at a
 # hardware module with no binary to run.
 observes  = ["latency"]
+detects_mechanisms = ["secret-branch", "variable-latency-op"]
 secret_model = "two_class_sampling"
 architectures = ["x86_64"]
 # dudect needs a runnable harness that feeds two input classes. A pair scored
@@ -24,3 +25,20 @@ architectures = ["x86_64"]
 # dudect is not applicable to it: there is no program for dudect to run.
 requires_harness = "two_class"
 platform_sensitive = true
+
+[tool.timecop]
+version = "valgrind-3.19.0"
+image   = "localhost/ct-toolchain/timecop:1"
+technique = "dynamic-taint"
+level     = "binary"
+# TIMECOP poisons secret bytes and reports branches or memory accesses on them.
+# It observes control-flow and address leaks. It does NOT observe a
+# variable-latency instruction operating on defined data, which is the KyberSlash
+# class; detecting that is exactly what the KyberSlash paper had to patch valgrind
+# to do. Encoding that boundary here is what makes the applicability honest.
+observes  = ["address-data", "address-code"]
+detects_mechanisms = ["secret-branch"]
+secret_model = "annotation"
+architectures = ["x86_64"]
+requires_harness = "poison"
+platform_sensitive = false

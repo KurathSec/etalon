@@ -1,0 +1,15 @@
+# TIMECOP adapter cell: valgrind's memcheck used as a constant-time checker.
+#
+# The technique (Reparaz et al., and the post-apocalyptic-crypto TIMECOP wrapper)
+# poisons secret bytes as uninitialised via memcheck client requests, then any
+# branch or memory index that depends on them is reported as a use of
+# uninitialised value. It detects address- and control-flow-based leaks; it does
+# NOT detect a variable-latency instruction on defined data, which is exactly the
+# KyberSlash class and exactly why that paper had to patch valgrind. That
+# boundary is encoded in the adapter's declared capabilities.
+FROM docker.io/library/debian@sha256:abd67ffcfa541b485a3dff59865ab629aa048a6c613e639d36e7456b0b229241
+ENV DEBIAN_FRONTEND=noninteractive SOURCE_DATE_EPOCH=0
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends gcc libc6-dev valgrind util-linux \
+ && rm -rf /var/lib/apt/lists/*
+WORKDIR /work

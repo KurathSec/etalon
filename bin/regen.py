@@ -89,7 +89,7 @@ def census_section() -> dict:
         if d.get("pair", {}).get("role") != "corpus":
             continue
         cls = d.get("class", {})
-        facets = {k: v for k, v in cls.items() if k != "rationale"}
+        facets = {k: v for k, v in cls.items() if k not in ("rationale", "mechanism_classes")}
         if facets:
             covered.add(tuple(sorted(facets.items())))
     uncovered = attested - covered

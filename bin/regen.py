@@ -278,6 +278,36 @@ def as_tex(report: dict) -> str:
         out.append(tex_macro("gravDeltaTicks", f"{e2e['secret_dependent_delta_ticks']:.3f}"))
         out.append(tex_macro("gravDeltaPercent", f"{e2e['delta_percent_of_call']:.1f}\\%"))
 
+    # Fuller detail for the expanded design and results sections.
+    for t in ("A", "B", "C"):
+        emit(f"nTier{t}", report["corpus"]["by_tier"].get(t, 0))
+    emit("nCensusIncluded", cen["census_included"])
+    emit("nCensusExcluded", cen["census_excluded"])
+    for macro, key in (("portableHours", "portable_hours_mean"),
+                       ("acquisitionHours", "acquisition_hours_mean")):
+        m = report["cost"][key]
+        out.append(tex_macro(macro, f"{m.value:.1f}" if m.defined else "\\NA"))
+        emit(macro + "N", m.n)
+    # dudect's t-statistic, the statistical tool's stopping value on the
+    # vulnerable arm: huge on the nonce leaks, ~2 on the division it misses.
+    t_named = {"ecdsa-nonce": "tDudectNonceLatency",
+               "ecdsa-address": "tDudectNonceAddress",
+               "kyberslash": "tDudectDivision",
+               "hqc-reject": "tDudectRejection",
+               "_sentinel-positive": "tSentinelPos"}
+    for r in read_jsonl(REPO / "results" / "verdicts.jsonl"):
+        if r.get("tool") == "dudect" and r.get("applicable") and r["pair"] in t_named:
+            v = r.get("vulnerable_max_t")
+            if v is not None:
+                out.append(tex_macro(t_named[r["pair"]],
+                                     f"{v:.0f}" if v >= 10 else f"{v:.2f}"))
+    # KyberSlash emission map: cells built, and how many emit the division.
+    ep = REPO / "results" / "kyberslash_emission.json"
+    if ep.exists():
+        cells = json.loads(ep.read_text()).get("emission_map", [])
+        emit("nEmissionCells", len(cells))
+        emit("nLeakingCells", sum(1 for c in cells if c.get("leak_emitted")))
+
     # Facts about the field, not about this corpus. They are still generated,
     # because a hand-typed 55 is a number nobody can re-derive either.
     facts = tomllib.loads((REPO / "data" / "facts.toml").read_text()) \

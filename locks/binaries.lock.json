@@ -1,5 +1,53 @@
 {
   "_sentinel-negative": {
+    "clang-14.0.6-O0-x86_64-linux-gnu": {
+      "patched": {
+        "instructions_in_symbol": 39,
+        "leak_class_instructions": null,
+        "sha256_text": "6fb3a87f2b375e83c1b7d5b336554aa2e0070db2b753b756e729d2d56ccb594d"
+      },
+      "vulnerable": {
+        "instructions_in_symbol": 39,
+        "leak_class_instructions": null,
+        "sha256_text": "6fb3a87f2b375e83c1b7d5b336554aa2e0070db2b753b756e729d2d56ccb594d"
+      }
+    },
+    "clang-14.0.6-O2-x86_64-linux-gnu": {
+      "patched": {
+        "instructions_in_symbol": 31,
+        "leak_class_instructions": null,
+        "sha256_text": "a33a0d653d09f1bac0b8e09626f0e0d5fc16da0e72180c68540e3045671064fa"
+      },
+      "vulnerable": {
+        "instructions_in_symbol": 31,
+        "leak_class_instructions": null,
+        "sha256_text": "a33a0d653d09f1bac0b8e09626f0e0d5fc16da0e72180c68540e3045671064fa"
+      }
+    },
+    "clang-14.0.6-O3-x86_64-linux-gnu": {
+      "patched": {
+        "instructions_in_symbol": 201,
+        "leak_class_instructions": null,
+        "sha256_text": "0cb922bb2eba4be85428f75ce0f8f56775a69794288d0abb164eeb69b129deea"
+      },
+      "vulnerable": {
+        "instructions_in_symbol": 201,
+        "leak_class_instructions": null,
+        "sha256_text": "0cb922bb2eba4be85428f75ce0f8f56775a69794288d0abb164eeb69b129deea"
+      }
+    },
+    "clang-14.0.6-Os-x86_64-linux-gnu": {
+      "patched": {
+        "instructions_in_symbol": 29,
+        "leak_class_instructions": null,
+        "sha256_text": "e5d86c69897ccdbea76727d001b84c0d40720fd014ab7730cab1ae72b9941208"
+      },
+      "vulnerable": {
+        "instructions_in_symbol": 29,
+        "leak_class_instructions": null,
+        "sha256_text": "e5d86c69897ccdbea76727d001b84c0d40720fd014ab7730cab1ae72b9941208"
+      }
+    },
     "gcc-12.2.0-O0-x86_64-linux-gnu": {
       "patched": {
         "instructions_in_symbol": 40,
@@ -50,6 +98,54 @@
     }
   },
   "_sentinel-positive": {
+    "clang-14.0.6-O0-x86_64-linux-gnu": {
+      "patched": {
+        "instructions_in_symbol": 39,
+        "leak_class_instructions": 0,
+        "sha256_text": "6fb3a87f2b375e83c1b7d5b336554aa2e0070db2b753b756e729d2d56ccb594d"
+      },
+      "vulnerable": {
+        "instructions_in_symbol": 36,
+        "leak_class_instructions": 1,
+        "sha256_text": "bfa9f92184af6c6edf12d5c54525544c622fed72600a173e6a0b1c214439f3b8"
+      }
+    },
+    "clang-14.0.6-O2-x86_64-linux-gnu": {
+      "patched": {
+        "instructions_in_symbol": 31,
+        "leak_class_instructions": 1,
+        "sha256_text": "a33a0d653d09f1bac0b8e09626f0e0d5fc16da0e72180c68540e3045671064fa"
+      },
+      "vulnerable": {
+        "instructions_in_symbol": 32,
+        "leak_class_instructions": 3,
+        "sha256_text": "79c2a2e69b7e9df3eb214f5fb4204369d5e76ff00d155b180438b9a9dab0a127"
+      }
+    },
+    "clang-14.0.6-O3-x86_64-linux-gnu": {
+      "patched": {
+        "instructions_in_symbol": 201,
+        "leak_class_instructions": 0,
+        "sha256_text": "0cb922bb2eba4be85428f75ce0f8f56775a69794288d0abb164eeb69b129deea"
+      },
+      "vulnerable": {
+        "instructions_in_symbol": 108,
+        "leak_class_instructions": 15,
+        "sha256_text": "38bfb35129f53a4ea8232787deaebc1031295856800f3a9f18afbc2dcd663aef"
+      }
+    },
+    "clang-14.0.6-Os-x86_64-linux-gnu": {
+      "patched": {
+        "instructions_in_symbol": 29,
+        "leak_class_instructions": 1,
+        "sha256_text": "e5d86c69897ccdbea76727d001b84c0d40720fd014ab7730cab1ae72b9941208"
+      },
+      "vulnerable": {
+        "instructions_in_symbol": 30,
+        "leak_class_instructions": 3,
+        "sha256_text": "95c037becd4f88e058d29a42cb45511ffc2f86235e33df969370a67f15fc80b8"
+      }
+    },
     "gcc-12.2.0-O0-x86_64-linux-gnu": {
       "patched": {
         "instructions_in_symbol": 40,
@@ -100,6 +196,54 @@
     }
   },
   "kyberslash": {
+    "clang-14.0.6-O0-x86_64-linux-gnu": {
+      "patched": {
+        "instructions_in_symbol": 22,
+        "leak_class_instructions": 0,
+        "sha256_text": "c64edb0a5f2fdd05075bf93695764493aaa6d54580099aabb68cc218e3b7fe03"
+      },
+      "vulnerable": {
+        "instructions_in_symbol": 21,
+        "leak_class_instructions": 1,
+        "sha256_text": "1a89c3f4cd7fa1638e31419ed509bfe327affb7ca41577ca37a6a93ce48c9ceb"
+      }
+    },
+    "clang-14.0.6-O2-x86_64-linux-gnu": {
+      "patched": {
+        "instructions_in_symbol": 10,
+        "leak_class_instructions": 0,
+        "sha256_text": "78902edae9f0ddab0f4ae5e6970bdac44e5dbc8b0af914efbefc2f137bd74fc0"
+      },
+      "vulnerable": {
+        "instructions_in_symbol": 15,
+        "leak_class_instructions": 0,
+        "sha256_text": "c689febf8de277b8fa852979f346ed36260b40fabf8b1d0b1d14be1205242c06"
+      }
+    },
+    "clang-14.0.6-O3-x86_64-linux-gnu": {
+      "patched": {
+        "instructions_in_symbol": 10,
+        "leak_class_instructions": 0,
+        "sha256_text": "78902edae9f0ddab0f4ae5e6970bdac44e5dbc8b0af914efbefc2f137bd74fc0"
+      },
+      "vulnerable": {
+        "instructions_in_symbol": 15,
+        "leak_class_instructions": 0,
+        "sha256_text": "c689febf8de277b8fa852979f346ed36260b40fabf8b1d0b1d14be1205242c06"
+      }
+    },
+    "clang-14.0.6-Os-x86_64-linux-gnu": {
+      "patched": {
+        "instructions_in_symbol": 10,
+        "leak_class_instructions": 0,
+        "sha256_text": "78902edae9f0ddab0f4ae5e6970bdac44e5dbc8b0af914efbefc2f137bd74fc0"
+      },
+      "vulnerable": {
+        "instructions_in_symbol": 15,
+        "leak_class_instructions": 0,
+        "sha256_text": "c689febf8de277b8fa852979f346ed36260b40fabf8b1d0b1d14be1205242c06"
+      }
+    },
     "gcc-12.2.0-O0-x86_64-linux-gnu": {
       "patched": {
         "instructions_in_symbol": 20,

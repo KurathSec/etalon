@@ -80,22 +80,30 @@ mechanism = "division of a secret-dependent value by KYBER_Q, a non-power-of-two
 instruction_class = ["div", "idiv", "divl", "divw", "udiv", "sdiv", "__udivsi3", "__divsi3", "__aeabi_idiv", "__aeabi_uidiv"]
 
 [toolchain]
-cells_required = ["gcc-12.2.0-Os-x86_64-linux-gnu"]
-# MEASURED, not assumed: on gcc 12.2.0 x86-64 the secret-dependent division
-# survives as an idiv only at -Os. At -O0, -O2 and -O3 the compiler replaces it
-# with a reciprocal multiply on its own, so the vulnerable SOURCE compiles to
-# constant-time CODE there. The ground-truth cell is therefore -Os, and the
-# other levels are recorded by BIN-2 as the toolchain-pinning finding: the same
-# source is constant time under a different build. This is the corpus's central
-# claim, produced as a measurement.
+cells_required = ["gcc-12.2.0-Os-x86_64-linux-gnu", "clang-14.0.6-O0-x86_64-linux-gnu"]
+# MEASURED across two vendors, not assumed. The secret-dependent division
+# survives as a hardware division instruction in gcc 12.2.0 only at -Os, and in
+# clang 14.0.6 only at -O0. Everywhere else each compiler replaces it with a
+# constant-time reciprocal multiply on its own. The two vendors disagree on
+# which cells are safe, so no single build choice is universally safe. The
+# declared ground-truth cells are the two where the leak is emitted; the other
+# six are recorded by BIN-2 as the toolchain-pinning finding, the same source
+# compiling to constant-time code under a different build. This is the corpus's
+# central claim, produced as a measurement. See results/kyberslash_emission.json.
+[toolchain.axes.vendor]
+values = ["gcc-12.2.0", "clang-14.0.6"]
+reason = "Two vendors is the minimum that can show the emission depends on the vendor and not only the optimisation level, and here they disagree."
+
 [toolchain.axes.opt]
 values = ["O0", "O2", "O3", "Os"]
 reason = """
 The central sweep for this pair. Whether a compiler emits a hardware division or
-replaces it with a reciprocal multiply is exactly what determines whether the
-leak exists in the built binary, and it varies by optimisation level. A leak
-present at one level and absent at another is the strongest demonstration that a
-source-only benchmark measures the compiler.
+replaces it with a reciprocal multiply determines whether the leak exists in the
+built binary. MEASURED result: gcc 12.2.0 emits the division only at -Os; clang
+14.0.6 emits it only at -O0. The two disagree, so no single build choice is
+universally safe. This is the strongest available demonstration that a
+source-only benchmark measures the compiler, and it is a measurement rather than
+a citation. See results/kyberslash_emission.json.
 """
 
 [acquisition]

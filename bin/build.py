@@ -48,6 +48,10 @@ CELLS = {
     "gcc-12.2.0-O2-x86_64-linux-gnu": ("localhost/ct-toolchain/gcc-bookworm:1", "O2"),
     "gcc-12.2.0-O3-x86_64-linux-gnu": ("localhost/ct-toolchain/gcc-bookworm:1", "O3"),
     "gcc-12.2.0-Os-x86_64-linux-gnu": ("localhost/ct-toolchain/gcc-bookworm:1", "Os"),
+    "clang-14.0.6-O0-x86_64-linux-gnu": ("localhost/ct-toolchain/clang-bookworm:1", "O0"),
+    "clang-14.0.6-O2-x86_64-linux-gnu": ("localhost/ct-toolchain/clang-bookworm:1", "O2"),
+    "clang-14.0.6-O3-x86_64-linux-gnu": ("localhost/ct-toolchain/clang-bookworm:1", "O3"),
+    "clang-14.0.6-Os-x86_64-linux-gnu": ("localhost/ct-toolchain/clang-bookworm:1", "Os"),
 }
 
 

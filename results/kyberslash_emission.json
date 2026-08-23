@@ -1,0 +1,63 @@
+{
+  "pair": "kyberslash",
+  "finding": "The secret-dependent division in the Kyber reference code is emitted as a hardware division instruction in some (vendor, optimisation) cells and replaced by a constant-time reciprocal multiply in others. The two compilers disagree on which cells are safe, so no single build choice is universally safe, which is why a corpus item's label must be bound to a pinned toolchain.",
+  "measured_on": "gcc 12.2.0 and clang 14.0.6, x86-64, debian bookworm base",
+  "emission_map": [
+    {
+      "vendor": "clang",
+      "opt": "O0",
+      "leak_emitted": true,
+      "vuln_div_count": 1,
+      "patch_div_count": 0
+    },
+    {
+      "vendor": "clang",
+      "opt": "O2",
+      "leak_emitted": false,
+      "vuln_div_count": 0,
+      "patch_div_count": 0
+    },
+    {
+      "vendor": "clang",
+      "opt": "O3",
+      "leak_emitted": false,
+      "vuln_div_count": 0,
+      "patch_div_count": 0
+    },
+    {
+      "vendor": "clang",
+      "opt": "Os",
+      "leak_emitted": false,
+      "vuln_div_count": 0,
+      "patch_div_count": 0
+    },
+    {
+      "vendor": "gcc",
+      "opt": "O0",
+      "leak_emitted": false,
+      "vuln_div_count": 0,
+      "patch_div_count": 0
+    },
+    {
+      "vendor": "gcc",
+      "opt": "O2",
+      "leak_emitted": false,
+      "vuln_div_count": 0,
+      "patch_div_count": 0
+    },
+    {
+      "vendor": "gcc",
+      "opt": "O3",
+      "leak_emitted": false,
+      "vuln_div_count": 0,
+      "patch_div_count": 0
+    },
+    {
+      "vendor": "gcc",
+      "opt": "Os",
+      "leak_emitted": true,
+      "vuln_div_count": 1,
+      "patch_div_count": 0
+    }
+  ]
+}

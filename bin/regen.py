@@ -279,6 +279,15 @@ def as_tex(report: dict) -> str:
         out.append(tex_macro("gravDeltaPercent", f"{e2e['delta_percent_of_call']:.1f}\\%"))
 
     # Fuller detail for the expanded design and results sections.
+    sp = REPO / "results" / "scoring.json"
+    if sp.exists():
+        cpu = json.loads(sp.read_text()).get("measured_on", "").split(",")[0].strip()
+        if cpu:
+            out.append(tex_macro("acqHost", cpu))
+    for r in read_jsonl(REPO / "results" / "verdicts.jsonl"):
+        if (r.get("tool") == "dudect" and r.get("pair") == "kyberslash"
+                and r.get("patched_max_t") is not None):
+            out.append(tex_macro("tDudectDivisionPatched", f"{r['patched_max_t']:.2f}"))
     for t in ("A", "B", "C"):
         emit(f"nTier{t}", report["corpus"]["by_tier"].get(t, 0))
     emit("nCensusIncluded", cen["census_included"])

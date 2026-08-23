@@ -1,0 +1,18 @@
+# GPL-licensed component, vendored with attribution
+
+valgrind-3.22.0-varlat.patch is a patch to Valgrind that adds detection of
+variable-latency instructions (such as idiv/div on x86-64) operating on secret
+or uninitialised data. It is authored by Tee Kiah Chia (2024) and distributed as
+part of the KyberSlash artifact (IACR TCHES 2025 artifact a9,
+artifacts.iacr.org/tches/2025/a9), which pins it under GPL-2.0-or-later.
+
+It is GPL-2.0-or-later (see COPYING.GPL2), applied to Valgrind (also GPL). It is
+NOT covered by this repository's MIT LICENSE. It is vendored here, isolated under
+vendor/varlat/, and used only to build a Valgrind image at analysis time; it is
+not linked into or distributed with the MIT-licensed corpus code. The patch and
+its licence travel together, unmodified.
+
+Source zip: artifacts.iacr.org/files/tches/2025/tches-2025-a9.zip
+Patch path: kyberslash-demo/valgrind/valgrind-3.22.0-varlat.patch
+Build: git clone sourceware valgrind, checkout VALGRIND_3_22_0, apply, configure, make.
+Client requirement: the program must call VALGRIND_ENABLE_TIMECOP_MODE.

@@ -132,7 +132,7 @@ note = "Expectations are declared for when the Arm acquisition exists. The oracl
 [cost]
 effort_hours = 2
 portable_hours = 2
-note = "Portable clock only. The acquisition clock is unmeasured because the hardware is not in hand, which is exactly what the two-clock KT3 split is for."
+note = "Portable clock only. The acquisition clock is unmeasured for a KEY RECOVERY, which needs Arm hardware not in hand. The leak PRESENCE was measured on a rented aarch64 host on 2026-08-23 (UTC); see results/kyberslash_graviton.json and pairs/kyberslash/graviton/."
 
 [divergence]
 from_deployment = """
@@ -140,4 +140,25 @@ The deployment was full decapsulation in a shipped library on Arm; this isolates
 coeff_to_bit and builds it on x86. The measured question here is only whether the
 division instruction is emitted, which is a property of the compiler and target
 and is faithfully reproduced. The exploit itself is not reproduced here.
+
+Added 2026-08-23 (UTC): the leak's magnitude is microarchitecture dependent, and
+this was measured on a rented AWS Graviton3 (Neoverse V1) host, not just asserted.
+See results/kyberslash_graviton.json. On aarch64 at -Os the source emits a real
+udiv w0,w0,w2, whose latency on Neoverse V1 depends on the operand: over the
+KyberSlash operand range it steps at dividend = divisor = 3329, so the running
+time of coeff_to_bit leaks one bit per coefficient, whether the coefficient
+exceeds about 833. End to end the real reduction takes 6.02 ticks per call for
+low coefficients and 6.37 for high, a roughly one cycle secret dependent
+difference, cleanly measurable. This is much quieter than the deployed Cortex-A7
+leak, which is tens of cycles because ArmV7 has no hardware divider and the
+compiler emits software __aeabi_idiv. Same source, same -Os build, tens of cycles
+on one core and about one cycle on another: the toolchain pinning finding extends
+to microarchitecture. A key recovery was not run on Graviton, so the pair stays
+tier C.
 """
+
+[[divergence.structured]]
+axis       = "microarchitecture"
+deployed   = "Cortex-A7, ArmV7 software division __aeabi_idiv, tens of cycles"
+reproduced = "Neoverse V1 hardware udiv, a one cycle step at dividend = divisor"
+effect     = "the leak class is present on both, but its magnitude is a property of the microarchitecture, not only the source or the build"

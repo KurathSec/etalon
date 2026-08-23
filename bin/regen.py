@@ -305,8 +305,10 @@ def as_tex(report: dict) -> str:
     ep = REPO / "results" / "kyberslash_emission.json"
     if ep.exists():
         cells = json.loads(ep.read_text()).get("emission_map", [])
+        leaking = sum(1 for c in cells if c.get("leak_emitted"))
         emit("nEmissionCells", len(cells))
-        emit("nLeakingCells", sum(1 for c in cells if c.get("leak_emitted")))
+        emit("nLeakingCells", leaking)
+        emit("nConstantTimeCells", len(cells) - leaking)
 
     # Facts about the field, not about this corpus. They are still generated,
     # because a hand-typed 55 is a number nobody can re-derive either.

@@ -57,9 +57,22 @@ tell that the detector measures the modelling and not the code.
    different adapter family than the two built here. It is real additional
    infrastructure and is recorded as the next instrument rather than faked.
 
-Until one of these exists, the corpus reports no recall over the deployed
-recall-eligible pairs, and the machinery refuses to print one. That refusal is
-the instrument working.
+Corrected 2026-08-23 (UTC). This paragraph used to read: "Until one of these
+exists, the corpus reports no recall over the deployed recall-eligible pairs, and
+the machinery refuses to print one. That refusal is the instrument working." That
+was true when written and is now false, and the reason is worth keeping.
+
+A third route existed that this document did not list: build a tier-A
+reproduction of the leak class, so that the pair is both recovery-verified and
+runnable by a code-reading analyser. That is what `ecdsa-nonce` and
+`ecdsa-address` are. Per-class recall over the deployed recall-eligible pairs is
+therefore reported today (see `results/recall.json`), and the two routes above
+remain the way to reach the classes those pairs do not cover.
+
+What the machinery still refuses is a single AGGREGATE recall figure, because the
+census is declared `expanded` rather than a complete enumeration of the published
+record. That refusal is the instrument working; the per-class numbers are not
+gated and are reported.
 
 ## Binsec/Rel2: image pinned, per-pair harness outstanding
 

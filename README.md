@@ -64,4 +64,28 @@ corpus that measures what it claims and one that does not.
 
 ## Status
 
-Early. Nothing here is a result yet.
+All dates in this file are UTC.
+
+The instrument works end to end and has produced results. The corpus holds seven
+corpus pairs and two synthetic sentinels; four pairs are recall-eligible (their
+key recovery runs and verifies here), three are tier C, built and scored for
+detection but with no committed recovery. Three analysers are built as
+digest-pinned images: a statistical timing test, a dynamic-taint checker, and the
+patched Valgrind that detects variable-latency instructions. Twelve controls pass
+and the oracle verifies six pairs.
+
+Two measured findings so far. A tool-by-class matrix in which each analyser has a
+different blind spot: the timing test detects both nonce classes and misses the
+division-timing leak on x86, while the patched Valgrind detects that same leak,
+and the taint checker cannot see the variable-latency class at all. And a
+toolchain-pinning result: the same vulnerable source emits a hardware division
+only at certain (vendor, optimisation) cells, and two compilers disagree on which.
+
+Coverage is six of eleven attested leak-class cells. The census is declared
+`expanded`, not complete, so an aggregate recall figure stays gated; recall is
+reported per named class with its `n`.
+
+Corrected 2026-08-23 (UTC): this section used to say, in full, "Early. Nothing
+here is a result yet." That was written at scaffold time and was true then. It
+survived unchanged through the work that produced the pairs, the adapters and the
+matrix above, which is the drift this correction records.

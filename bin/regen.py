@@ -367,6 +367,17 @@ def as_tex(report: dict) -> str:
         out.append(tex_macro("hostIdivReciprocal", str(cg["O2"])))
         if xr.get("tsc_ghz"):
             out.append(tex_macro("hostTscGHz", f"{xr['tsc_ghz']:.2f}"))
+    # Recovery robustness: the vendored lattice attack's success over random signature
+    # subsets, and its wall time, so the recovery card carries a measured success rate.
+    rr = REPO / "results" / "recovery_robustness.json"
+    if rr.exists():
+        rrd = json.loads(rr.read_text()).get("results", [])
+        if rrd:
+            total = sum(r["seeds"] for r in rrd)
+            got = sum(r["recovered"] for r in rrd)
+            out.append(tex_macro("recRobustSuccess", f"{got}\\,of\\,{total}"))
+            out.append(tex_macro("recRobustMinSigs", str(min(r["num_signatures"] for r in rrd))))
+            out.append(tex_macro("recRobustWall", f"{max(r['median_wall_s'] for r in rrd):.1f}"))
     # The x86 detection curve: dudect's paired |t| for the division at amplification up
     # to hostCurveMaxAmp. Its max stays far below the leak band, so amplification does
     # not surface a hidden sub-noise step.

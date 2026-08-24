@@ -1,0 +1,28 @@
+{
+  "finding": "recovery-robustness",
+  "pair": "ecdsa-nonce",
+  "note": "success of the vendored lattice attack over random signature subsets of the committed observations, seed varied; a probabilistic attack, so the rate is a real measurement, not trivially one.",
+  "results": [
+    {
+      "num_signatures": 3200,
+      "seeds": 8,
+      "recovered": 8,
+      "success_rate": "8/8",
+      "median_wall_s": 2.07
+    },
+    {
+      "num_signatures": 4000,
+      "seeds": 8,
+      "recovered": 8,
+      "success_rate": "8/8",
+      "median_wall_s": 1.86
+    },
+    {
+      "num_signatures": 5000,
+      "seeds": 8,
+      "recovered": 8,
+      "success_rate": "8/8",
+      "median_wall_s": 0.77
+    }
+  ]
+}

@@ -339,16 +339,24 @@ def as_tex(report: dict) -> str:
     gp = REPO / "results" / "kyberslash_graviton.json"
     if gp.exists():
         g = json.loads(gp.read_text())
-        step = g["results"]["kyberslash_operand_range_step"]
+        mag = g["results"]["operand_magnitude_leak"]
+        bnd = g["results"]["single_bit_boundary_step"]
         e2e = g["results"]["end_to_end_coeff_to_bit_Os"]
         codegen = g["results"]["codegen"]["udiv_in_coeff_to_bit"]
-        snr = int(round(step["step_ticks"] / step["noise_floor_ticks"], -2))
+        dud = g["results"].get("dudect_on_aarch64", {})
         out.append(tex_macro("gravHost", "AWS Graviton3 (Neoverse\\,V1)"))
         out.append(tex_macro("gravOsUdiv", str(codegen["Os"])))
-        out.append(tex_macro("gravStepTicks", f"{step['step_ticks']:.3f}"))
-        out.append(tex_macro("gravSNR", str(snr)))
+        # The operand-MAGNITUDE spread across the KyberSlash range (low- vs
+        # high-coefficient udiv latency), which is the leak; the single-coefficient
+        # boundary step (gravBoundaryStep) is sub-noise, measured directly on aarch64.
+        out.append(tex_macro("gravStepTicks",
+                             f"{mag['high_coeff_ticks_per_udiv'] - mag['low_coeff_ticks_per_udiv']:.2f}"))
+        out.append(tex_macro("gravBoundaryStep", f"{abs(bnd['step_ticks']):.4f}"))
+        out.append(tex_macro("gravNoiseFloor", f"{bnd['noise_floor_ticks']:.4f}"))
         out.append(tex_macro("gravDeltaTicks", f"{e2e['secret_dependent_delta_ticks']:.3f}"))
         out.append(tex_macro("gravDeltaPercent", f"{e2e['delta_percent_of_call']:.1f}\\%"))
+        if dud.get("max_tau") is not None:
+            out.append(tex_macro("gravDudectTau", f"{dud['max_tau']:.4f}"))
 
     # Fuller detail for the expanded design and results sections.
     sp = REPO / "results" / "scoring.json"

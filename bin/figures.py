@@ -132,7 +132,7 @@ def fig_emission():
 def fig_graviton():
     g = json.loads((REPO / "results" / "kyberslash_graviton.json").read_text())
     lat = g["results"]["udiv_latency_operand_dependent"]["ticks_per_udiv"]
-    step = g["results"]["kyberslash_operand_range_step"]
+    e2e = g["results"]["end_to_end_coeff_to_bit_Os"]
     xs = [1, 3000, 8000, 1e6, 4e9]
     ys = [lat["dividend_1"], lat["dividend_3000"], lat["dividend_8000"],
           lat["dividend_1e6"], lat["dividend_4e9"]]
@@ -145,15 +145,18 @@ def fig_graviton():
     a.set_ylabel("ticks / udiv")
     a.set_title("latency rises with the operand", fontsize=8.5)
 
-    lo, hi = step["coeff_below_833_ticks"], step["coeff_at_or_above_833_ticks"]
+    # Right: the end-to-end operand-magnitude leak, low- vs high-coefficient call
+    # time (the 5.8% separation), not a single-coefficient boundary step.
+    lo, hi = e2e["low_coeffs_ticks_per_call"], e2e["high_coeffs_ticks_per_call"]
+    pct = e2e["delta_percent_of_call"]
     b.bar([0, 1], [lo, hi], width=0.6, color=[MUTE, WARM])
     b.set_xticks([0, 1])
-    b.set_xticklabels(["coeff\n< 833", "coeff\n$\\geq$ 833"], fontsize=8)
-    b.set_ylim(2.3, 2.95)
+    b.set_xticklabels(["low coeff\n(quot. 0)", "high coeff\n(quot. $\\geq$1)"], fontsize=8)
+    b.set_ylim(min(lo, hi) - 0.25, max(lo, hi) + 0.25)
     b.set_ylabel("ticks / call")
-    b.set_title("the KyberSlash step", fontsize=8.5)
-    b.annotate(f"+{step['step_ticks']:.3f}\nticks", xy=(1, hi), xytext=(0.3, 2.9),
-               fontsize=7.5, color=WARM, ha="center")
+    b.set_title("operand-magnitude leak", fontsize=8.5)
+    b.annotate(f"{pct:.1f}\\%", xy=(1, hi), xytext=(0.35, hi + 0.08),
+               fontsize=8, color=WARM, ha="center")
     fig.savefig(FIG / "fig-graviton.pdf")
     plt.close(fig)
 

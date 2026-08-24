@@ -1,53 +1,65 @@
 {
-  "finding": "kyberslash-microarchitecture",
-  "measured_utc": "2026-08-23",
+  "finding": "kyberslash-graviton-microarch",
+  "measured_utc": "2026-08-24",
   "host": {
-    "instance": "aws c7g.4xlarge (virtualized, not metal)",
-    "cpu": "Neoverse-V1 (Graviton3, CPU part 0xd40), 16 cores",
-    "os": "Ubuntu 26.04",
-    "compiler": "gcc 15.2.0 (aarch64)",
-    "timer": "cntvct_el0 at 1.05 GHz; PMCCNTR_EL0 SIGILLs from userspace on the virtualized instance, so the coarse virtual counter averaged over a dependency chain was used and was sufficient",
-    "counter_ghz": 1.05
+    "cpu": "AWS Graviton3 (Neoverse-V1)",
+    "cpuid_part": "0x41:0xd40",
+    "counter_ghz": 1.05,
+    "note": "Rented c7g.xlarge, aarch64. Counter is cntvct_el0 (fixed rate, coarser than the core clock); PMCCNTR_EL0 is gated, so a dependency-chain average over the virtual counter resolves the leak."
   },
-  "regenerable": "only on an aarch64 host. This is an acquired observation, like the pair's ARM key recovery and the imported nonce-leak traces, not a number bin/regen.py produces on the x86 build host. The acquisition script is pairs/kyberslash/graviton/.",
+  "regenerable": "on an aarch64 Neoverse-V1 host: taskset -c 2 python3 pairs/kyberslash/graviton/measure_arm.py",
   "results": {
     "codegen": {
-      "note": "the KyberSlash vulnerable source emits a hardware division only at -Os, the same pattern as x86 (idiv only at -Os), now on a third architecture",
+      "note": "gcc emits a hardware udiv at -Os only (O0=0, Os=1, O2=0), the same size-only pattern as x86; here the compiler narrows the signed-int source to an UNSIGNED udiv where the x86 build emits a signed idiv. Confirmed by the committed disassembly.",
       "udiv_in_coeff_to_bit": {
         "O0": 0,
         "Os": 1,
-        "O2": 0,
-        "O3": 0
+        "O2": 0
       },
-      "os_instruction": "udiv w0, w0, w2"
+      "os_instruction": "udiv w0, w0, w2",
+      "textprint": "locks/textprints/kyberslash/gcc-15.2.0-Os-aarch64-linux-gnu/vulnerable.asm"
     },
     "udiv_latency_operand_dependent": {
-      "note": "serial dependency chain; ticks/udiv rises with dividend magnitude, matching ARM's documented W-form 5 to 12 cycle range",
+      "note": "Serial dependency chain. Unlike the flat x86 divider, the Neoverse-V1 udiv latency RISES with dividend magnitude (more significant quotient bits cost more): this is the leak.",
       "ticks_per_udiv": {
-        "dividend_1": 2.4301,
-        "dividend_3000": 2.4309,
-        "dividend_8000": 2.8353,
-        "dividend_1e6": 3.2399,
-        "dividend_4e9": 4.4556
+        "dividend_1": 2.42963,
+        "dividend_3000": 2.43065,
+        "dividend_8000": 2.83504,
+        "dividend_1e6": 3.24015,
+        "dividend_4e9": 4.45514
       }
     },
-    "kyberslash_operand_range_step": {
-      "note": "a step at dividend = divisor = 3329: below it the quotient is 0 and udiv finishes one iteration sooner. The leak is one bit per coefficient, whether the coefficient exceeds about 833.",
-      "coeff_below_833_ticks": 2.431,
-      "coeff_at_or_above_833_ticks": 2.835,
-      "step_ticks": 0.4054,
-      "noise_floor_ticks": 0.0008,
-      "signal_to_noise": "about 500x"
+    "operand_magnitude_leak": {
+      "note": "The exploitable signal is operand-magnitude: low coefficients (dividend < 3329, quotient 0) run faster than high coefficients (quotient >= 1). This is NOT a single-coefficient boundary step.",
+      "low_coeff_ticks_per_udiv": 2.43065,
+      "high_coeff_ticks_per_udiv": 2.83504
+    },
+    "single_bit_boundary_step": {
+      "note": "Adjacent coefficients 832 (dividend 3328, quotient 0) and 833 (dividend 3330, quotient 1) are indistinguishable in udiv time: the single-bit recovery step is SUB-NOISE on this hardware divider, unlike the software division the published Cortex-A7 attack used.",
+      "step_ticks": -0.00018,
+      "noise_floor_ticks": 0.00153
     },
     "end_to_end_coeff_to_bit_Os": {
-      "note": "real KyberSlash reduction, two-class fixed-vs-random over low and high coefficients",
-      "low_coeffs_ticks_per_call": 6.0226,
+      "note": "Two-class over the real coeff_to_bit, min-of-11 batches, 10 repeats. Low class = coeff in [0,832] (quotient 0), high = [1664,3328] (quotient >= 1). The operand-magnitude delta a full reduction call carries.",
+      "low_coeffs_ticks_per_call": 6.0228,
       "high_coeffs_ticks_per_call": 6.3739,
-      "secret_dependent_delta_ticks": 0.3513,
-      "delta_percent_of_call": 5.8,
-      "verdict": "LEAK MEASURABLE on Graviton3"
+      "secret_dependent_delta_ticks": 0.35105000000000003,
+      "delta_ci_ticks": [
+        0.3506,
+        0.3517
+      ],
+      "delta_percent_of_call": 5.83
+    },
+    "dudect_on_aarch64": {
+      "note": "W6 control: dudect run on the aarch64 KyberSlash build (coeff_to_bit at -Os, the udiv-emitting cell), fixed-vs-random over the secret coefficient, using the cntvct_el0 virtual counter (PMCCNTR_EL0 is gated). It reads CLEAN at 2.9M measurements: the per-call operand-magnitude signal sits below the coarse virtual counter resolution, even though the min-of-millions batch estimator above resolves a 5.8% magnitude difference. So the statistical timing test reads the division clean on this Arm host too, not only on x86; the instruction-class tools flag the udiv regardless of host.",
+      "max_t": 1.98,
+      "max_tau": 0.00116,
+      "measurements": 2900000,
+      "verdict": "clean",
+      "reproduce": "patch dudect.h cpucycles to read cntvct_el0, drop the x86 headers, gcc -Os coeff driver + pairs/kyberslash/src/vulnerable.c, taskset -c 2"
+    },
+    "recovery_assessment": {
+      "note": "Attempted per the tier-A goal; not feasible cheaply on Graviton3. The one-bit-per-coefficient recovery needs the adjacent-coefficient (single-bit boundary) step, which is sub-noise here; the resolvable signal is operand magnitude (batch estimator only), and a per-call timing test reads clean on the virtual counter. The published recovery used the Cortex-A7 software-division routine (tens of cycles, sharply operand-dependent), a different and louder mechanism. KyberSlash therefore stays tier C, now with a measured reason rather than an assumed one."
     }
-  },
-  "conclusion": "The KyberSlash leak class reproduces on Graviton3 as a ~1-cycle, one-bit-per-coefficient leak (a step at dividend = divisor), much quieter than the tens-of-cycles software-division leak on Cortex-A7 (ARMv7, no hardware divider, __aeabi_idiv). A virtualized c7g suffices to measure it. This extends the corpus's (vendor x optimisation-level) toolchain finding to (x microarchitecture): the same source, the same -Os build, leaks at tens of cycles on Cortex-A7 and about one cycle on Neoverse V1.",
-  "tier_note": "This is a leak-PRESENCE measurement, not a key recovery. No recovery was run on Graviton, so the KyberSlash pair stays tier C. A recovery adapted to one-bit-per-coefficient information would make it tier A, and this measurement shows that is feasible on rented hardware for roughly one dollar."
+  }
 }

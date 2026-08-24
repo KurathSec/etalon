@@ -1,0 +1,48 @@
+{
+  "finding": "kyberslash-x86-leak-presence",
+  "measured_utc": "2026-08-24",
+  "host": {
+    "_comment": "The x86 acquisition host, captured from this machine (/proc/cpuinfo, /sys) so every host fact the paper states is a regenerated macro rather than a typed claim. Turbo is enabled because disabling it needs root we do not have; that is recorded, not hidden. Regenerable by re-reading /proc/cpuinfo and /sys/devices/system/cpu on the same host.",
+    "cpu_model": "Intel Core Ultra 9 285H",
+    "microarch": "Arrow Lake",
+    "microarch_basis": "CPUID family 6, model 197, stepping 2",
+    "cpu_family": 6,
+    "cpu_model_num": 197,
+    "cpu_stepping": 2,
+    "microcode": "0x11b",
+    "smt": "off",
+    "turbo": "enabled",
+    "governor": "performance",
+    "kernel": "7.1.8-200.fc44.x86_64",
+    "machine": "x86_64"
+  },
+  "regenerable": "on this x86 host: taskset -c 2 python3 pairs/kyberslash/x86/measure.py. Unlike the Graviton measurement this is not architecture-locked.",
+  "results": {
+    "codegen": {
+      "note": "the real vulnerable source emits a hardware idiv at -Os on this host gcc and a reciprocal multiply at -O2/-O0, the same size-only pattern the committed emission map records with the pinned gcc-12.2.0.",
+      "idiv_in_coeff_to_bit": {
+        "Os": 1,
+        "O2": 0
+      }
+    },
+    "idiv_latency_operand_dependent": {
+      "note": "serial dependency chain; TSC ticks per div rises with dividend magnitude in general (more significant quotient bits cost more).",
+      "ticks_per_udiv": {
+        "dividend_1": 9.84523,
+        "dividend_3000": 9.37133,
+        "dividend_8000": 9.34366,
+        "dividend_1e6": 9.31803,
+        "dividend_4e9": 9.30878
+      }
+    },
+    "kyberslash_operand_range_step": {
+      "note": "the step at dividend=divisor=3329, quotient 0 -> 1, over the KyberSlash range [1664,8320]. Over this range the quotient never exceeds 2 bits, so the operand-dependent latency the wide sweep shows barely moves.",
+      "coeff_below_833_ticks": 9.95469,
+      "coeff_at_or_above_833_ticks": 9.93756,
+      "step_ticks": -0.00962,
+      "noise_floor_ticks": 0.12856,
+      "signal_to_noise": 0
+    },
+    "tsc_ghz": 3.6863
+  }
+}

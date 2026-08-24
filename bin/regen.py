@@ -341,6 +341,22 @@ def as_tex(report: dict) -> str:
         ghz = json.loads(gp2.read_text()).get("host", {}).get("counter_ghz")
         if ghz is not None:
             out.append(tex_macro("gravCounterGHz", f"{ghz:.2f}"))
+    # The x86 leak-presence microbenchmark on the acquisition host: the divl step at
+    # the KyberSlash divisor boundary against the run's noise floor. It certifies that
+    # dudect's null on x86 is correct on this host, not a missed present leak.
+    xp = REPO / "results" / "kyberslash_x86_idiv.json"
+    if xp.exists():
+        xr = json.loads(xp.read_text())["results"]
+        st = xr["kyberslash_operand_range_step"]
+        out.append(tex_macro("hostStepTicks", f"{abs(st['step_ticks']):.3f}"))
+        out.append(tex_macro("hostNoiseFloor", f"{st['noise_floor_ticks']:.2f}"))
+        out.append(tex_macro("hostStepBelow", f"{st['coeff_below_833_ticks']:.2f}"))
+        out.append(tex_macro("hostStepAbove", f"{st['coeff_at_or_above_833_ticks']:.2f}"))
+        cg = xr["codegen"]["idiv_in_coeff_to_bit"]
+        out.append(tex_macro("hostIdivOs", str(cg["Os"])))
+        out.append(tex_macro("hostIdivReciprocal", str(cg["O2"])))
+        if xr.get("tsc_ghz"):
+            out.append(tex_macro("hostTscGHz", f"{xr['tsc_ghz']:.2f}"))
     for t in ("A", "B", "C"):
         emit(f"nTier{t}", report["corpus"]["by_tier"].get(t, 0))
     emit("nCensusIncluded", cen["census_included"])

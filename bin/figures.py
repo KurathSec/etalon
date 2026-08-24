@@ -155,11 +155,46 @@ def fig_graviton():
     plt.close(fig)
 
 
+def fig_x86_idiv():
+    x = json.loads((REPO / "results" / "kyberslash_x86_idiv.json").read_text())["results"]
+    lat = x["idiv_latency_operand_dependent"]["ticks_per_udiv"]
+    step = x["kyberslash_operand_range_step"]
+    xs = [1, 3000, 8000, 1e6, 4e9]
+    ys = [lat["dividend_1"], lat["dividend_3000"], lat["dividend_8000"],
+          lat["dividend_1e6"], lat["dividend_4e9"]]
+
+    fig, (a, b) = plt.subplots(1, 2, figsize=(5.6, 2.5),
+                               gridspec_kw={"width_ratios": [1.35, 1]})
+    a.plot(xs, ys, "-o", color=TEAL, ms=4, lw=1.4)
+    a.set_xscale("log")
+    a.set_xlabel("dividend magnitude")
+    a.set_ylabel("TSC ticks / div")
+    a.set_title("latency is flat in the operand", fontsize=8.5)
+
+    lo, hi = step["coeff_below_833_ticks"], step["coeff_at_or_above_833_ticks"]
+    noise = step["noise_floor_ticks"]
+    mid = (lo + hi) / 2
+    b.bar([0, 1], [lo, hi], width=0.6, color=[MUTE, WARM])
+    # the noise floor as an error band around the pair mean, to show the step is inside it
+    b.errorbar([0, 1], [mid, mid], yerr=noise, fmt="none", ecolor=INK,
+               elinewidth=1.1, capsize=4)
+    b.set_xticks([0, 1])
+    b.set_xticklabels(["coeff\n< 833", "coeff\n$\\geq$ 833"], fontsize=8)
+    b.set_ylim(mid - max(noise, abs(hi - lo)) * 2.2, mid + max(noise, abs(hi - lo)) * 2.2)
+    b.set_ylabel("TSC ticks / div")
+    b.set_title("no step: within noise", fontsize=8.5)
+    b.annotate(f"step {abs(hi - lo):.3f}\n< noise {noise:.2f}", xy=(0.5, mid),
+               xytext=(0.5, mid + noise * 1.1), fontsize=7.5, color=INK, ha="center")
+    fig.savefig(FIG / "fig-x86-idiv.pdf")
+    plt.close(fig)
+
+
 def main():
     FIG.mkdir(parents=True, exist_ok=True)
     fig_blindspot()
     fig_emission()
     fig_graviton()
+    fig_x86_idiv()
     print(f"figures: wrote {len(list(FIG.glob('*.pdf')))} to {FIG}")
 
 

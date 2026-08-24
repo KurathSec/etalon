@@ -3,3 +3,4 @@ idiv_lat_x86
 ks_range_x86
 ks_leak_x86
 _probe_*.o
+detection_curve

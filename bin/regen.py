@@ -367,6 +367,16 @@ def as_tex(report: dict) -> str:
         out.append(tex_macro("hostIdivReciprocal", str(cg["O2"])))
         if xr.get("tsc_ghz"):
             out.append(tex_macro("hostTscGHz", f"{xr['tsc_ghz']:.2f}"))
+    # The x86 detection curve: dudect's paired |t| for the division at amplification up
+    # to hostCurveMaxAmp. Its max stays far below the leak band, so amplification does
+    # not surface a hidden sub-noise step.
+    dc = REPO / "results" / "kyberslash_detection_curve.json"
+    if dc.exists():
+        dcd = json.loads(dc.read_text())
+        pts = dcd.get("curve", [])
+        if pts:
+            out.append(tex_macro("hostCurveMaxT", f"{dcd['max_abs_t']:.1f}"))
+            out.append(tex_macro("hostCurveMaxAmp", str(max(p["amp"] for p in pts))))
     for t in ("A", "B", "C"):
         emit(f"nTier{t}", report["corpus"]["by_tier"].get(t, 0))
     emit("nCensusIncluded", cen["census_included"])

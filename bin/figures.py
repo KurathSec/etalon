@@ -189,12 +189,44 @@ def fig_x86_idiv():
     plt.close(fig)
 
 
+def fig_detection_curve():
+    d = json.loads((REPO / "results" / "kyberslash_detection_curve.json").read_text())
+    amps = [p["amp"] for p in d["curve"]]
+    ts = [p["abs_t"] for p in d["curve"]]
+    band = d.get("leak_band", 500)
+    # the nonce leak's amplification and t, for contrast
+    nonce_amp, nonce_t = 40, None
+    for line in (REPO / "results" / "verdicts.jsonl").read_text().splitlines():
+        r = json.loads(line)
+        if r.get("tool") == "dudect" and r.get("pair") == "ecdsa-nonce":
+            nonce_t = r.get("vulnerable_max_t")
+
+    fig, ax = plt.subplots(figsize=(5.2, 2.6))
+    ax.plot(amps, ts, "-o", color=TEAL, ms=5, lw=1.5, label="KyberSlash division")
+    ax.axhline(band, color=WARM, ls="--", lw=1.2)
+    ax.text(amps[0], band * 1.2, f"dudect leak band ({band})", color=WARM, fontsize=7.5, va="bottom")
+    if nonce_t:
+        ax.plot([nonce_amp], [nonce_t], "s", color=INK, ms=7)
+        ax.annotate(f"nonce leak\n{nonce_t:.0f} at {nonce_amp}$\\times$", xy=(nonce_amp, nonce_t),
+                    xytext=(nonce_amp * 0.42, nonce_t * 0.5), fontsize=7.5, color=INK, ha="center")
+    ax.set_xscale("log", base=2)
+    ax.set_yscale("log")
+    ax.set_xlabel("amplification factor")
+    ax.set_ylabel("dudect $|t|$")
+    ax.set_title("amplification does not surface the division", fontsize=8.5)
+    ax.set_xticks(amps + [nonce_amp])
+    ax.set_xticklabels([str(a) for a in amps] + [str(nonce_amp)], fontsize=7.5)
+    fig.savefig(FIG / "fig-detection-curve.pdf")
+    plt.close(fig)
+
+
 def main():
     FIG.mkdir(parents=True, exist_ok=True)
     fig_blindspot()
     fig_emission()
     fig_graviton()
     fig_x86_idiv()
+    fig_detection_curve()
     print(f"figures: wrote {len(list(FIG.glob('*.pdf')))} to {FIG}")
 
 

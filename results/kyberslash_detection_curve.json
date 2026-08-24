@@ -1,0 +1,50 @@
+{
+  "finding": "kyberslash-x86-detection-curve",
+  "measured_utc": "2026-08-24",
+  "host": {
+    "_comment": "The x86 acquisition host, captured from this machine (/proc/cpuinfo, /sys) so every host fact the paper states is a regenerated macro rather than a typed claim. Turbo is enabled because disabling it needs root we do not have; that is recorded, not hidden. Regenerable by re-reading /proc/cpuinfo and /sys/devices/system/cpu on the same host.",
+    "cpu_model": "Intel Core Ultra 9 285H",
+    "microarch": "Arrow Lake",
+    "microarch_basis": "CPUID family 6, model 197, stepping 2",
+    "cpu_family": 6,
+    "cpu_model_num": 197,
+    "cpu_stepping": 2,
+    "microcode": "0x11b",
+    "smt": "off",
+    "turbo": "enabled",
+    "governor": "performance",
+    "kernel": "7.1.8-200.fc44.x86_64",
+    "machine": "x86_64"
+  },
+  "regenerable": "on this x86 host: taskset -c 2 python3 pairs/kyberslash/x86/detection_curve.py",
+  "note": "dudect's Welch |t| between below-boundary and above-boundary dividend classes, each measurement a latency chain of AMP idivs kept in its class, M=200000 per class. On a constant-time divider |t| stays below the leak band (500) at every amplification; the nonce pairs cross the leak band at amplification 40 (t=15420), the division does not at amplification 32, so the x86 null is not a hidden sub-noise step waiting for more gain.",
+  "leak_band": 500,
+  "curve": [
+    {
+      "amp": 1,
+      "abs_t": 1.8354
+    },
+    {
+      "amp": 2,
+      "abs_t": 11.6475
+    },
+    {
+      "amp": 4,
+      "abs_t": 11.0212
+    },
+    {
+      "amp": 8,
+      "abs_t": 5.9081
+    },
+    {
+      "amp": 16,
+      "abs_t": 1.6385
+    },
+    {
+      "amp": 32,
+      "abs_t": 4.5563
+    }
+  ],
+  "max_abs_t": 11.6475,
+  "crosses_leak_band": false
+}

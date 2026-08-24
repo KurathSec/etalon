@@ -1,0 +1,32 @@
+{
+  "_meaning": "Null distribution of dudect's tau on the constant-time negative sentinel at the scoring budget. null_threshold_tau is the largest observed null tau times a safety margin; an arm counts as a leak only above it. tau = t / sqrt(measurements), the budget-invariant effect size, so this transfers across pairs run at the same budget. The sentinel is a tag comparison, so the null it characterises is this host's noise on constant-time code, not the specific noise of every operation scored.",
+  "budget": {
+    "measurements_per_batch": 20000,
+    "batches": 3,
+    "total_measurements": 60000
+  },
+  "runs": 16,
+  "null_tau_samples": [
+    0.00363,
+    0.00479,
+    0.00572,
+    0.00694,
+    0.00696,
+    0.00732,
+    0.00772,
+    0.00791,
+    0.00868,
+    0.00875,
+    0.0088,
+    0.0105,
+    0.0109,
+    0.0129,
+    0.0131,
+    0.0144
+  ],
+  "null_tau_max": 0.0144,
+  "null_tau_median": 0.008295,
+  "null_t_max": 2.84,
+  "margin": 1.3,
+  "null_threshold_tau": 0.01872
+}

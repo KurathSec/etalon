@@ -66,26 +66,29 @@ def fig_blindspot():
     rows = {r["pair"]: r for r in rows}
     seq = ["ecdsa-nonce", "ecdsa-address", "_sentinel-positive",
            "hqc-reject", "kyberslash"]
-    vt = [rows[p]["vulnerable_max_t"] for p in seq]
-    pt = [rows[p]["patched_max_t"] for p in seq]
+    # Plot tau (dudect's budget-invariant effect size), the PR-3 decision variable,
+    # against the null band calibrated on the negative sentinel, not the retired
+    # [10,500] band on the raw t.
+    thr = json.loads((REPO / "results" / "dudect_calibration.json").read_text())["null_threshold_tau"]
+    vt = [rows[p]["vulnerable_max_tau"] for p in seq]
+    pt = [rows[p]["patched_max_tau"] for p in seq]
     names = [label[p] for p in seq]
     x = range(len(seq))
 
     fig, ax = plt.subplots(figsize=(5.4, 2.9))
-    ax.axhspan(10, 500, color=LIGHT, zorder=0)
-    ax.axhline(500, color=MUTE, lw=0.8, ls="--", zorder=1)
-    ax.axhline(10, color=MUTE, lw=0.8, ls="--", zorder=1)
+    ax.axhspan(1e-3, thr, color=LIGHT, zorder=0)
+    ax.axhline(thr, color=MUTE, lw=0.9, ls="--", zorder=1)
     w = 0.38
     ax.bar([i - w / 2 for i in x], vt, w, color=TEAL, label="vulnerable arm", zorder=3)
     ax.bar([i + w / 2 for i in x], pt, w, color=MUTE, label="patched arm", zorder=3)
     ax.set_yscale("log")
-    ax.set_ylim(0.8, 60000)
+    ax.set_ylim(2e-3, 300)
     ax.set_xticks(list(x))
     ax.set_xticklabels(names)
-    ax.set_ylabel(r"dudect max $|t|$  (log)")
-    ax.text(len(seq) - 1, 700, "detect", color=INK, fontsize=7.5, ha="center")
-    ax.text(len(seq) - 1, 3.0, "no evidence", color=WARM, fontsize=7.5, ha="center")
-    ax.annotate("missed:\nsame as patched", xy=(4, vt[-1]), xytext=(3.3, 40),
+    ax.set_ylabel(r"dudect $\tau = |t|/\sqrt{n}$  (log)")
+    ax.text(len(seq) - 1, thr * 2.4, "leak", color=INK, fontsize=7.5, ha="center")
+    ax.text(len(seq) - 1, thr * 0.35, "null band", color=WARM, fontsize=7.5, ha="center")
+    ax.annotate("missed:\nboth in null band", xy=(4, vt[-1]), xytext=(3.3, thr * 12),
                 fontsize=7.5, color=WARM, ha="center",
                 arrowprops=dict(arrowstyle="->", color=WARM, lw=0.8))
     ax.legend(frameon=False, fontsize=7.5, loc="upper right",

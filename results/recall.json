@@ -31,26 +31,26 @@
     {
       "tool": "dudect",
       "class": "exploit_path=lattice-hnp/granularity=bit/observable=address-data/origin=source-level/secret_role=nonce",
-      "detected": 1,
+      "detected": 0,
       "n": 1,
-      "recall": "1/1",
+      "recall": "0/1",
       "outcomes": [
         [
           "ecdsa-address",
-          "detected"
+          "non_discriminating"
         ]
       ]
     },
     {
       "tool": "dudect",
       "class": "exploit_path=lattice-hnp/granularity=bit/observable=latency/origin=source-level/secret_role=nonce",
-      "detected": 1,
+      "detected": 0,
       "n": 1,
-      "recall": "1/1",
+      "recall": "0/1",
       "outcomes": [
         [
           "ecdsa-nonce",
-          "detected"
+          "non_discriminating"
         ]
       ]
     },
@@ -116,7 +116,7 @@
     {
       "tool": "dudect",
       "pair": "hqc-reject",
-      "outcome": "budget_exhausted"
+      "outcome": "detected"
     },
     {
       "tool": "timecop",
@@ -219,9 +219,9 @@
       "tool": "dudect",
       "pair": "ecdsa-address",
       "scored_against": "exploit",
-      "exploit_discriminates": true,
+      "exploit_discriminates": false,
       "policy_detects_vulnerable": true,
-      "flags_uncertified_patched_arm": false
+      "flags_uncertified_patched_arm": true
     },
     {
       "tool": "timecop",
@@ -235,9 +235,9 @@
       "tool": "dudect",
       "pair": "ecdsa-nonce",
       "scored_against": "exploit",
-      "exploit_discriminates": true,
+      "exploit_discriminates": false,
       "policy_detects_vulnerable": true,
-      "flags_uncertified_patched_arm": false
+      "flags_uncertified_patched_arm": true
     },
     {
       "tool": "timecop",

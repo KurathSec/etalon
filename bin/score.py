@@ -71,6 +71,10 @@ def main() -> int:
     ap.add_argument("--pair", help="score only this pair and MERGE its rows into "
                     "verdicts.jsonl, leaving the other pairs' committed rows untouched "
                     "(the existing statistical rows are the sealed pilot values).")
+    ap.add_argument("--tool", help="score only this tool across all pairs and MERGE "
+                    "its rows, leaving the other tools' committed rows untouched (used "
+                    "to re-acquire dudect under the PR-3 verdict rule without disturbing "
+                    "the deterministic taint and symbolic rows).")
     a = ap.parse_args()
 
     tools = tomllib.loads((REPO / "data" / "tools.toml").read_text())["tool"]
@@ -84,6 +88,8 @@ def main() -> int:
     for tool_name, tool in tools.items():
         if a.recall_only:
             break
+        if a.tool and tool_name != a.tool:
+            continue
         adapter = load_adapter(tool_name)
         for pair in pairs:
             if a.pair and pair.name != a.pair:
@@ -116,7 +122,7 @@ def main() -> int:
                 outcome = "detected"        # red on the bug, green on the fix
             elif hit and fp:
                 outcome = "non_discriminating"  # flags both arms
-            elif vuln["status"] in ("budget_exhausted", "error"):
+            elif vuln["status"] in ("budget_exhausted", "error", "inconclusive"):
                 outcome = vuln["status"]
             else:
                 outcome = "missed"
@@ -125,16 +131,29 @@ def main() -> int:
                         "patched_status": patch["status"],
                         "vulnerable_max_t": vuln.get("max_t"),
                         "patched_max_t": patch.get("max_t")})
+            # dudect (PR-3) also reports the budget-invariant tau and the effect
+            # size in ticks with a bootstrap CI; carry them so the paper can quote a
+            # magnitude, not only a threshold crossing.
+            for who, res in (("vulnerable", vuln), ("patched", patch)):
+                if res.get("max_tau") is not None:
+                    row[f"{who}_max_tau"] = res.get("max_tau")
+                    row[f"{who}_effect_ticks"] = res.get("effect_ticks")
+                    row[f"{who}_ci"] = [res.get("ci_low"), res.get("ci_high")]
+                    if res.get("raw"):
+                        row[f"{who}_raw"] = res.get("raw")
             rows.append(row)
 
     # With --pair, keep every other pair's committed rows (the sealed pilot
     # statistics) and replace only this pair's, so recall below is computed over the
     # merged corpus without re-perturbing the existing statistical verdicts.
-    if a.pair and not a.recall_only:
+    if (a.pair or a.tool) and not a.recall_only:
         existing = [json.loads(l) for l
                     in (REPO / "results" / "verdicts.jsonl").read_text().splitlines()
                     if l.strip()]
-        rows = [r for r in existing if r.get("pair") != a.pair] + rows
+        if a.tool:
+            rows = [r for r in existing if r.get("tool") != a.tool] + rows
+        else:
+            rows = [r for r in existing if r.get("pair") != a.pair] + rows
 
     # Recall per (tool, class) over applicable recall-eligible corpus pairs, and
     # the tier-C detections that inform the crossover but never a denominator.

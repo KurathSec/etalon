@@ -26,7 +26,7 @@ secret_role  = "key-material"
 origin       = "source-level"
 granularity  = "byte"
 exploit_path = "direct-recovery"
-mechanism_classes = []
+mechanism_classes = ["secret-branch"]
 rationale = """
 The facet tuple is deliberately identical to the positive sentinel's. The two
 differ only in whether the leak is present, which is what makes the pair a
@@ -34,6 +34,13 @@ matched control rather than a different experiment. Control CLS-2 would flag a
 shared tuple between two corpus pairs as undeclared replication; both of these
 are fixtures rather than corpus items, so they are outside that check and
 outside every denominator.
+
+For a NEGATIVE control, mechanism_classes names the mechanism the control is a
+clean negative FOR, not one it exhibits: this arm is constant-time and exhibits
+no secret branch. Declaring the tested mechanism is what makes the branch-detecting
+tools applicable to it, so SENT-2 actually exercises each tool and confirms it stays
+clean; an empty list left the negative sentinel inapplicable to every tool, which
+made SENT-2 vacuous.
 """
 
 [provenance]

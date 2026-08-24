@@ -126,8 +126,14 @@ def verdict_section() -> dict:
     rows = read_jsonl(REPO / "results" / "verdicts.jsonl")
     applicable = [r for r in rows if r.get("applicable")]
     inapplicable = [r for r in rows if r.get("applicable") is False]
+    # Outcome tally over corpus pairs only. The sentinel controls (positive detected
+    # by all, negative clean by all) are reported as SENT-1/SENT-2, not folded into
+    # the detection or miss counts, where a tool correctly clean on the constant-time
+    # negative control would otherwise register as a "miss".
     outcomes = {}
     for r in applicable:
+        if r.get("role") != "corpus":
+            continue
         o = r.get("outcome", "unset")
         outcomes[o] = outcomes.get(o, 0) + 1
     # The three exclusion reasons are genuinely different and were once all
@@ -379,6 +385,34 @@ def as_tex(report: dict) -> str:
             # how close the patched arm runs to the boundary.
             out.append(tex_macro(patched_named[r["pair"]],
                                  f"{r['patched_max_t']:.2f}"))
+    # PR-3 dudect: the null-tau band calibrated on the constant-time negative
+    # sentinel (replacing the arbitrary [10,500] band), and the effect size in ticks
+    # with its bootstrap CI for the key arms, so the paper quotes a magnitude and an
+    # interval rather than a threshold crossing.
+    calp = REPO / "results" / "dudect_calibration.json"
+    if calp.exists():
+        cal = json.loads(calp.read_text())
+        out.append(tex_macro("dudectNullThresholdTau", f"{cal['null_threshold_tau']:.3f}"))
+        out.append(tex_macro("dudectNullTauMedian", f"{cal['null_tau_median']:.3f}"))
+        out.append(tex_macro("dudectCalibRuns", str(cal.get("runs", 0))))
+    effect_named = {"kyberslash": "Division", "ecdsa-nonce": "NonceLatency",
+                    "ecdsa-address": "NonceAddress", "hmac-timing": "Hmac"}
+    for r in read_jsonl(REPO / "results" / "verdicts.jsonl"):
+        if r.get("tool") != "dudect" or r["pair"] not in effect_named:
+            continue
+        suf = effect_named[r["pair"]]
+        if r.get("vulnerable_effect_ticks") is not None:
+            out.append(tex_macro(f"effectVuln{suf}", f"{r['vulnerable_effect_ticks']:.3f}"))
+        ci = r.get("vulnerable_ci")
+        if ci and ci[0] is not None:
+            out.append(tex_macro(f"ciLoVuln{suf}", f"{ci[0]:.3f}"))
+            out.append(tex_macro(f"ciHiVuln{suf}", f"{ci[1]:.3f}"))
+        def _tau(v):
+            return f"{v:.4f}" if v < 1 else f"{v:.0f}"
+        if r.get("vulnerable_max_tau") is not None:
+            out.append(tex_macro(f"tauVuln{suf}", _tau(r["vulnerable_max_tau"])))
+        if r.get("patched_max_tau") is not None:
+            out.append(tex_macro(f"tauPatched{suf}", _tau(r["patched_max_tau"])))
     # The amplification factor applied to the nonce pairs' per-bit work, read from
     # the driver #define so the disclosure is itself a regenerated number. KyberSlash
     # carries no such loop; the paper says so and this macro exists only for the arms

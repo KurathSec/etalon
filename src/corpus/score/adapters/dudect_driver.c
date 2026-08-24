@@ -13,6 +13,7 @@
 #include <dudect.h>
 #include <string.h>
 #include "tag.h"
+#include "dudect_run.h"
 
 /* The arm's check_tag is linked in separately. */
 int check_tag(const uint8_t *secret, const uint8_t *candidate);
@@ -45,17 +46,5 @@ int main(void) {
     .chunk_size = SECRET_LEN,
     .number_measurements = 1e5,
   };
-  dudect_ctx_t ctx;
-  dudect_init(&ctx, &config);
-  dudect_state_t state = DUDECT_NO_LEAKAGE_EVIDENCE_YET;
-  /* Bounded number of batches so the adapter always terminates. */
-  for (int i = 0; i < 40 && state == DUDECT_NO_LEAKAGE_EVIDENCE_YET; i++) {
-    state = dudect_main(&ctx);
-  }
-  dudect_free(&ctx);
-  /* Exit code is NOT the verdict; the adapter parses stdout. Print a machine
-   * line the adapter keys on. */
-  printf("DUDECT_VERDICT %s\n",
-         state == DUDECT_LEAKAGE_FOUND ? "LEAK" : "NO_LEAK_EVIDENCE");
-  return 0;
+  return dudect_run_and_dump(&config);
 }

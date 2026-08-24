@@ -7,6 +7,7 @@
  */
 #define DUDECT_IMPLEMENTATION
 #include <dudect.h>
+#include "dudect_run.h"
 #include <openssl/ec.h>
 #include <openssl/bn.h>
 #include <openssl/obj_mac.h>
@@ -40,10 +41,5 @@ int main(void) {
   group = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
   R = EC_POINT_new(group);
   dudect_config_t config = { .chunk_size = 32, .number_measurements = 2e4 };
-  dudect_ctx_t c; dudect_init(&c, &config);
-  dudect_state_t s = DUDECT_NO_LEAKAGE_EVIDENCE_YET;
-  for (int i = 0; i < 40 && s == DUDECT_NO_LEAKAGE_EVIDENCE_YET; i++) s = dudect_main(&c);
-  dudect_free(&c);
-  printf("DUDECT_VERDICT %s\n", s == DUDECT_LEAKAGE_FOUND ? "LEAK" : "NO_LEAK_EVIDENCE");
-  return 0;
+  return dudect_run_and_dump(&config);
 }

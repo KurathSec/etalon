@@ -7,6 +7,7 @@
  */
 #define DUDECT_IMPLEMENTATION
 #include <dudect.h>
+#include "dudect_run.h"
 #include <string.h>
 #include "kyber_slash.h"
 
@@ -33,11 +34,5 @@ uint8_t do_one_computation(uint8_t *data) {
 
 int main(void) {
   dudect_config_t config = { .chunk_size = 2, .number_measurements = 1e5 };
-  dudect_ctx_t ctx; dudect_init(&ctx, &config);
-  dudect_state_t state = DUDECT_NO_LEAKAGE_EVIDENCE_YET;
-  for (int i = 0; i < 40 && state == DUDECT_NO_LEAKAGE_EVIDENCE_YET; i++)
-    state = dudect_main(&ctx);
-  dudect_free(&ctx);
-  printf("DUDECT_VERDICT %s\n", state == DUDECT_LEAKAGE_FOUND ? "LEAK" : "NO_LEAK_EVIDENCE");
-  return 0;
+  return dudect_run_and_dump(&config);
 }

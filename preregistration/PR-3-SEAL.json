@@ -1,0 +1,9 @@
+{
+  "_meaning": "These digests fix the content of PR-3 at seal time. A later reader checks here whether the protocol was written before the observations it governs: the effect-size plus calibrated-CI dudect verdict rule, the certified-CT negatives and their policy-precision denominator, and the new recall-benchmark pairs. The sealing commit is the timestamp of record. PR-1, PR-2, and their sealed results are unaffected.",
+  "_sealed_at": "2026-08-24",
+  "_gates": "Sealed before any dudect re-acquisition to full budget, before any certified-negative scoring, and before any scoring of the new nonce pairs. No PR-3-governed observation existed at seal time: the re-band is a re-measurement not yet run, the certified negatives are not yet built, and the new pairs do not yet exist. The recorded PR-2 detection-curve deviation is a past event, disclosed here, not a new observation.",
+  "PR-3-recall-benchmark.md": {
+    "bytes": 7965,
+    "sha256": "a508d76bcd4e3cba0dc9335acde5bd678f19278ee63ebddea7a0bca859bf1002"
+  }
+}

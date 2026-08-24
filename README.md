@@ -162,3 +162,44 @@ Still deliberately not faked, because both need hardware this repository does no
 have: promoting KyberSlash to tier A (its recovery is exploitable only on a host
 with a variable-latency divider, which this x86 host, measured constant-time, is
 not), and reproducing the loud-end Cortex-A7 magnitude.
+
+Revised 2026-08-24 (UTC), against a second third-party review, grounded against the
+source before acting. The paper is now 27 pages.
+
+dudect's decision rule was replaced. The old `[10,500]` band is not the tool's own
+semantics, and the drivers stopped at the first crossing, so a banded value was a
+lower bound wrongly labelled `budget_exhausted`. The runs now go to a fixed full
+budget, and the verdict is the class difference of means with a bootstrap CI, decided
+against a null band calibrated on the constant-time negative sentinel
+(`bin/dudect_calibrate.py`) using dudect's budget-invariant `tau`. Measured, not
+assumed, the consequence is that dudect flags the amplified patched nonce residual and
+is non-discriminating on the nonce pairs, exactly like the taint checker: the nonce
+dudect-versus-taint contrast dissolves, and the surviving crossovers are the
+host-conditional division (which reads clean with an effect of a few thousandths of a
+tick, CI straddling zero) and the discriminating HMAC pair. The raw samples are
+committed under `results/raw/` so any reader can re-decide.
+
+Certified constant-time negatives were added (`pairs/certified-fiat`,
+`certified-fiat-add`), vendoring Fiat-Crypto's machine-checked Curve25519 field
+arithmetic unmodified. All four analysers report clean on both, so the corpus now
+reports a general false-positive rate (zero over these functions), separate from the
+site-local count it had before. SENT-2 was made real: the negative sentinel declared
+no mechanism, so no tool was applicable to it and the clean-on-the-negative claim had
+no backing row; it now declares the tested mechanism and carries a binsec harness, so
+all four tools score it.
+
+Prose honesty fixes: the cross-ISA claim that instruction-class tools flag "the
+identical binary" that "leaks on the Arm core" is reworded (an x86 binary does not run
+on aarch64; the tools flag the x86 binary's division as a policy fact, and the same
+source built for the Arm core is what leaks); the F2 emission mechanism is corrected to
+the real per-compiler lowering; Simon et al. and the KyberSlash catalogue are cited;
+`ecdsa-address` drops the mismatched libgcrypt CVE for its OpenSSL/Weiser DOI; the
+tier-B datasets are named as observation-only with modelled patched arms. The
+defensive and manifesto sentences and the abstract were trimmed per the review.
+
+Still deliberately not done rather than faked: the recall classes remain a pilot at
+`n=1`. A real recall benchmark at `n>=3` needs distinct, recovery-certified nonce
+mechanisms, or from-source library builds this offline environment cannot run;
+manufacturing replicate pairs would inflate `n` without establishing a rate, so the
+pilot framing stands and is stated as such in the paper. ARM promotion of KyberSlash
+and the Cortex-A7 loud end still need hardware.

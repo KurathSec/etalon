@@ -138,3 +138,14 @@ because the address-data mechanism the corpus's address pair carries is already
 detected by TIMECOP (a secret-indexed access on poisoned data reports UninitValue),
 so the address cell is scored today without Microwalk. Microwalk would add a second,
 differential-address-trace lens on the same cell.
+
+Added 2026-08-24 (UTC): dudect's decision rule changed (PR-3). The adapter no longer
+bands `max |t|` at the pilot's `[10,500]`; the driver runs a fixed full budget (shared
+`dudect_run.h`, no early stop) and dumps its raw per-measurement samples, and the
+adapter reports the class difference of means with a bootstrap CI (`bin/dudect_ci.py`),
+deciding leak or clean against a null band calibrated on the constant-time negative
+sentinel (`bin/dudect_calibrate.py`, `results/dudect_calibration.json`) via dudect's
+budget-invariant `tau`. The raw samples are committed under `results/raw/`. A new
+`certified-negative` role (`pairs/certified-fiat*`) scores vendored formally-verified
+constant-time code for a general false-positive rate; it is scored on the adapter
+builds, carries no oracle, and `bin/verify.py` skips it.

@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 import tomllib
 from pathlib import Path
@@ -284,10 +285,50 @@ def as_tex(report: dict) -> str:
         cpu = json.loads(sp.read_text()).get("measured_on", "").split(",")[0].strip()
         if cpu:
             out.append(tex_macro("acqHost", cpu))
+    # The acquisition host, named from committed measured facts (results/host.json)
+    # rather than typed: microarchitecture with its CPUID basis, microcode, kernel,
+    # and the turbo/SMT state that bounds the measurement hygiene.
+    hp = REPO / "results" / "host.json"
+    if hp.exists():
+        h = json.loads(hp.read_text())
+        for macro, key in (("acqMicroarch", "microarch"),
+                           ("acqMicrocode", "microcode"),
+                           ("acqKernel", "kernel"),
+                           ("acqTurbo", "turbo"),
+                           ("acqSMT", "smt"),
+                           ("acqGovernor", "governor")):
+            if h.get(key):
+                out.append(tex_macro(macro, str(h[key]).replace("_", "\\_")))
+        if all(h.get(k) is not None for k in ("cpu_family", "cpu_model_num", "cpu_stepping")):
+            out.append(tex_macro(
+                "acqCpuid",
+                f"family\\,{h['cpu_family']}, model\\,{h['cpu_model_num']}, stepping\\,{h['cpu_stepping']}"))
+    # Patched-arm dudect t per applicable pair. The nonce pairs' patched arms sit in
+    # the no-decision band (108.76, 13.78), not the clean band, so the paper reports
+    # them beside the vulnerable arm rather than implying a clean patched reading.
+    patched_named = {"ecdsa-nonce": "tPatchedNonceLatency",
+                     "ecdsa-address": "tPatchedNonceAddress",
+                     "kyberslash": "tDudectDivisionPatched",
+                     "hqc-reject": "tPatchedRejection",
+                     "_sentinel-positive": "tPatchedSentinelPos"}
     for r in read_jsonl(REPO / "results" / "verdicts.jsonl"):
-        if (r.get("tool") == "dudect" and r.get("pair") == "kyberslash"
+        if (r.get("tool") == "dudect" and r.get("applicable")
+                and r["pair"] in patched_named
                 and r.get("patched_max_t") is not None):
-            out.append(tex_macro("tDudectDivisionPatched", f"{r['patched_max_t']:.2f}"))
+            # Two decimals always: these are near-threshold values (13.78 sits just
+            # above the clean band edge of 10) and rounding to an integer would hide
+            # how close the patched arm runs to the boundary.
+            out.append(tex_macro(patched_named[r["pair"]],
+                                 f"{r['patched_max_t']:.2f}"))
+    # The amplification factor applied to the nonce pairs' per-bit work, read from
+    # the driver #define so the disclosure is itself a regenerated number. KyberSlash
+    # carries no such loop; the paper says so and this macro exists only for the arms
+    # that are amplified.
+    amp_src = REPO / "pairs" / "ecdsa-nonce" / "src" / "vulnerable.c"
+    if amp_src.exists():
+        m = re.search(r"#define\s+AMP\s+(\d+)", amp_src.read_text())
+        if m:
+            emit("ampNonce", int(m.group(1)))
     tp = REPO / "data" / "tools.toml"
     if tp.exists():
         dud = tomllib.loads(tp.read_text()).get("tool", {}).get("dudect", {})

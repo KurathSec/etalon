@@ -1,0 +1,9 @@
+{
+  "_meaning": "These digests fix the content of PR-2 at seal time. A later reader checks here whether the protocol was written before the observations it governs (the policy labels, the detection curves, and the hmac-timing pair). The sealing commit is the timestamp of record. PR-1 and its sealed results are unaffected.",
+  "_sealed_at": "2026-08-24T08:51:21+08:00",
+  "_gates": "Sealed before any policy-label scoring, any detection-curve acquisition, or any scoring of the hmac-timing pair. No R2/R3/R4 verdict existed at seal time.",
+  "PR-2-policy-and-curves.md": {
+    "bytes": 8104,
+    "sha256": "b39c8fbffc3a1611a3c55e7a614c9ecd0f11141f4a72d6b6f4dbba9ee15b6b90"
+  }
+}

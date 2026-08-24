@@ -3,6 +3,32 @@
   "supersedes_pilot": true,
   "recall_per_class": [
     {
+      "tool": "binsec",
+      "class": "exploit_path=direct-recovery/granularity=byte/observable=latency/origin=source-level/secret_role=message",
+      "detected": 1,
+      "n": 1,
+      "recall": "1/1",
+      "outcomes": [
+        [
+          "hmac-timing",
+          "detected"
+        ]
+      ]
+    },
+    {
+      "tool": "dudect",
+      "class": "exploit_path=direct-recovery/granularity=byte/observable=latency/origin=source-level/secret_role=message",
+      "detected": 1,
+      "n": 1,
+      "recall": "1/1",
+      "outcomes": [
+        [
+          "hmac-timing",
+          "detected"
+        ]
+      ]
+    },
+    {
       "tool": "dudect",
       "class": "exploit_path=lattice-hnp/granularity=bit/observable=address-data/origin=source-level/secret_role=nonce",
       "detected": 1,
@@ -30,6 +56,19 @@
     },
     {
       "tool": "timecop",
+      "class": "exploit_path=direct-recovery/granularity=byte/observable=latency/origin=source-level/secret_role=message",
+      "detected": 1,
+      "n": 1,
+      "recall": "1/1",
+      "outcomes": [
+        [
+          "hmac-timing",
+          "detected"
+        ]
+      ]
+    },
+    {
+      "tool": "timecop",
       "class": "exploit_path=lattice-hnp/granularity=bit/observable=address-data/origin=source-level/secret_role=nonce",
       "detected": 0,
       "n": 1,
@@ -51,6 +90,19 @@
         [
           "ecdsa-nonce",
           "non_discriminating"
+        ]
+      ]
+    },
+    {
+      "tool": "varlat",
+      "class": "exploit_path=direct-recovery/granularity=byte/observable=latency/origin=source-level/secret_role=message",
+      "detected": 1,
+      "n": 1,
+      "recall": "1/1",
+      "outcomes": [
+        [
+          "hmac-timing",
+          "detected"
         ]
       ]
     }
@@ -97,6 +149,32 @@
   "exploit_recall_note": "recall_per_class is exploit recall: red on the vulnerable arm and clean on the patched arm.",
   "policy_recall_per_class": [
     {
+      "tool": "binsec",
+      "class": "exploit_path=direct-recovery/granularity=byte/observable=latency/origin=source-level/secret_role=message",
+      "detected": 1,
+      "n": 1,
+      "recall": "1/1",
+      "outcomes": [
+        [
+          "hmac-timing",
+          "policy-detected"
+        ]
+      ]
+    },
+    {
+      "tool": "timecop",
+      "class": "exploit_path=direct-recovery/granularity=byte/observable=latency/origin=source-level/secret_role=message",
+      "detected": 1,
+      "n": 1,
+      "recall": "1/1",
+      "outcomes": [
+        [
+          "hmac-timing",
+          "policy-detected"
+        ]
+      ]
+    },
+    {
       "tool": "timecop",
       "class": "exploit_path=lattice-hnp/granularity=bit/observable=address-data/origin=source-level/secret_role=nonce",
       "detected": 1,
@@ -118,6 +196,19 @@
       "outcomes": [
         [
           "ecdsa-nonce",
+          "policy-detected"
+        ]
+      ]
+    },
+    {
+      "tool": "varlat",
+      "class": "exploit_path=direct-recovery/granularity=byte/observable=latency/origin=source-level/secret_role=message",
+      "detected": 1,
+      "n": 1,
+      "recall": "1/1",
+      "outcomes": [
+        [
+          "hmac-timing",
           "policy-detected"
         ]
       ]
@@ -155,6 +246,38 @@
       "exploit_discriminates": false,
       "policy_detects_vulnerable": true,
       "flags_uncertified_patched_arm": true
+    },
+    {
+      "tool": "binsec",
+      "pair": "hmac-timing",
+      "scored_against": "policy",
+      "exploit_discriminates": true,
+      "policy_detects_vulnerable": true,
+      "flags_uncertified_patched_arm": false
+    },
+    {
+      "tool": "dudect",
+      "pair": "hmac-timing",
+      "scored_against": "exploit",
+      "exploit_discriminates": true,
+      "policy_detects_vulnerable": true,
+      "flags_uncertified_patched_arm": false
+    },
+    {
+      "tool": "timecop",
+      "pair": "hmac-timing",
+      "scored_against": "policy",
+      "exploit_discriminates": true,
+      "policy_detects_vulnerable": true,
+      "flags_uncertified_patched_arm": false
+    },
+    {
+      "tool": "varlat",
+      "pair": "hmac-timing",
+      "scored_against": "policy",
+      "exploit_discriminates": true,
+      "policy_detects_vulnerable": true,
+      "flags_uncertified_patched_arm": false
     }
   ],
   "policy_recall_note": "PR-2. A policy tool is scored on whether it flags the policy violation on the vulnerable arm, not on discriminating an uncertified patched arm. timecop's exploit recall on the nonce pairs is 0/1 because it flags both arms, but its policy recall is 1/1 because it correctly reports the secret-dependent operation on the vulnerable arm; the patched-arm flag is the unadjudicated site-local false positive of the threats section, not a discrimination failure."

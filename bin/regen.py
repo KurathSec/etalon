@@ -245,21 +245,26 @@ def as_tex(report: dict) -> str:
     # an aggregate recall figure may be stated.
     rp = REPO / "results" / "recall.json"
     recall_doc = json.loads(rp.read_text()) if rp.exists() else {}
-    def _obs(cls):
-        return ("Latency" if "observable=latency" in cls
-                else "Address" if "observable=address-data" in cls else "")
+    def _clskey(cls):
+        # Disambiguate by secret role and observable, because there is now more than
+        # one latency class (a nonce timing leak and a message tag comparison).
+        role = ("Nonce" if "secret_role=nonce" in cls
+                else "Message" if "secret_role=message" in cls else "")
+        obs = ("Latency" if "observable=latency" in cls
+               else "Address" if "observable=address-data" in cls else "")
+        return role + obs
     for r in recall_doc.get("recall_per_class", []):
-        obs = _obs(r["class"])
-        if obs:
-            out.append(tex_macro(f"recall{r['tool'].capitalize()}{obs}",
+        k = _clskey(r["class"])
+        if k:
+            out.append(tex_macro(f"recall{r['tool'].capitalize()}{k}",
                                  r["recall"].replace("/", "\\,of\\,")))
     # Policy recall (PR-2): a policy tool's detection of the policy violation on the
     # vulnerable arm, the number that separates timecop's real detection from its
     # inability to discriminate an uncertified patched arm.
     for r in recall_doc.get("policy_recall_per_class", []):
-        obs = _obs(r["class"])
-        if obs:
-            out.append(tex_macro(f"policyRecall{r['tool'].capitalize()}{obs}",
+        k = _clskey(r["class"])
+        if k:
+            out.append(tex_macro(f"policyRecall{r['tool'].capitalize()}{k}",
                                  r["recall"].replace("/", "\\,of\\,")))
     # tier-C detection outcomes (the crossover), per pair and tool, so the paper
     # can name e.g. dudect missed while varlat and binsec detected KyberSlash.
@@ -320,6 +325,7 @@ def as_tex(report: dict) -> str:
                      "ecdsa-address": "tPatchedNonceAddress",
                      "kyberslash": "tDudectDivisionPatched",
                      "hqc-reject": "tPatchedRejection",
+                     "hmac-timing": "tPatchedHmac",
                      "_sentinel-positive": "tPatchedSentinelPos"}
     for r in read_jsonl(REPO / "results" / "verdicts.jsonl"):
         if (r.get("tool") == "dudect" and r.get("applicable")
@@ -403,6 +409,7 @@ def as_tex(report: dict) -> str:
                "ecdsa-address": "tDudectNonceAddress",
                "kyberslash": "tDudectDivision",
                "hqc-reject": "tDudectRejection",
+               "hmac-timing": "tDudectHmac",
                "_sentinel-positive": "tSentinelPos"}
     for r in read_jsonl(REPO / "results" / "verdicts.jsonl"):
         if r.get("tool") == "dudect" and r.get("applicable") and r["pair"] in t_named:

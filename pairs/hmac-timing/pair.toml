@@ -1,0 +1,143 @@
+schema = "pair/1"
+
+[pair]
+id      = "hmac-timing"
+title   = "Non-constant-time HMAC comparison (OpenVPN, CVE-2013-2061)"
+role    = "corpus"
+status  = "active"
+tier    = "A"
+added   = "2026-08-24"
+summary = """
+A reproduction of CVE-2013-2061: OpenVPN's openvpn_decrypt compared the received
+HMAC against the computed one with a comparison that returns as soon as a byte
+differs, so its running time reveals how many leading bytes of a forged tag are
+correct. An attacker forges a valid tag one byte at a time from the timing,
+bypassing authentication. The patched arm compares in constant time, visiting
+every byte and accumulating without branching.
+
+This is a real deployed leak reproduced as a matched pair, not a verbatim copy of
+OpenVPN. The mechanism is faithful, the build is ours, and the divergence from the
+deployed original is recorded below. The recovery forges the tag byte by byte and
+verifies it against a commitment to the true tag, so the known answer is certified
+by arithmetic rather than by any analyser.
+"""
+
+[class]
+observable   = "latency"
+secret_role  = "message"
+origin       = "source-level"
+granularity  = "byte"
+exploit_path = "direct-recovery"
+mechanism_classes = ["secret-branch"]
+rationale = """
+observable is latency and not address-data: the work per byte is identical in
+both arms and no secret-dependent memory access occurs; what varies is only how
+many times the comparison loop runs before the early return.
+
+secret_role is message and not key-material: the secret the timing recovers is the
+message-authentication tag, and forging it is an authentication bypass rather than
+a key-recovery. origin is source-level because the early return is written in the
+comparison itself, needing no instruction selection to produce it. This is the
+distinct facet tuple the census names as the early-exit comparison cell.
+"""
+
+[provenance]
+upstream_repo   = "reproduction of the OpenVPN openvpn_decrypt HMAC comparison"
+disclosed       = "2013-05-07"
+advisory        = ["CVE-2013-2061"]
+licence         = "MIT"
+redistributable = true
+note = """
+A reproduction of a real deployed leak (CVE-2013-2061, the OpenVPN openvpn_decrypt
+HMAC comparison that did not run in constant time), not a verbatim copy of OpenVPN.
+The mechanism is faithful; the build is ours. OpenVPN 2.3.1 replaced the
+comparison with a constant-time one, which is the patched arm here.
+"""
+
+[[build]]
+arm   = "vulnerable"
+source = "src/vulnerable.c"
+entry_symbol = "check_tag"
+secret_input = "the 16-byte HMAC tag, drawn from /dev/urandom at acquisition time"
+
+[[build]]
+arm   = "patched"
+source = "src/patched.c"
+entry_symbol = "check_tag"
+secret_input = "identical to the vulnerable arm, same tag, same acquisition run"
+
+[[site]]
+arm        = "vulnerable"
+file       = "src/vulnerable.c"
+symbol     = "check_tag"
+mechanism  = "return on a comparison against the secret tag, so the loop trip count is secret dependent"
+instruction_class = ["je", "jne", "jz", "jnz"]
+
+[toolchain]
+cells_required = ["gcc-12.2.0-O2-x86_64-linux-gnu"]
+note = """
+The cell is a container image pinned by base digest plus an explicit compiler
+version, so ground truth is keyed to the build. The early return is a
+source-level branch and survives every optimisation level, unlike the KyberSlash
+division whose survival is cell-dependent.
+"""
+
+[acquisition]
+origin    = "ours"
+platform  = "x86_64 host, single performance core, pinned with taskset"
+procedure = "acquire/acquire.sh"
+counter   = "rdtscp"
+reps      = 500
+grade     = "evidence"
+note = """
+The tag comparison is amplified per byte so the byte-by-byte signal clears rdtsc
+noise on a fast x86 core without root to pin the frequency; see divergence. The
+mechanism and its exploitability are faithful; the magnitude is tuned to this host.
+"""
+
+[recovery]
+entry    = "recover/recover.py"
+runtime  = "pure"
+inputs   = ["traces/vulnerable.bin.z"]
+note = "stdlib only, no container, no hardware, no network: the byte-by-byte forgery"
+
+[oracle]
+verifier   = "recover/fixtures/verifier.json"
+predicate  = "sha256-preimage"
+expected_vulnerable = "recovered"
+expected_patched    = "not-recovered"
+note = """
+The tag is drawn from /dev/urandom during acquisition and destroyed immediately
+after its digest is published, so nothing committed derives it: the timing is the
+only channel carrying it. The recovery reads TAG_LEN-1 bytes from the timing and
+closes the final byte against the published commitment, which is the public
+success test a real forger has, so a recovery that ignored the timings would face
+a 2^128 search. Run against the patched arm it fails, which is control ORC-2.
+"""
+
+[cost]
+effort_hours = 4
+note = "KT3 is a schema field. A real corpus pair, priced as one: mechanism reproduction, acquisition, recovery, and the four-tool scoring."
+
+[divergence]
+from_deployment = """
+OpenVPN compared the HMAC inside openvpn_decrypt over a full packet; this
+reproduces the comparison in isolation so a tool sees the mechanism without the
+surrounding packet machinery. The work per byte comparison is amplified above what
+a single memcmp costs, so the byte-by-byte signal clears the noise floor of a host
+with three core frequency tiers and no root to disable turbo. Amplification widens
+an existing signal rather than creating one: the early return, and the
+authentication bypass it enables, are the deployed mechanism.
+"""
+
+[[divergence.structured]]
+axis       = "leak amplitude"
+deployed   = "one memcmp per byte, on a slower path where it sufficed"
+reproduced = "amplified per-byte work so the byte-by-byte signal clears rdtsc noise on a fast core"
+effect     = "the branch mechanism and its exploitability are faithful; the timing amplitude is tuned to this host"
+
+[[divergence.structured]]
+axis       = "scope"
+deployed   = "the HMAC comparison inside openvpn_decrypt over a full packet"
+reproduced = "the comparison in isolation, so the tool sees the mechanism without the packet machinery"
+effect     = "the secret-dependent early return is the deployed one"

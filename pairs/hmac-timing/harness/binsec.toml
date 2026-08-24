@@ -1,0 +1,12 @@
+# How binsec scores the positive hmac-timing. The driver declares the tag secret and
+# the candidate public; byte_work is stubbed there (a timing device with no
+# secret branch), so the analyser judges only check_tag's control flow, where the
+# early-exit branch on secret data is the leak.
+driver = "binsec_driver.c"
+header = "tag.h"
+opt = "O2"
+secret_globals = ["secret"]
+public_globals = ["candidate"]
+entry = "main"
+halt = "exit"
+features = "memory-access,control-flow"

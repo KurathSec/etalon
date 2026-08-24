@@ -68,6 +68,9 @@ def main() -> int:
                     help="recompute recall (exploit and policy) from committed "
                          "verdicts.jsonl, running no adapters. The policy metric is a "
                          "re-reading of the same observations, not a new measurement.")
+    ap.add_argument("--pair", help="score only this pair and MERGE its rows into "
+                    "verdicts.jsonl, leaving the other pairs' committed rows untouched "
+                    "(the existing statistical rows are the sealed pilot values).")
     a = ap.parse_args()
 
     tools = tomllib.loads((REPO / "data" / "tools.toml").read_text())["tool"]
@@ -83,6 +86,8 @@ def main() -> int:
             break
         adapter = load_adapter(tool_name)
         for pair in pairs:
+            if a.pair and pair.name != a.pair:
+                continue
             man = tomllib.loads((pair / "pair.toml").read_text())
             role = man["pair"].get("role")
             tier = man["pair"].get("tier")
@@ -121,6 +126,15 @@ def main() -> int:
                         "vulnerable_max_t": vuln.get("max_t"),
                         "patched_max_t": patch.get("max_t")})
             rows.append(row)
+
+    # With --pair, keep every other pair's committed rows (the sealed pilot
+    # statistics) and replace only this pair's, so recall below is computed over the
+    # merged corpus without re-perturbing the existing statistical verdicts.
+    if a.pair and not a.recall_only:
+        existing = [json.loads(l) for l
+                    in (REPO / "results" / "verdicts.jsonl").read_text().splitlines()
+                    if l.strip()]
+        rows = [r for r in existing if r.get("pair") != a.pair] + rows
 
     # Recall per (tool, class) over applicable recall-eligible corpus pairs, and
     # the tier-C detections that inform the crossover but never a denominator.

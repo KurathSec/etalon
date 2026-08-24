@@ -6,18 +6,30 @@
     "cpu": "Neoverse-V1 (Graviton3, CPU part 0xd40), 16 cores",
     "os": "Ubuntu 26.04",
     "compiler": "gcc 15.2.0 (aarch64)",
-    "timer": "cntvct_el0 at 1.05 GHz; PMCCNTR_EL0 SIGILLs from userspace on the virtualized instance, so the coarse virtual counter averaged over a dependency chain was used and was sufficient"
+    "timer": "cntvct_el0 at 1.05 GHz; PMCCNTR_EL0 SIGILLs from userspace on the virtualized instance, so the coarse virtual counter averaged over a dependency chain was used and was sufficient",
+    "counter_ghz": 1.05
   },
   "regenerable": "only on an aarch64 host. This is an acquired observation, like the pair's ARM key recovery and the imported nonce-leak traces, not a number bin/regen.py produces on the x86 build host. The acquisition script is pairs/kyberslash/graviton/.",
   "results": {
     "codegen": {
       "note": "the KyberSlash vulnerable source emits a hardware division only at -Os, the same pattern as x86 (idiv only at -Os), now on a third architecture",
-      "udiv_in_coeff_to_bit": {"O0": 0, "Os": 1, "O2": 0, "O3": 0},
+      "udiv_in_coeff_to_bit": {
+        "O0": 0,
+        "Os": 1,
+        "O2": 0,
+        "O3": 0
+      },
       "os_instruction": "udiv w0, w0, w2"
     },
     "udiv_latency_operand_dependent": {
       "note": "serial dependency chain; ticks/udiv rises with dividend magnitude, matching ARM's documented W-form 5 to 12 cycle range",
-      "ticks_per_udiv": {"dividend_1": 2.4301, "dividend_3000": 2.4309, "dividend_8000": 2.8353, "dividend_1e6": 3.2399, "dividend_4e9": 4.4556}
+      "ticks_per_udiv": {
+        "dividend_1": 2.4301,
+        "dividend_3000": 2.4309,
+        "dividend_8000": 2.8353,
+        "dividend_1e6": 3.2399,
+        "dividend_4e9": 4.4556
+      }
     },
     "kyberslash_operand_range_step": {
       "note": "a step at dividend = divisor = 3329: below it the quotient is 0 and udiv finishes one iteration sooner. The leak is one bit per coefficient, whether the coefficient exceeds about 833.",

@@ -19,6 +19,10 @@ level     = "binary"
 observes  = ["latency"]
 detects_mechanisms = ["secret-branch", "variable-latency-op"]
 secret_model = "two_class_sampling"
+# dudect's pre-registered decision bands (PR-1): a leak above band_leak,
+# clean below band_clean, inconclusive between.
+band_leak = 500
+band_clean = 10
 architectures = ["x86_64"]
 # dudect needs a runnable harness that feeds two input classes. A pair scored
 # only on recorded observations (Minerva, TPM-FAIL) has no such harness here, so

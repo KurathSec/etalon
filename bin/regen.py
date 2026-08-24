@@ -288,6 +288,18 @@ def as_tex(report: dict) -> str:
         if (r.get("tool") == "dudect" and r.get("pair") == "kyberslash"
                 and r.get("patched_max_t") is not None):
             out.append(tex_macro("tDudectDivisionPatched", f"{r['patched_max_t']:.2f}"))
+    tp = REPO / "data" / "tools.toml"
+    if tp.exists():
+        dud = tomllib.loads(tp.read_text()).get("tool", {}).get("dudect", {})
+        if "band_leak" in dud:
+            emit("dudectBandLeak", dud["band_leak"])
+        if "band_clean" in dud:
+            emit("dudectBandClean", dud["band_clean"])
+    gp2 = REPO / "results" / "kyberslash_graviton.json"
+    if gp2.exists():
+        ghz = json.loads(gp2.read_text()).get("host", {}).get("counter_ghz")
+        if ghz is not None:
+            out.append(tex_macro("gravCounterGHz", f"{ghz:.2f}"))
     for t in ("A", "B", "C"):
         emit(f"nTier{t}", report["corpus"]["by_tier"].get(t, 0))
     emit("nCensusIncluded", cen["census_included"])

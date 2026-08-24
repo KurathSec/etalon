@@ -139,7 +139,26 @@ exploit/policy scoring (`scored_against` in `data/tools.toml`, `--recall-only` i
 `bin/score.py`, PR-2 sealed) gives timecop a policy recall of one of one where its
 exploit recall is zero of one; recovery cards and a divergence table are generated
 from committed data (`bin/recovery_cards.py`); and the bibliography gains Magma,
-LAVA, Jancar, DATA, Microwalk, ct-verif, Arm DIT and Intel DOITM. Still outstanding,
-and deliberately not faked: a new deployed tier-A pair to grow the recall past
-`n=1`, detection curves over amplification factors, and a multi-seed success-rate
-measurement, all genuine multi-day experimental work.
+LAVA, Jancar, DATA, Microwalk, ct-verif, Arm DIT and Intel DOITM. The detection
+curve over amplification factors and the multi-seed recovery-success measurement
+landed too: amplifying the division to 32x still surfaces no step (max |t| 11.6
+against the 500 leak band), and the nonce recovery verifies on 24 of 24 random
+signature subsets.
+
+A new deployed tier-A pair was built rather than faked, against a verifiable CVE:
+`hmac-timing` reproduces CVE-2013-2061, OpenVPN's non-constant-time HMAC
+comparison, whose recovery forges a valid tag byte by byte from the timing and
+verifies against a commitment to the true tag (ORC-1/2 both pass). All four
+analysers detect it, and the taint checker DISCRIMINATES here (exploit recall one
+of one) where it could not on the nonce pairs, because the OpenVPN fix deletes the
+branch while the OpenSSL fix leaves a residual it still flags: its
+non-discrimination is mechanism-determined, not a fixed failing. This takes tier A
+from two pairs to three, recall-eligible from four to five, coverage from six of
+eleven to seven of eleven (it covers the early-exit-comparison census cell), and
+the recall matrix from four cells to eight across all four tools and three classes,
+with varlat and binsec earning their first tier-A recall rows.
+
+Still deliberately not faked, because both need hardware this repository does not
+have: promoting KyberSlash to tier A (its recovery is exploitable only on a host
+with a variable-latency divider, which this x86 host, measured constant-time, is
+not), and reproducing the loud-end Cortex-A7 magnitude.

@@ -64,13 +64,23 @@ def applicable(tool: dict, pair_mechanisms: list, has_harness: bool) -> tuple[bo
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--recall-only", action="store_true",
+                    help="recompute recall (exploit and policy) from committed "
+                         "verdicts.jsonl, running no adapters. The policy metric is a "
+                         "re-reading of the same observations, not a new measurement.")
     a = ap.parse_args()
 
     tools = tomllib.loads((REPO / "data" / "tools.toml").read_text())["tool"]
     pairs = sorted(p.parent for p in (REPO / "pairs").glob("*/pair.toml"))
 
     rows = []
+    if a.recall_only:
+        rows = [json.loads(l) for l
+                in (REPO / "results" / "verdicts.jsonl").read_text().splitlines()
+                if l.strip()]
     for tool_name, tool in tools.items():
+        if a.recall_only:
+            break
         adapter = load_adapter(tool_name)
         for pair in pairs:
             man = tomllib.loads((pair / "pair.toml").read_text())
@@ -135,6 +145,37 @@ def main() -> int:
                        "outcomes": [[p, o] for p, o in pair_outcomes]})
     tier_c.sort(key=lambda d: (d["pair"], d["tool"]))
 
+    # Policy recall (PR-2). A policy tool detects the policy violation on the
+    # vulnerable arm whenever it reports a leak there, independently of the patched
+    # arm, because the corpus does not certify the patched arm constant-time. This
+    # separates a policy tool's real detection from the discrimination metric, so a
+    # tool that also flags an uncertified patched arm is not scored a bare failure.
+    scored = {t: tools[t].get("scored_against", "exploit") for t in tools}
+    pol_denom = defaultdict(list)
+    cross = []
+    for r in rows:
+        if (not r.get("applicable") or r.get("role") != "corpus"
+                or r.get("tier") not in ("A", "B")):
+            continue
+        cls_s = "/".join(f"{k}={v}" for k, v in sorted(r["class"].items()))
+        vuln_leak = r.get("vulnerable_status") == "leak_reported"
+        cross.append({"tool": r["tool"], "pair": r["pair"],
+                      "scored_against": scored.get(r["tool"], "exploit"),
+                      "exploit_discriminates": r.get("outcome") == "detected",
+                      "policy_detects_vulnerable": vuln_leak,
+                      "flags_uncertified_patched_arm":
+                          r.get("patched_status") == "leak_reported"})
+        if scored.get(r["tool"]) == "policy":
+            pol_denom[(r["tool"], cls_s)].append((r["pair"], vuln_leak))
+    policy_recall = []
+    for (tool, cls), pv in sorted(pol_denom.items()):
+        hits = sum(1 for _, v in pv if v)
+        policy_recall.append({"tool": tool, "class": cls, "detected": hits,
+                              "n": len(pv), "recall": f"{hits}/{len(pv)}",
+                              "outcomes": [[p, "policy-detected" if v else "policy-clean"]
+                                           for p, v in pv]})
+    cross.sort(key=lambda d: (d["pair"], d["tool"]))
+
     report = {"rows": rows, "recall_per_class": recall,
               "tier_c_detections": tier_c,
               "note": "recall over applicable, recall-eligible (tier A or B) corpus "
@@ -151,6 +192,19 @@ def main() -> int:
     doc.setdefault("round", "PR-1")
     doc.setdefault("supersedes_pilot", True)
     doc["recall_per_class"] = recall
+    doc["exploit_recall_note"] = ("recall_per_class is exploit recall: red on the "
+                                  "vulnerable arm and clean on the patched arm.")
+    doc["policy_recall_per_class"] = policy_recall
+    doc["cross_table"] = cross
+    doc["policy_recall_note"] = ("PR-2. A policy tool is scored on whether it flags the "
+                                 "policy violation on the vulnerable arm, not on "
+                                 "discriminating an uncertified patched arm. timecop's "
+                                 "exploit recall on the nonce pairs is 0/1 because it "
+                                 "flags both arms, but its policy recall is 1/1 because "
+                                 "it correctly reports the secret-dependent operation on "
+                                 "the vulnerable arm; the patched-arm flag is the "
+                                 "unadjudicated site-local false positive of the threats "
+                                 "section, not a discrimination failure.")
     doc["tier_c_detections"] = tier_c
     rpath.write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8")
 

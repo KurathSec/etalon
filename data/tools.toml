@@ -13,6 +13,7 @@ version = "dc269651"
 # Declared capabilities are sourced from the tool's own literature, not asserted by
 # us, so the applicability computation rests on documentation rather than opinion.
 capability_source = "Reparaz, Balasch, Verbauwhede, DATE 2017 [dudect]: a Welch t-test over two input-timing classes; observes execution latency only."
+scored_against = "exploit"  # measures the timing magnitude an attacker consumes
 image   = "localhost/ct-toolchain/dudect:1"
 technique = "statistical"
 level     = "binary"
@@ -36,6 +37,7 @@ platform_sensitive = true
 [tool.timecop]
 version = "valgrind-3.19.0"
 capability_source = "Schwabe, TIMECOP (ctgrind lineage) [timecop]: poisons secret bytes under memcheck and reports secret-dependent branches and memory accesses; does not model variable-latency instructions on defined data."
+scored_against = "policy"  # reports a secret-dependent branch/address, exploitable or not
 image   = "localhost/ct-toolchain/timecop:1"
 technique = "dynamic-taint"
 level     = "binary"
@@ -54,6 +56,7 @@ platform_sensitive = false
 [tool.varlat]
 version = "valgrind-3.22.0+varlat"
 capability_source = "Chia, varlat Valgrind patch shipped with KyberSlash, TCHES 2025(2) [kyberslash]: flags variable-latency instruction operands on secret or uninitialised data."
+scored_against = "policy"  # reports a variable-latency instruction on secret operands
 # Provenance, disclosed because it is a by-construction relationship: varlat is the
 # instrument the KyberSlash authors wrote to catch that exact division class, so its
 # detection of KyberSlash is guaranteed by construction and is reported as such. The
@@ -76,6 +79,7 @@ platform_sensitive = false
 [tool.binsec]
 version = "binsec-checkct"
 capability_source = "Daniel, Bardin, Rezk, Binsec/Rel, S&P 2020 [binsecrel]: relational symbolic execution deciding constant-time over explored paths; the divisor/dividend features are the later extension that reaches the division class."
+scored_against = "policy"  # decides a constant-time policy over explored paths
 # Provenance: binsec's divisor/dividend constant-time features may postdate the
 # KyberSlash disclosure, so its detection of that pair carries the same
 # by-construction caveat as varlat. The pair is tier C and outside every denominator.

@@ -245,11 +245,21 @@ def as_tex(report: dict) -> str:
     # an aggregate recall figure may be stated.
     rp = REPO / "results" / "recall.json"
     recall_doc = json.loads(rp.read_text()) if rp.exists() else {}
+    def _obs(cls):
+        return ("Latency" if "observable=latency" in cls
+                else "Address" if "observable=address-data" in cls else "")
     for r in recall_doc.get("recall_per_class", []):
-        tool = r["tool"]
-        obs = "Latency" if "observable=latency" in r["class"] else "Address" if "observable=address-data" in r["class"] else ""
+        obs = _obs(r["class"])
         if obs:
-            out.append(tex_macro(f"recall{tool.capitalize()}{obs}",
+            out.append(tex_macro(f"recall{r['tool'].capitalize()}{obs}",
+                                 r["recall"].replace("/", "\\,of\\,")))
+    # Policy recall (PR-2): a policy tool's detection of the policy violation on the
+    # vulnerable arm, the number that separates timecop's real detection from its
+    # inability to discriminate an uncertified patched arm.
+    for r in recall_doc.get("policy_recall_per_class", []):
+        obs = _obs(r["class"])
+        if obs:
+            out.append(tex_macro(f"policyRecall{r['tool'].capitalize()}{obs}",
                                  r["recall"].replace("/", "\\,of\\,")))
     # tier-C detection outcomes (the crossover), per pair and tool, so the paper
     # can name e.g. dudect missed while varlat and binsec detected KyberSlash.

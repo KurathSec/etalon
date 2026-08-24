@@ -52,8 +52,20 @@ Committing the observations is what makes each known answer reproducible by
 anyone. Every pair declares an evidence tier: A, acquired and recovered here; B,
 recovered here on published observations; C, a published exploit exists but was
 not re-run. **Tier C items are listed and never enter a recall denominator**,
-because a corpus that labels items by "a tool flagged it and upstream patched
-it" is scoring tools against their own past output.
+because the recovery was not re-run on the reproduction, so we cannot certify that
+the reproduction preserved the exploitable mechanism rather than only the
+instruction that carries it. The reason is reproduction drift, not circularity:
+these pairs do carry published key recoveries, so their exploitability is not in
+doubt; what is missing is a rerun here.
+
+Corrected 2026-08-24 (UTC): this paragraph used to justify the tier-C exclusion as
+circularity ("a corpus that labels items by 'a tool flagged it and upstream patched
+it' is scoring tools against their own past output"). That was inaccurate for
+KyberSlash, the rejection sampler, and the ladder leak, which all carry published
+key recoveries, so the real reason is reproduction drift. The genuine circularity
+the corpus does carry, varlat being the Valgrind the KyberSlash authors wrote to
+catch that exact class, is now marked by construction in `data/tools.toml` and kept
+out of every denominator by the tier-C rule.
 
 ## Toolchain pinning
 
@@ -112,3 +124,22 @@ consistency), whose findings were applied, and it carries a threat model, a
 per-tool blind-spot matrix, a bibliography whose eighteen references are all
 verified, and a number-gate test that a hand-typed figure cannot survive
 regeneration.
+
+Revised 2026-08-24 (UTC), against a third-party review. Grounding the review
+against the source and data separated genuine defects from staleness. The changes
+that landed: an x86 leak-presence microbenchmark (`pairs/kyberslash/x86/`,
+regenerable on this host) measures the division constant-time on the acquisition
+host, so F1 is reframed from "dudect misses a leak the others catch" to "a timing
+test reports a host-conditional truth while instruction-class tools report a
+host-independent policy, and the two answer different questions"; the tier-C
+exclusion is corrected from circularity to reproduction drift; the patched nonce
+arms are reported at their true no-decision-band t-statistics rather than implied
+clean; the nonce amplification factor is disclosed as a generated number; a dual
+exploit/policy scoring (`scored_against` in `data/tools.toml`, `--recall-only` in
+`bin/score.py`, PR-2 sealed) gives timecop a policy recall of one of one where its
+exploit recall is zero of one; recovery cards and a divergence table are generated
+from committed data (`bin/recovery_cards.py`); and the bibliography gains Magma,
+LAVA, Jancar, DATA, Microwalk, ct-verif, Arm DIT and Intel DOITM. Still outstanding,
+and deliberately not faked: a new deployed tier-A pair to grow the recall past
+`n=1`, detection curves over amplification factors, and a multi-seed success-rate
+measurement, all genuine multi-day experimental work.

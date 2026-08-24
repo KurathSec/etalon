@@ -14,6 +14,7 @@ TCHES="$REPO/paper/tches"
 
 python3 "$REPO/bin/regen.py" --tex "$TCHES/numbers.tex"
 python3 "$REPO/bin/figures.py"
+python3 "$REPO/bin/recovery_cards.py"
 
 for pkg in sectsty floatrow; do
   if [ ! -f "$TCHES/$pkg.sty" ] && ! kpsewhich "$pkg.sty" >/dev/null 2>&1; then

@@ -201,5 +201,23 @@ Still deliberately not done rather than faked: the recall classes remain a pilot
 `n=1`. A real recall benchmark at `n>=3` needs distinct, recovery-certified nonce
 mechanisms, or from-source library builds this offline environment cannot run;
 manufacturing replicate pairs would inflate `n` without establishing a rate, so the
-pilot framing stands and is stated as such in the paper. ARM promotion of KyberSlash
-and the Cortex-A7 loud end still need hardware.
+pilot framing stands and is stated as such in the paper. The Cortex-A7 loud end still
+needs hardware.
+
+ARM phase, run 2026-08-24 (UTC) on a rented Graviton3 (Neoverse-V1, c7g.xlarge),
+terminated after. It corrected the earlier Graviton finding as much as confirmed it.
+Confirmed: gcc emits a hardware `udiv` at `-Os` only, committed as a real aarch64
+disassembly under `locks/textprints/`, settling the open `udiv`-vs-`idiv` question (it
+narrows the signed source to an unsigned `udiv` where x86 emits a signed `idiv`).
+Corrected: the 0.405-tick, 5.8% signal is the udiv's operand-**magnitude** dependence,
+not a step at a single-coefficient boundary; the adjacent-coefficient boundary step,
+measured directly, is sub-noise. The noise floor is now derived by a committed program
+(`ks_range_arm.c`, `measure_arm.py`) rather than a hand-entered constant, and the 5.8%
+carries a tight CI. The W6 control: dudect run on the aarch64 build with the virtual
+counter (the cycle-accurate PMU is privileged) reads the division **clean**, its tau
+within the null band, because the per-call magnitude signal sits below the counter
+resolution even though a batch estimator resolves 5.8%. So the statistical timing test
+reads clean on both x86 and Graviton; the instruction-class tools flag the `udiv`
+regardless. The tier-A recovery was attempted and is not feasible cheaply here (sub-noise
+single-bit, dudect clean), so KyberSlash stays tier C with a measured reason. The paper
+prose, macros, and `fig-graviton` were corrected throughout.

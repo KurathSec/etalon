@@ -31,7 +31,7 @@ static double tsc_ghz(void){
   double ns=(b.tv_sec-a.tv_sec)*1e9+(b.tv_nsec-a.tv_nsec);
   return (double)(t1-t0)/ns;
 }
-#define K 41
+#define K 201
 int main(void){
   printf("RESULT tsc_ghz %.4f\n", tsc_ghz());
   /* wide range for the latency-vs-operand panel (best-of to shed turbo dips) */

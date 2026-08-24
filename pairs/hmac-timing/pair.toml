@@ -4,6 +4,7 @@ schema = "pair/1"
 id      = "hmac-timing"
 title   = "Non-constant-time HMAC comparison (OpenVPN, CVE-2013-2061)"
 role    = "corpus"
+synthetic = false
 status  = "active"
 tier    = "A"
 added   = "2026-08-24"
@@ -117,7 +118,9 @@ a 2^128 search. Run against the patched arm it fails, which is control ORC-2.
 
 [cost]
 effort_hours = 4
-note = "KT3 is a schema field. A real corpus pair, priced as one: mechanism reproduction, acquisition, recovery, and the four-tool scoring."
+portable_hours = 4
+acquisition_hours = 1
+note = "KT3 is a schema field. A real corpus pair, priced as one: mechanism reproduction, acquisition (real, tier A), recovery, and the four-tool scoring. Portable is the from-cold-clone half (build plus byte-by-byte forgery); acquisition is the platform-bound timing half."
 
 [divergence]
 from_deployment = """

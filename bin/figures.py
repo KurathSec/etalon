@@ -169,22 +169,27 @@ def fig_x86_idiv():
     a.set_xscale("log")
     a.set_xlabel("dividend magnitude")
     a.set_ylabel("TSC ticks / div")
-    a.set_title("latency is flat in the operand", fontsize=8.5)
+    a.set_title("per-div latency vs dividend", fontsize=8.5)
 
-    lo, hi = step["coeff_below_833_ticks"], step["coeff_at_or_above_833_ticks"]
+    # Right panel: the operand step at the KyberSlash boundary (coeff 832 -> 833) as
+    # the robust paired-difference median, with the same-operand noise floor as its
+    # error bar, against zero. Both quantities come from one interleaved paired loop,
+    # so the figure and the paper macro report the same number; the step straddles
+    # zero within noise, which is why dudect's clean verdict is correct on this host.
+    signed_step = step["step_ticks"]
     noise = step["noise_floor_ticks"]
-    mid = (lo + hi) / 2
-    b.bar([0, 1], [lo, hi], width=0.6, color=[MUTE, WARM])
-    # the noise floor as an error band around the pair mean, to show the step is inside it
-    b.errorbar([0, 1], [mid, mid], yerr=noise, fmt="none", ecolor=INK,
-               elinewidth=1.1, capsize=4)
-    b.set_xticks([0, 1])
-    b.set_xticklabels(["coeff\n< 833", "coeff\n$\\geq$ 833"], fontsize=8)
-    b.set_ylim(mid - max(noise, abs(hi - lo)) * 2.2, mid + max(noise, abs(hi - lo)) * 2.2)
-    b.set_ylabel("TSC ticks / div")
-    b.set_title("no step: within noise", fontsize=8.5)
-    b.annotate(f"step {abs(hi - lo):.3f}\n< noise {noise:.2f}", xy=(0.5, mid),
-               xytext=(0.5, mid + noise * 1.1), fontsize=7.5, color=INK, ha="center")
+    b.axhline(0, color=MUTE, lw=0.8, ls="--")
+    b.errorbar([0], [signed_step], yerr=noise, fmt="o", color=WARM, ms=6,
+               ecolor=INK, elinewidth=1.2, capsize=5)
+    b.set_xticks([0])
+    b.set_xticklabels(["coeff 832 $\\to$ 833"], fontsize=8)
+    b.set_xlim(-0.7, 0.7)
+    lim = max(noise, abs(signed_step)) * 2.4
+    b.set_ylim(-lim, lim)
+    b.set_ylabel("paired step (TSC ticks)")
+    b.set_title("no step: within noise of 0", fontsize=8.5)
+    b.annotate(f"step {abs(signed_step):.3f}\n$\\pm$ noise {noise:.3f}", xy=(0, signed_step),
+               xytext=(0.14, lim * 0.45), fontsize=7.5, color=INK, ha="left")
     fig.savefig(FIG / "fig-x86-idiv.pdf")
     plt.close(fig)
 

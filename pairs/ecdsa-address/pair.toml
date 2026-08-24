@@ -44,15 +44,17 @@ defining channel is the address.
 upstream_repo   = "reproduction of the OpenSSL 1.0.1u nonce-leak class"
 disclosed       = "2020-08-01"
 doi             = ["10.5555/3489212.3489301"]
-advisory        = ["CVE-2019-13627"]
+advisory        = []
 licence         = "MIT"
 redistributable = true
 note = """
-A reproduction of the address-leak nonce class (the OpenSSL 1.0.1u leak analysed
-by Weiser, Schrammel, Bodner and Spreitzer, USENIX Security 2020, and the same
-CVE family as Minerva). The mechanism is faithful, the build is ours, and the
-divergence is recorded below. The DOI is a best-effort proceedings identifier;
-the CVE is the load-bearing one.
+A reproduction of the OpenSSL 1.0.1u address-leak nonce class analysed by Weiser,
+Schrammel, Bodner and Spreitzer, USENIX Security 2020. This is a mechanism
+reproduction with no single matching CVE: the earlier draft assigned it
+CVE-2019-13627, but that is the libgcrypt Minerva assignment and this pair is the
+OpenSSL address-trace class, a different leak, so the CVE is removed and the DOI
+(Weiser et al.) is the load-bearing provenance. Admission rests on that DOI. The
+mechanism is faithful, the build is ours, and the divergence is recorded below.
 """
 
 [[build]]

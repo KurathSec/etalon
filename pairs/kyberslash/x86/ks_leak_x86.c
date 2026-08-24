@@ -3,10 +3,13 @@
 #include <x86intrin.h>
 #define KYBER_Q 3329
 /* The real KyberSlash coeff_to_bit, with the division FORCED to a hardware idiv via
-   inline asm. Forcing is necessary on this host because its gcc 16.1.1 lowers the
-   division to a reciprocal multiply even at -Os, unlike the pinned gcc-12.2.0 in the
-   emission map, which emits the idiv; this file measures what the idiv-emitting build
-   does, two-class fixed-vs-random, directly comparable to the Graviton end-to-end. */
+   inline asm. The host gcc 16.1.1 already emits the idiv at -Os (only), matching the
+   pinned gcc-12.2.0 in the emission map; forcing it here makes the measurement
+   compiler-independent and holds the idiv fixed regardless of the -O level used to
+   build this file. Two-class fixed-vs-random, directly comparable to the Graviton
+   end-to-end. The measured operand is a signed int in coeff_to_bit; divl is used in
+   the forcing asm only to time the shared 32-bit integer divider (idiv and divl share
+   the unit and are latency-equivalent for these non-negative operands). */
 static uint16_t coeff_to_bit(uint16_t t){
   t += ((int16_t)t >> 15) & KYBER_Q;
   uint32_t d=(uint32_t)((t<<1)+KYBER_Q/2), q;

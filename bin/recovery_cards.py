@@ -40,6 +40,14 @@ def amp_factor(pair_dir: Path):
         m = re.search(r"(\d+)\s*\*\s*bits", v.read_text())
         if m:
             return m.group(1)
+    # Some pairs amplify in a separate per-byte work unit rather than in
+    # vulnerable.c (e.g. hmac-timing's byte_work loop), so read that too. The loop
+    # bound is the per-byte amplification factor over a single deployed compare.
+    w = pair_dir / "src" / "work.c"
+    if w.exists():
+        m = re.search(r"for\s*\(\s*int\s+i\s*=\s*0;\s*i\s*<\s*(\d+);", w.read_text())
+        if m:
+            return m.group(1)
     return None
 
 

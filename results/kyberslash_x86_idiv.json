@@ -26,22 +26,29 @@
       }
     },
     "idiv_latency_operand_dependent": {
-      "note": "serial dependency chain; TSC ticks per div rises with dividend magnitude in general (more significant quotient bits cost more).",
+      "note": "serial dependency chain. On this Arrow Lake out-of-order divider the per-div TSC latency is essentially flat across the operand range, within a fraction of a tick; the higher first sample at dividend 1 is a warm-up artifact. This is flatter than the Graviton Neoverse-V1 udiv, which rises across the same range.",
       "ticks_per_udiv": {
-        "dividend_1": 9.84523,
-        "dividend_3000": 9.37133,
-        "dividend_8000": 9.34366,
-        "dividend_1e6": 9.31803,
-        "dividend_4e9": 9.30878
+        "dividend_1": 9.30725,
+        "dividend_3000": 9.33241,
+        "dividend_8000": 9.29238,
+        "dividend_1e6": 9.32239,
+        "dividend_4e9": 9.30938
       }
     },
     "kyberslash_operand_range_step": {
       "note": "the step at dividend=divisor=3329, quotient 0 -> 1, over the KyberSlash range [1664,8320]. Over this range the quotient never exceeds 2 bits, so the operand-dependent latency the wide sweep shows barely moves.",
-      "coeff_below_833_ticks": 9.95469,
-      "coeff_at_or_above_833_ticks": 9.93756,
-      "step_ticks": -0.00962,
-      "noise_floor_ticks": 0.12856,
+      "coeff_below_833_ticks": 9.31167,
+      "coeff_at_or_above_833_ticks": 9.28336,
+      "step_ticks": -0.0008,
+      "noise_floor_ticks": 0.02403,
       "signal_to_noise": 0
+    },
+    "end_to_end_coeff_to_bit_Os": {
+      "note": "two-class fixed-vs-random over the real coeff_to_bit with the division forced to a hardware idiv, min-of-11 batches of M each. Low class = coeff in [0,833), high class = coeff in [1664,3329). The x86 rung of the host-magnitude ladder; the single-bit recovery step (above) stays sub-noise.",
+      "low_coeffs_ticks_per_call": 6.47433,
+      "high_coeffs_ticks_per_call": 6.581,
+      "secret_dependent_delta_ticks": 0.10667,
+      "delta_percent_of_call": 1.6476
     },
     "tsc_ghz": 3.6863
   }

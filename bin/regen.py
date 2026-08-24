@@ -94,6 +94,18 @@ def census_section() -> dict:
         if facets:
             covered.add(tuple(sorted(facets.items())))
     uncovered = attested - covered
+    # Human-readable names of the uncovered cells, from the census rows themselves,
+    # so the paper's uncovered-cell list is generated and cannot drift (it once
+    # listed a cell that a later pair had already covered). One name per uncovered
+    # facet tuple, first by census id.
+    uncovered_names = []
+    seen = set()
+    for r in sorted(included, key=lambda x: x.get("id", "")):
+        cell = tuple(sorted(r["facets"].items()))
+        if cell in uncovered and cell not in seen:
+            seen.add(cell)
+            # Short name only (drop the parenthetical gloss), for the terse prose list.
+            uncovered_names.append(r["name"].split(" (")[0].strip())
     return {
         # census_status travels with the number, because a seed census makes
         # coverage look better than it is.
@@ -106,6 +118,7 @@ def census_section() -> dict:
                               "coverage of attested leak-class cells"),
         "uncovered_cells": sorted(
             "/".join(f"{k}={v}" for k, v in cell) for cell in uncovered),
+        "uncovered_names": uncovered_names,
     }
 
 
@@ -117,9 +130,25 @@ def verdict_section() -> dict:
     for r in applicable:
         o = r.get("outcome", "unset")
         outcomes[o] = outcomes.get(o, 0) + 1
+    # The three exclusion reasons are genuinely different and were once all
+    # reported as "excluded by construction": a mechanism intersection that is
+    # empty (a real by-construction exclusion), a pair with no runnable harness
+    # built here, and a pair that declares no mechanism at all. Count them apart.
+    mech = noharn = nullmech = 0
+    for r in inapplicable:
+        reason = r.get("reason", "")
+        if reason.startswith("mechanism:"):
+            mech += 1
+        elif "no runnable harness" in reason:
+            noharn += 1
+        elif "no mechanism a code-running analyser detects" in reason:
+            nullmech += 1
     return {"scored_rows": len(rows),
             "applicable": len(applicable),
             "inapplicable": len(inapplicable),
+            "inapplicable_mechanism": mech,
+            "inapplicable_no_harness": noharn,
+            "inapplicable_null_mechanism": nullmech,
             "outcomes": outcomes if outcomes else NA}
 
 
@@ -223,11 +252,25 @@ def as_tex(report: dict) -> str:
     # rather than the six being retyped beside the generated eleven.
     emit("nCoveredCells", cen["covered_cells"].numerator)
     emit("nUncoveredCells", len(cen["uncovered_cells"]))
+    # The uncovered cells by name, generated so the prose list cannot go stale.
+    unames = cen["uncovered_names"]
+    if unames:
+        joined = (unames[0] if len(unames) == 1
+                  else ", ".join(unames[:-1]) + ", and " + unames[-1])
+        for ch, rep in (("\\", ""), ("#", "\\#"), ("&", "\\&"),
+                        ("_", "\\_"), ("%", "\\%"), ("$", "\\$")):
+            joined = joined.replace(ch, rep)
+        emit("uncoveredCellNames", joined)
+    else:
+        emit("uncoveredCellNames", None)
 
     v = report["verdicts"]
     emit("nScoredRows", v["scored_rows"])
     emit("nApplicable", v["applicable"])
     emit("nInapplicable", v["inapplicable"])
+    emit("nInapplicableMechanism", v["inapplicable_mechanism"])
+    emit("nInapplicableNoHarness", v["inapplicable_no_harness"])
+    emit("nInapplicableNullMechanism", v["inapplicable_null_mechanism"])
     # Detected and missed are real counts when applicable rows exist, and NA when
     # none do. A default 0 over an empty applicable set is exactly the mean([])
     # defect this module refuses: it would read as "measured, found nothing".
@@ -345,6 +388,12 @@ def as_tex(report: dict) -> str:
         m = re.search(r"#define\s+AMP\s+(\d+)", amp_src.read_text())
         if m:
             emit("ampNonce", int(m.group(1)))
+    # hmac-timing amplifies in a per-byte work loop, not a #define, so read its bound.
+    amp_hmac = REPO / "pairs" / "hmac-timing" / "src" / "work.c"
+    if amp_hmac.exists():
+        m = re.search(r"for\s*\(\s*int\s+i\s*=\s*0;\s*i\s*<\s*(\d+);", amp_hmac.read_text())
+        if m:
+            emit("ampHmac", int(m.group(1)))
     tp = REPO / "data" / "tools.toml"
     if tp.exists():
         dud = tomllib.loads(tp.read_text()).get("tool", {}).get("dudect", {})
@@ -373,6 +422,13 @@ def as_tex(report: dict) -> str:
         out.append(tex_macro("hostIdivReciprocal", str(cg["O2"])))
         if xr.get("tsc_ghz"):
             out.append(tex_macro("hostTscGHz", f"{xr['tsc_ghz']:.2f}"))
+        # x86 end-to-end two-class delta: the x86 rung of the host-magnitude ladder
+        # (F3), against gravDeltaPercent on Neoverse-V1. Distinct from the single-bit
+        # step above, which is what F1 rests on.
+        e2x = xr.get("end_to_end_coeff_to_bit_Os")
+        if e2x and e2x.get("delta_percent_of_call") is not None:
+            out.append(tex_macro("hostDeltaTicks", f"{e2x['secret_dependent_delta_ticks']:.3f}"))
+            out.append(tex_macro("hostDeltaPercent", f"{e2x['delta_percent_of_call']:.1f}\\%"))
     # Recovery robustness: the vendored lattice attack's success over random signature
     # subsets, and its wall time, so the recovery card carries a measured success rate.
     rr = REPO / "results" / "recovery_robustness.json"

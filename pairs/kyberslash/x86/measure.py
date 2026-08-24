@@ -44,11 +44,19 @@ def idiv_count_source(opt):
                    check=True)
     d = subprocess.run(["objdump", "-d", str(obj)], capture_output=True, text=True).stdout
     obj.unlink(missing_ok=True)
-    return len(re.findall(r"\b[a-z]*div[a-z]?\s", d))
+    # Integer division only (div/idiv, any size suffix); NOT the SSE divsd/divss,
+    # which a loose match would over-count. A reciprocal-multiply lowering emits no
+    # div at all, so a count of 0 means the compiler removed the division here.
+    return len(re.findall(r"\b(?:i?div)[bwlq]?\s", d))
 
 def main():
     lat = run(build("idiv_lat_x86.c", ["-O2"]))
     rng = run(build("ks_range_x86.c", ["-O2"]))
+    # End-to-end two-class coeff_to_bit, the direct x86 analogue of the Graviton
+    # ks_leak.c measurement, so the x86 null is grounded end to end and not only on
+    # the isolated divl chain. On this out-of-order divider the low-vs-high class
+    # difference is small but nonzero: the x86 rung of the host-magnitude ladder.
+    leak = run(build("ks_leak_x86.c", ["-O2"]))
     # The end-to-end binary is the REAL coeff_to_bit at -Os, where the emission map
     # records gcc emitting a hardware division. Confirm the idiv is actually there.
     div_in_os = idiv_count_source("Os")
@@ -73,8 +81,11 @@ def main():
                 "idiv_in_coeff_to_bit": {"Os": div_in_os, "O2": div_in_o2},
             },
             "idiv_latency_operand_dependent": {
-                "note": "serial dependency chain; TSC ticks per div rises with dividend "
-                        "magnitude in general (more significant quotient bits cost more).",
+                "note": "serial dependency chain. On this Arrow Lake out-of-order divider "
+                        "the per-div TSC latency is essentially flat across the operand range, "
+                        "within a fraction of a tick; the higher first sample at dividend 1 is a "
+                        "warm-up artifact. This is flatter than the Graviton Neoverse-V1 udiv, "
+                        "which rises across the same range.",
                 "ticks_per_udiv": {
                     "dividend_1": lat.get("lat_dividend_1"),
                     "dividend_3000": lat.get("lat_dividend_3000"),
@@ -93,6 +104,16 @@ def main():
                 "step_ticks": step,
                 "noise_floor_ticks": noise,
                 "signal_to_noise": snr,
+            },
+            "end_to_end_coeff_to_bit_Os": {
+                "note": "two-class fixed-vs-random over the real coeff_to_bit with the division "
+                        "forced to a hardware idiv, min-of-11 batches of M each. Low class = coeff "
+                        "in [0,833), high class = coeff in [1664,3329). The x86 rung of the "
+                        "host-magnitude ladder; the single-bit recovery step (above) stays sub-noise.",
+                "low_coeffs_ticks_per_call": leak.get("e2e_low"),
+                "high_coeffs_ticks_per_call": leak.get("e2e_high"),
+                "secret_dependent_delta_ticks": leak.get("e2e_delta"),
+                "delta_percent_of_call": leak.get("e2e_pct"),
             },
             "tsc_ghz": ghz,
         },

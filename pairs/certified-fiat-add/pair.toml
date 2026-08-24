@@ -1,0 +1,77 @@
+schema = "pair/1"
+
+[pair]
+id      = "certified-fiat-add"
+title   = "Certified constant-time negative: Fiat-Crypto Curve25519 field add/sub"
+role    = "certified-negative"
+status  = "active"
+tier    = "A"
+added   = "2026-08-24"
+synthetic = false
+summary = """
+A certified constant-time negative. check_tag runs machine-checked constant-time
+Curve25519 field arithmetic from Fiat-Crypto (a field multiply and a constant-time
+conditional select on a secret-derived condition) over the secret and candidate.
+The code is proven constant-time by construction, so a finding on it by any analyser
+is a genuine false positive, not the site-local kind a patched arm bounds.
+
+This is what the corpus previously could not measure: a general false-positive rate,
+against certified-constant-time code rather than a patched reproduction. Both arms are
+identical; there is no leaking body. It enters no recall denominator; it feeds a
+separate policy-precision number.
+"""
+
+[class]
+observable   = "latency"
+secret_role  = "key-material"
+origin       = "source-level"
+granularity  = "whole-operation"
+exploit_path = "direct-recovery"
+mechanism_classes = ["secret-branch", "variable-latency-op", "address-data"]
+rationale = """
+For a certified negative, mechanism_classes names the mechanisms the control is a clean
+negative FOR, so every analyser is applicable to it and asked to confirm clean, not one
+it exhibits (it exhibits none: the code is constant-time). Declaring branch, variable
+latency and data address makes all four tools applicable, so the false-positive rate is
+measured over the tools that could in principle flag such code. The pair is not corpus,
+so CLS-2 replication does not apply.
+"""
+
+[provenance]
+upstream_repo   = "mit-plv/fiat-crypto, fiat-c/src/curve25519_64.c (generated)"
+doi             = []
+advisory        = []
+licence         = "Apache-2.0 OR BSD-1-Clause OR MIT"
+redistributable = true
+note = """
+Fiat-Crypto emits machine-checked constant-time C. The file is vendored unmodified in
+src/fiat_25519.h with its licence recorded. Admission rests on that provenance: this is
+a published, formally verified constant-time artifact, used here as a negative control.
+"""
+
+[[build]]
+arm = "vulnerable"
+source = "src/vulnerable.c"
+entry_symbol = "check_tag"
+secret_input = "the 16-byte secret operand, treated as secret by every analyser"
+note = "named vulnerable for symmetry with every other pair; it is certified constant-time"
+
+[[build]]
+arm = "patched"
+source = "src/patched.c"
+entry_symbol = "check_tag"
+secret_input = "identical"
+
+[toolchain]
+cells_required = []
+
+[cost]
+effort_hours = 2
+note = "KT3: vendoring the certified artifact, wiring the four-tool harness, and scoring."
+
+[divergence]
+from_deployment = """
+Not a deployment. The field arithmetic is the real Fiat-Crypto output; the driver feeds
+it secret operands so an analyser sees the operation under a secret, which is exactly the
+condition under which a false positive would arise.
+"""

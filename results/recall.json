@@ -280,5 +280,48 @@
       "flags_uncertified_patched_arm": false
     }
   ],
-  "policy_recall_note": "PR-2. A policy tool is scored on whether it flags the policy violation on the vulnerable arm, not on discriminating an uncertified patched arm. timecop's exploit recall on the nonce pairs is 0/1 because it flags both arms, but its policy recall is 1/1 because it correctly reports the secret-dependent operation on the vulnerable arm; the patched-arm flag is the unadjudicated site-local false positive of the threats section, not a discrimination failure."
+  "policy_recall_note": "PR-2. A policy tool is scored on whether it flags the policy violation on the vulnerable arm, not on discriminating an uncertified patched arm. timecop's exploit recall on the nonce pairs is 0/1 because it flags both arms, but its policy recall is 1/1 because it correctly reports the secret-dependent operation on the vulnerable arm; the patched-arm flag is the unadjudicated site-local false positive of the threats section, not a discrimination failure.",
+  "policy_precision": [
+    {
+      "tool": "binsec",
+      "false_positives": 0,
+      "n": 2,
+      "precision": "2/2",
+      "certified_negatives": [
+        "certified-fiat",
+        "certified-fiat-add"
+      ]
+    },
+    {
+      "tool": "dudect",
+      "false_positives": 0,
+      "n": 2,
+      "precision": "2/2",
+      "certified_negatives": [
+        "certified-fiat",
+        "certified-fiat-add"
+      ]
+    },
+    {
+      "tool": "timecop",
+      "false_positives": 0,
+      "n": 2,
+      "precision": "2/2",
+      "certified_negatives": [
+        "certified-fiat",
+        "certified-fiat-add"
+      ]
+    },
+    {
+      "tool": "varlat",
+      "false_positives": 0,
+      "n": 2,
+      "precision": "2/2",
+      "certified_negatives": [
+        "certified-fiat",
+        "certified-fiat-add"
+      ]
+    }
+  ],
+  "policy_precision_note": "PR-3. A general false-positive rate over certified constant-time negatives (formally verified code), kept separate from the site-local patched-arm count and from every recall denominator. A tool that errors and cannot analyse a function is excluded."
 }

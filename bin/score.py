@@ -209,6 +209,27 @@ def main() -> int:
                                            for p, v in pv]})
     cross.sort(key=lambda d: (d["pair"], d["tool"]))
 
+    # Policy precision (PR-3): a general false-positive rate over certified
+    # constant-time negatives. A flag on proven-CT code is a genuine false positive,
+    # unlike a flag on a patched arm, which is only site-local. A tool that errors and
+    # cannot analyse a function is excluded, not counted as clean or as a flag.
+    prec_denom = defaultdict(list)
+    for r in rows:
+        if r.get("role") != "certified-negative" or not r.get("applicable"):
+            continue
+        if r.get("vulnerable_status") == "error":
+            continue
+        flagged = (r.get("vulnerable_status") == "leak_reported"
+                   or r.get("patched_status") == "leak_reported")
+        prec_denom[r["tool"]].append((r["pair"], flagged))
+    policy_precision = []
+    for tool, pf in sorted(prec_denom.items()):
+        fp = sum(1 for _, f in pf if f)
+        n = len(pf)
+        policy_precision.append({"tool": tool, "false_positives": fp, "n": n,
+                                 "precision": f"{n - fp}/{n}",
+                                 "certified_negatives": [p for p, _ in pf]})
+
     report = {"rows": rows, "recall_per_class": recall,
               "tier_c_detections": tier_c,
               "note": "recall over applicable, recall-eligible (tier A or B) corpus "
@@ -229,6 +250,12 @@ def main() -> int:
                                   "vulnerable arm and clean on the patched arm.")
     doc["policy_recall_per_class"] = policy_recall
     doc["cross_table"] = cross
+    doc["policy_precision"] = policy_precision
+    doc["policy_precision_note"] = ("PR-3. A general false-positive rate over certified "
+                                    "constant-time negatives (formally verified code), "
+                                    "kept separate from the site-local patched-arm count "
+                                    "and from every recall denominator. A tool that "
+                                    "errors and cannot analyse a function is excluded.")
     doc["policy_recall_note"] = ("PR-2. A policy tool is scored on whether it flags the "
                                  "policy violation on the vulnerable arm, not on "
                                  "discriminating an uncertified patched arm. timecop's "

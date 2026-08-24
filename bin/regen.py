@@ -315,6 +315,13 @@ def as_tex(report: dict) -> str:
         if k:
             out.append(tex_macro(f"policyRecall{r['tool'].capitalize()}{k}",
                                  r["recall"].replace("/", "\\,of\\,")))
+    # Policy precision (PR-3): the general false-positive rate over certified
+    # constant-time negatives, the measurement the corpus previously could not make.
+    pp = recall_doc.get("policy_precision", [])
+    if pp:
+        emit("policyPrecisionFP", sum(r["false_positives"] for r in pp))
+        emit("policyPrecisionTools", len(pp))
+        emit("nCertifiedNegatives", max((r["n"] for r in pp), default=0))
     # tier-C detection outcomes (the crossover), per pair and tool, so the paper
     # can name e.g. dudect missed while varlat and binsec detected KyberSlash.
     outcome_word = {"detected": "detected", "missed": "missed",

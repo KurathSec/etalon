@@ -43,6 +43,12 @@ def verify_pair(pair_dir: pathlib.Path) -> dict:
     name = pair_dir.name
     manifest = tomllib.loads((pair_dir / "pair.toml").read_text())
 
+    # A certified-negative control has no oracle: it is proven-constant-time code
+    # scored for false positives, not a leak to recover, so there is nothing to verify.
+    if manifest["pair"].get("role") == "certified-negative" or "oracle" not in manifest:
+        return {"pair": name, "tier": manifest["pair"].get("tier"), "status": "NOT_RUN",
+                "checks": {}, "reason": "no oracle: certified negative or non-recoverable control"}
+
     # A tier C pair has no reproduced oracle yet: its acquisition needs hardware
     # that is not in hand. It is reported as NOT_RUN, distinct from PASS and from
     # FAIL, so it neither claims a verification it cannot make nor counts as a

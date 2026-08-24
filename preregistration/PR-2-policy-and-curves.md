@@ -109,8 +109,8 @@ finding, not an error to reconcile.
 - Every analyser must pass SENT-1/2 (detect the positive sentinel, stay clean on the negative)
   at the same build before any real row of this round counts. A control failure VOIDs that
   analyser's row and is neither a clean nor a miss (ported from PR-1 and null N3).
-- `etalon run --shuffle-halves` must change no verdict; a change means ground truth leaked into
-  a container and voids the round.
+- The half-shuffle invariant must hold: relabelling the two arms with opaque tokens must change
+  no verdict; a change means ground truth leaked into a container and voids the round.
 - Consequences: C4 confirmed reframes timecop's nonce rows from non-discriminating to
   policy-detecting and is reported as the fairness finding. C4 refuted leaves the exploit-recall
   reading unchanged. C5 confirmed makes the KyberSlash miss host-conditional in the paper's own

@@ -3,7 +3,9 @@
   "_sealed_at": "2026-08-24T08:51:21+08:00",
   "_gates": "Sealed before any policy-label scoring, any detection-curve acquisition, or any scoring of the hmac-timing pair. No R2/R3/R4 verdict existed at seal time.",
   "PR-2-policy-and-curves.md": {
-    "bytes": 8104,
-    "sha256": "b39c8fbffc3a1611a3c55e7a614c9ecd0f11141f4a72d6b6f4dbba9ee15b6b90"
-  }
+    "bytes": 8156,
+    "sha256": "33f54ad23ca467a6ab0545735e18b7cd26b8e694f744c02cb953e2f50f004cba"
+  },
+  "_resealed_at": "2026-08-24T09:34:51+08:00",
+  "_reseal_note": "Resealed after removing the project name from a code example (ANON-1). No PR-2-governed NEW observation had run: the policy recall is a re-reading of committed verdicts, and the detection curves and the new pair do not exist yet, so the predates-observations property holds."
 }

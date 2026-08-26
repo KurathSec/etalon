@@ -1,22 +1,23 @@
 {
  "finding": "the arms acquired twice, and what the second acquisition agrees with",
- "why": "Every per-arm interval in this paper comes from one acquisition and bounds sampling within it. The detection curve re-runs five pairs at amplification factor 1, which is the default build at the committed budget, so ten arms have a second independent acquisition.",
- "reading": "Two acquisitions is n=2. It does not estimate between-acquisition spread and no interval here is widened by it. What it shows is that the verdict and the sign of the effect survived a re-run, and where the two point estimates landed relative to each other's within-acquisition interval.",
+ "why": "CORRECTED 2026-08-26. An earlier revision of this field said the factor-one rows are 'the default build at the committed budget', which is false for most of these arms: the adapter compiles them with -DAMP=1, overriding each pair's compiled-in default, so where a pair's AMP is in a source the arm compiles the second acquisition is a rebuild at a different gain. Only the division pair's two arms and the patched arms of the two ECDSA pairs are the same binary, and same_binary records which.",
+ "reading": "The verdict comparison spans all ten arms and shows the verdict does not turn on the gain or on the run. The EFFECT comparison spans only the same-binary arms, because an effect measured at amplification one is not comparable with one measured at forty or twelve hundred; the committed message pair reads -74,545 ticks against -33 on the factor-one rebuild. Neither comparison bounds between-acquisition spread, which needs repeats of one binary and exists in this corpus only for the fix-verification case, in results/matrixssl_repeats.json.",
  "generator": "bin/repeatability.py",
  "n_arms": 10,
  "n_status_compared": 10,
  "n_status_agree": 10,
  "n_status_disagree": 0,
- "n_effect_compared": 5,
+ "n_effect_compared": 3,
  "n_effect_mutually_inside": 3,
- "n_gap_below_coarser_half_width": 5,
+ "n_gap_below_coarser_half_width": 3,
  "n_gap_below_finer_half_width": 3,
- "max_gap_ticks": 25.44177439471055,
- "max_ci_half_width_ticks": 57.11107125000049,
+ "max_gap_ticks": 1.0049903581222899,
+ "max_ci_half_width_ticks": 3.484529999999722,
  "arms": [
   {
    "pair": "ecdsa-address",
    "arm": "patched",
+   "same_binary": true,
    "committed_status": "clean",
    "reacquired_status": "clean",
    "status_agrees": true,
@@ -33,6 +34,7 @@
   {
    "pair": "ecdsa-address",
    "arm": "vulnerable",
+   "same_binary": false,
    "committed_status": "leak_reported",
    "reacquired_status": "leak_reported",
    "status_agrees": true,
@@ -42,6 +44,7 @@
   {
    "pair": "ecdsa-nonce",
    "arm": "patched",
+   "same_binary": true,
    "committed_status": "clean",
    "reacquired_status": "clean",
    "status_agrees": true,
@@ -58,6 +61,7 @@
   {
    "pair": "ecdsa-nonce",
    "arm": "vulnerable",
+   "same_binary": false,
    "committed_status": "leak_reported",
    "reacquired_status": "leak_reported",
    "status_agrees": true,
@@ -67,22 +71,17 @@
   {
    "pair": "hmac-timing",
    "arm": "patched",
+   "same_binary": false,
    "committed_status": "clean",
    "reacquired_status": "clean",
    "status_agrees": true,
    "reacquired_effect_ticks": -0.176,
-   "reacquired_ci_half_width_ticks": 2.4690000000000003,
-   "committed_effect_ticks": 14.155589743968449,
-   "committed_ci_half_width_ticks": 57.11107125000049,
-   "gap_ticks": 14.331589743968449,
-   "reacquired_inside_committed_ci": true,
-   "committed_inside_reacquired_ci": false,
-   "gap_below_coarser_half_width": true,
-   "gap_below_finer_half_width": false
+   "reacquired_ci_half_width_ticks": 2.4690000000000003
   },
   {
    "pair": "hmac-timing",
    "arm": "vulnerable",
+   "same_binary": false,
    "committed_status": "leak_reported",
    "reacquired_status": "leak_reported",
    "status_agrees": true,
@@ -92,22 +91,17 @@
   {
    "pair": "hqc-reject",
    "arm": "patched",
+   "same_binary": false,
    "committed_status": "clean",
    "reacquired_status": "clean",
    "status_agrees": true,
    "reacquired_effect_ticks": 0.098,
-   "reacquired_ci_half_width_ticks": 0.677,
-   "committed_effect_ticks": 25.539774394710548,
-   "committed_ci_half_width_ticks": 49.96863499999745,
-   "gap_ticks": 25.44177439471055,
-   "reacquired_inside_committed_ci": true,
-   "committed_inside_reacquired_ci": false,
-   "gap_below_coarser_half_width": true,
-   "gap_below_finer_half_width": false
+   "reacquired_ci_half_width_ticks": 0.677
   },
   {
    "pair": "hqc-reject",
    "arm": "vulnerable",
+   "same_binary": false,
    "committed_status": "leak_reported",
    "reacquired_status": "leak_reported",
    "status_agrees": true,
@@ -117,6 +111,7 @@
   {
    "pair": "kyberslash",
    "arm": "patched",
+   "same_binary": true,
    "committed_status": "clean",
    "reacquired_status": "clean",
    "status_agrees": true,
@@ -133,6 +128,7 @@
   {
    "pair": "kyberslash",
    "arm": "vulnerable",
+   "same_binary": true,
    "committed_status": "clean",
    "reacquired_status": "clean",
    "status_agrees": true,

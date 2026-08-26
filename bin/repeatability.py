@@ -1,15 +1,25 @@
 #!/usr/bin/env python3
-"""Between-acquisition agreement for the arms acquired twice.
+"""What the arms acquired twice agree on, and on which of them it is a re-run.
 
-The detection curve of bin/detection_curve_all.py runs each pair at amplification
-factor 1, which is the default build: the same binary, at the same budget, as the
-committed corpus dump. Those rows are therefore a second, independent acquisition
-of ten arms, and this script says what the two acquisitions agree on.
+CORRECTED 2026-08-26. An earlier revision of this file claimed the second acquisition
+was "the same binary, at the same budget" as the committed dump. That is false for
+most of these arms, and the paper repeated it. The detection curve runs each pair at
+amplification factor 1, and the dudect adapter turns that into `-DAMP=1` on the
+compile, which OVERRIDES the pair's compiled-in default: 40 for the ECDSA pairs, 200
+for the rejection sampler, 1200 for the message pair. Where a pair's AMP lives in a
+source that arm compiles, the re-acquisition is a REBUILD AT A DIFFERENT GAIN, not a
+re-run, and its effect size is not comparable with the committed one. The committed
+message pair reads -74,545 ticks against -33 on the factor-one rebuild.
 
-Two acquisitions per arm is a consistency check, not a variance estimate. It cannot
-bound between-acquisition spread; it can show whether the verdict and the sign of
-the effect survive a re-run, and whether each acquisition's point estimate lands
-inside the other's within-acquisition interval.
+So each arm is classified. `same_binary` is true only where no source that arm
+compiles carries an AMP define, which is both division-pair arms and the patched arms
+of the two ECDSA pairs, whose AMP is in vulnerable.c alone.
+
+What the whole set supports is that the VERDICT does not turn on the gain or on the
+run. What only the same-binary arms support is a comparison of effect estimates, and
+the effect comparison below is restricted to them. Neither bounds between-acquisition
+spread: that needs repeats of one binary, which this corpus has only for the
+fix-verification case (results/matrixssl_repeats.json).
 """
 import json
 import pathlib
@@ -17,6 +27,24 @@ import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
+PAIRS = ROOT / "pairs"
+
+
+def same_binary(pair: str, arm: str) -> bool:
+    """True when -DAMP=1 cannot change this arm's binary.
+
+    The adapter compiles the arm's own source plus the pair's extra sources. If none
+    of them mentions AMP, the define is inert and the factor-one build is byte-for-byte
+    the committed one. If any does, the rebuild is a different binary.
+    """
+    src = PAIRS / pair / "src"
+    if not src.is_dir():
+        return False
+    # The arm's own file, plus any shared source the pair carries. Shared work.c is the
+    # case that makes BOTH arms of the message pair differ.
+    files = [f for f in src.glob("*.c")
+             if f.stem == arm or f.stem not in ("vulnerable", "patched")]
+    return not any("AMP" in f.read_text(errors="replace") for f in files)
 CURVE = ROOT / "results" / "detection_curve_all.json"
 POWER = ROOT / "results" / "patched_power.json"
 VERDICTS = ROOT / "results" / "verdicts.jsonl"
@@ -74,9 +102,11 @@ def main() -> int:
     n_effect_pairs = 0
     for (pair, arm), re_acq in sorted(curve.items()):
         first = committed_status.get((pair, arm))
+        sb = same_binary(pair, arm)
         row = {
             "pair": pair,
             "arm": arm,
+            "same_binary": sb,
             "committed_status": first,
             "reacquired_status": re_acq["status"],
             "status_agrees": first == re_acq["status"],
@@ -90,7 +120,7 @@ def main() -> int:
             disagree += not row["status_agrees"]
         # The committed effect estimate exists only for the patched arms, which
         # are the ones bin/patched_power.py reports on.
-        if arm == "patched" and pair in power:
+        if arm == "patched" and pair in power and sb:
             c = power[pair]
             row["committed_effect_ticks"] = c["effect_ticks"]
             row["committed_ci_half_width_ticks"] = c["ci_half_width_ticks"]
@@ -131,17 +161,23 @@ def main() -> int:
             "the arms acquired twice, and what the second acquisition agrees with"
         ),
         "why": (
-            "Every per-arm interval in this paper comes from one acquisition and "
-            "bounds sampling within it. The detection curve re-runs five pairs at "
-            "amplification factor 1, which is the default build at the committed "
-            "budget, so ten arms have a second independent acquisition."
+            "CORRECTED 2026-08-26. An earlier revision of this field said the "
+            "factor-one rows are 'the default build at the committed budget', which is "
+            "false for most of these arms: the adapter compiles them with -DAMP=1, "
+            "overriding each pair's compiled-in default, so where a pair's AMP is in a "
+            "source the arm compiles the second acquisition is a rebuild at a different "
+            "gain. Only the division pair's two arms and the patched arms of the two "
+            "ECDSA pairs are the same binary, and same_binary records which."
         ),
         "reading": (
-            "Two acquisitions is n=2. It does not estimate between-acquisition "
-            "spread and no interval here is widened by it. What it shows is that "
-            "the verdict and the sign of the effect survived a re-run, and where "
-            "the two point estimates landed relative to each other's "
-            "within-acquisition interval."
+            "The verdict comparison spans all ten arms and shows the verdict does not "
+            "turn on the gain or on the run. The EFFECT comparison spans only the "
+            "same-binary arms, because an effect measured at amplification one is not "
+            "comparable with one measured at forty or twelve hundred; the committed "
+            "message pair reads -74,545 ticks against -33 on the factor-one rebuild. "
+            "Neither comparison bounds between-acquisition spread, which needs repeats "
+            "of one binary and exists in this corpus only for the fix-verification "
+            "case, in results/matrixssl_repeats.json."
         ),
         "generator": "bin/repeatability.py",
         "n_arms": len(arms),

@@ -77,12 +77,12 @@ def main() -> int:
                     "not balance the cost"),
         "why": __doc__.strip().split("\n\n")[2],
         "reading": (
-            "One leading zero and sixty-three retire almost the same number of extra "
+            "One leading zero and sixty-three each SAVE almost the same number of "
             "instructions, while the measured time differs by nearly two orders of "
-            "magnitude. Balancing by operation count is exactly what the vendor's "
-            "dummy add and double achieve, and it is exactly what does not make this "
-            "constant time, because the operands the dummy path feeds to the bignum "
-            "layer are cheaper than the ones the real path feeds it."),
+            "magnitude, which is why an instruction count cannot stand in for the cost "
+            "here. delta_vs_256 is the 256-bit count minus the shorter class's, so a "
+            "positive delta is a saving; an earlier revision of this field read it as an "
+            "addition and the paper repeated the inverted sign."),
         "generator": "bin/matrixssl_icount.py",
         "version": VERSION,
         "method": (f"callgrind at {LOW} and {HIGH} calls per class, differenced, so process "

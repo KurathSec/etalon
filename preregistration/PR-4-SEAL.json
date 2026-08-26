@@ -1,11 +1,16 @@
 {
-  "_meaning": "These digests fix the content of PR-4 at seal time. A later reader checks here whether the permutation verdict rule was written before the re-analysis it governs, and whether the recorded deviations from PR-2 and PR-3 were disclosed rather than discovered. The sealing commit is the timestamp of record. PR-1, PR-2, PR-3 and their sealed results are unaffected.",
+  "_meaning": "Digests over PR-4. The entry under the filename covers the file AS IT NOW STANDS, after three amendments; the seal-time content is the digest under _digest_before_amendment, and each later amendment records the digest it superseded. An earlier revision of this field described the top-level digest as fixing the content 'at seal time', which it has not done since the first amendment. What a later reader checks here is that the permutation verdict rule was written before the re-analysis it governs, and that every recorded deviation was disclosed rather than discovered. The sealing commit and the commits carrying each amendment are the timestamps of record; the dates in this file are claims by its author and the git history is what corroborates them. PR-1, PR-2, PR-3 and their sealed results are unaffected.",
   "_sealed_at": "2026-08-25",
   "_gates": "Sealed before the corpus-wide re-decision under the permutation rule is reported as final. The deviations recorded here are past events, disclosed, not new observations: PR-3's band was applied before being retired, its prediction C7 was falsified by a harness fix, and PR-2's registered five-pair detection curve remains unrun. Predictions C8, C9 and C10 govern observations that are fixed here regardless of outcome.",
+  "_gates_note": "_gates is kept as sealed. Its statement that PR-2's registered five-pair detection curve remains unrun described the file at seal time and is superseded: the curve has since been run and discharged, as _amended and the rewritten entry in PR-4-permutation-verdict.md record.",
   "PR-4-permutation-verdict.md": {
-    "bytes": 7401,
-    "sha256": "254d732a3b22b8460c83abd51378ffb7f6286d1bb862adbbea6ea611e70bd3bd"
+    "bytes": 8881,
+    "sha256": "5cb7ada8b9aa6106b7abec104e2981c8de036404608050d96c46b8f630618437"
   },
   "_amended": "2026-08-25: the PR-2 detection-curve deviation is discharged and the entry rewritten to record the result, including one falsified registered expectation. The digest below covers the amended text; the pre-amendment digest is kept beside it so the change is visible rather than silent.",
-  "_digest_before_amendment": "febc55634b38c0df0c17c5b5eb9b6d8992779fe050431285b8506597f7ec7040"
+  "_digest_before_amendment": "febc55634b38c0df0c17c5b5eb9b6d8992779fe050431285b8506597f7ec7040",
+  "_amended_2": "2026-08-26: a second amendment, recording a deviation discovered after the seal. One committed outcome, binsec on hqc-reject, had been scored a detection while its patched arm was budget-exhausted, folding an unresolved arm into a clean one. The outcome rule is now applied to both arms and every row re-derived; one row of sixty changed. The digest below covers the twice-amended text and the previous digest is kept beside it.",
+  "_digest_before_amendment_2": "254d732a3b22b8460c83abd51378ffb7f6286d1bb862adbbea6ea611e70bd3bd",
+  "_amended_3": "2026-08-26, same day, third amendment: the audit found C9 fixed over 18 committed arms while the paper corrects over 22, the row count of results/dudect_permutation.json, because two pairs gained committed dumps after this file was written. The prediction is unchanged in substance; the denominator is recorded as a deviation so a reader comparing the two finds the reason rather than a discrepancy.",
+  "_digest_before_amendment_3": "3501f5a43ed590bd0bf615f2b4d1454302f2d284a12cbc1f428f73a50a901be0"
 }

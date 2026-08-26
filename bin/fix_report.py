@@ -6,11 +6,11 @@ WHY THIS EXISTS
 Every number in the paper is a macro emitted by bin/regen.py, and regen reads the
 fix-verification statistics out of results/fix_verification.json. That file was assembled
 by hand. So the chain from committed samples to the paper's headline had one link that no
-script closed: the ten MatrixSSL designs were correct, but nothing regenerated them, and a
+script closed: the twelve MatrixSSL designs were correct, but nothing regenerated them, and a
 control could only check that the dumps had not changed (STAT-1), never that the
 statistics still described them.
 
-This closes that link. It reads the ten committed dumps, re-decides each design under the
+This closes that link. It reads the twelve committed dumps, re-decides each design under the
 rule in force (permutation null over dudect's first-order crop ladder, bootstrap CI on the
 class difference of means), and either checks the committed block or rewrites it. Both the
 permutation and the bootstrap are seeded, so the pass is reproducible: --check is a real

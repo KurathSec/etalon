@@ -133,9 +133,15 @@ returning at least `status` and `detail`. `status` is one of:
 | `leak_reported` | the tool reports a leak on this arm |
 | `clean` | the tool reports no leak, and the run was valid |
 | `inconclusive` | the run reached no decision |
+| `budget_exhausted` | the run hit its sample, path or solver bound without deciding this arm |
 | `error` | the run did not happen or could not be decided |
 
-**`error` is not `clean`.** An adapter that cannot decide must say so. The dudect adapter
+**`error` is not `clean`, and neither is `budget_exhausted`.** Those two, with
+`inconclusive`, are the three unresolved statuses `decide()` in `bin/score.py` refuses to read as
+evidence of absence, on either arm. It is not a distinction for the vulnerable arm only: a
+cell whose vulnerable arm reported a leak and whose patched arm was budget-exhausted had been
+recorded as a detection, which reads the unresolved arm as clean, and correcting that rule
+changed one committed row. An adapter that cannot decide must say so. The dudect adapter
 returns `error` when no permutation null can be built, because falling back to a
 threshold is exactly how a failed measurement becomes a passing verdict.
 

@@ -53,9 +53,26 @@ tell that the detector measures the modelling and not the code.
 
 2. An address-trace instrument. DATA-style differential address-trace analysis
    can reach the nonce-leakage pairs, but it needs the implementation built and
-   run, not the observations. That means vendoring and building libgcrypt, and a
-   different adapter family than the two built here. It is real additional
-   infrastructure and is recorded as the next instrument rather than faked.
+   run, not the observations. That means building libgcrypt and pointing an
+   adapter at the path its fix sits in. It is real additional infrastructure and
+   is recorded as the next instrument rather than faked.
+
+Corrected 2026-08-27 (UTC). Route 2 used to read "That means vendoring and
+building libgcrypt, and a different adapter family than the two built here."
+Both counts are stale. libgcrypt 1.8.4 and 1.8.5 have been built and timed here
+since 2026-08-24 (`pairs/libgcrypt-minerva`, tier A): the tarballs are pinned by
+sha256 and fetched by the operator, not vendored, and only the timing traces are
+redistributed. And the adapters built and scoring are four (dudect, TIMECOP,
+varlat, Binsec), with Microwalk validated end to end but not yet scoring, so "the
+two built here" was wrong on the day it was read. The gap route 2 exists to close
+is still open, for a third reason distinct from the observation-only pairs, and
+`results/scoring.json` (`recall_status`) records it: libgcrypt-minerva carries no
+analyser row because no analyser's declared mechanism intersects the one it
+exhibits. Its deployed fix sits in the secure-nonce signing path, and the public
+`gcry_mpi_ec_mul` an analyser would drive leaks the scalar bit-length in both
+releases (`pairs/libgcrypt-minerva/pair.toml`, class rationale). The outstanding
+work is therefore an analyser that can be pointed at a signing path, not a
+libgcrypt build.
 
 Corrected 2026-08-23 (UTC). This paragraph used to read: "Until one of these
 exists, the corpus reports no recall over the deployed recall-eligible pairs, and

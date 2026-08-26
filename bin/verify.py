@@ -2,10 +2,16 @@
 """THE ORACLE. Runs every pair's recovery against its published verifier.
 
 This is the deliverable a reader runs, and the constraint that shapes it is that
-it must work from a cold clone with a stock interpreter: no containers, no
-analysers, no hardware, no network. If this ever needs any of those, the
-acquisition and verification halves have leaked into each other and the design
-has failed.
+it must work from a cold clone with no analyser, no measurement and no hardware.
+If it ever needs one of those, the acquisition and verification halves have leaked
+into each other and the design has failed.
+
+It is NOT stdlib-only, and saying so was wrong for five of the six recall-eligible
+pairs. Each pair declares `[recovery] runtime`: `pure` runs on a stock interpreter,
+`image` runs the recovery inside the pinned recovery container, because lattice
+reduction needs fpylll and upstream's curve module is GPL and so is kept out of
+this MIT tree. That is a real cost and the manifests carry it; regen counts the
+split so the paper cannot restate the stdlib-only claim.
 
 Two checks per pair, and the second is the one that matters:
 

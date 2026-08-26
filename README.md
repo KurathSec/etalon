@@ -95,15 +95,15 @@ corpus that measures what it claims and one that does not.
 
 All dates in this file are UTC.
 
-The instrument works end to end and has produced results. The corpus holds seven
-corpus pairs and two synthetic sentinels; four pairs are recall-eligible (their
+The instrument works end to end and has produced results. The corpus holds nine
+corpus pairs and two synthetic sentinels; six pairs are recall-eligible (their
 key recovery runs and verifies here), three are tier C, built and scored for
 detection but with no committed recovery. Four analysers are built as
 digest-pinned images: a statistical timing test, a dynamic-taint checker, the
 patched Valgrind that detects variable-latency instructions, and a relational
 symbolic execution engine. A fifth, a differential address-trace analyser, is
 validated end to end on a pure-C address leak but its per-pair integration is
-outstanding. Twelve controls pass and the oracle verifies six pairs.
+outstanding. Nineteen controls pass and the oracle verifies eight pairs.
 
 Two measured findings so far. A tool-by-class matrix in which each analyser has a
 different blind spot: the timing test detects both nonce classes and misses the
@@ -117,7 +117,7 @@ emits a hardware division only at certain (vendor, optimisation) cells, two
 compilers disagree on which, and a rented Graviton3 confirms the leak extends to
 microarchitecture.
 
-Coverage is six of eleven attested leak-class cells. The census is declared
+Coverage is seven of eleven attested leak-class cells. The census is declared
 `expanded`, not complete, so an aggregate recall figure stays gated; recall is
 reported per named class with its `n`.
 
@@ -125,6 +125,18 @@ Corrected 2026-08-23 (UTC): this section used to say, in full, "Early. Nothing
 here is a result yet." That was written at scaffold time and was true then. It
 survived unchanged through the work that produced the pairs, the adapters and the
 matrix above, which is the drift this correction records.
+
+Corrected 2026-08-26 (UTC): every count in the section above had gone stale and none of
+the earlier dated corrections had caught it, which is the drift this one records. The corpus
+gained libgcrypt-minerva (tier A) and the two tier-B observation datasets, so it holds nine
+corpus pairs rather than seven and six are recall-eligible rather than four; the control
+suite grew from twelve to nineteen and the oracle verifies eight pairs rather than six; and
+coverage moved to seven of eleven attested cells. The counts here are the generated ones as
+of that date (\nPairsCorpus, \nRecallEligible, \nControls, \nCoveredCells in
+paper/tches/numbers.tex); this section is prose and not generated, which is exactly why it
+drifted, and it is the last hand-maintained count of the corpus totals. The paper-structure
+counts later in this file and the rule and adapter counts in docs/ are hand-maintained too,
+and drift the same way.
 
 Corrected 2026-08-24 (UTC): the analyser count above read three; a fourth, the
 symbolic engine (Binsec/Rel2), is now built and scored, and the toolchain finding
@@ -308,9 +320,16 @@ four digits and run the identical 256 iterations. A four-design decomposition, h
 digit count fixed while varying bit length, locates the leading-zero phase instead, whose
 dummy add and double are balanced by operation count but not by cost (the dummy double is
 out-of-place, forcing three big-integer copies on magnitude-variable arithmetic). `|t|`
-runs 1.4 at equal length, 18 at one leading zero, 1197 at sixty-three, and 8371 once the
-digit count really differs. Pre-fix 97 to fixed 18 read as about fivefold attenuation (CORRECTED 2026-08-26: that
-harness timed the wrong curve; the real attenuation is 1.44x, see the rebuild section), and it replicates on aarch64 (87 to 17, control 1.15). The loop bound is real but
+ran 1.4 at equal length, 18 at one leading zero, 1197 at sixty-three, and 8371 once the
+digit count really differs (CORRECTED 2026-08-26: those were wrong-curve figures; re-acquired
+on the corrected harness they read 1.7, 17, 216 and 219, from
+`results/fix_verification.json` `measurements_full_report.designs`). Pre-fix 97 to fixed 18
+read as about fivefold attenuation (CORRECTED 2026-08-26: that harness timed the wrong curve,
+and no attenuation ratio replaces the fivefold, because the two releases are separately built
+arms and the paper's rule admits no ratio across them; the rebuild section gives the two class
+differences instead). It was also reported as replicating on aarch64 (87 to 17, control 1.15);
+that run predates the harness correction, so it timed a different curve, and the replication
+is WITHDRAWN. The loop bound is real but
 needs a nonce short by a whole digit, which a uniform nonce is 2^-64 likely to be. The
 general claim is stronger than the old one: balancing control flow by operation count does
 not give constant time on variable-time arithmetic.
@@ -333,8 +352,13 @@ is reported rather than dropped.
 lattice run was fed nonces labelled with the key it was meant to recover. MatrixSSL is now
 leak-presence certified, recovery pending. The "fast host" excuse was also wrong, and
 measurement refuted it: on the same host, AUC between timing and nonce shortness is 0.63
-for MatrixSSL against 0.80 for libgcrypt, with 31% against 3.3% contamination in the
-fastest 90 signatures. It is information content, not host noise (`bin/exploit_budget.py`).
+for MatrixSSL against 0.80 for libgcrypt, with 44.4% at a matched 6,000-signature budget and
+26.7% at 250,000 against 3.3% contamination in the fastest 90 signatures (CORRECTED
+2026-08-26: those MatrixSSL figures came from an uncommitted
+250,000-signature trace that turned out to be the 4.2.1 pre-fix build; on the committed
+25,000-signature 4-3-0 trace the AUC is 0.63 and the contamination 28.9%,
+`results/exploit_budget_matrixssl.json`). It is information content, not host noise
+(`bin/exploit_budget.py`).
 
 Also this round: every pair with a local recovery declares the channel that recovery
 consumes (`class.certification_channel`), enforced by a new control CLS-6, because
@@ -384,7 +408,8 @@ script and the evidence note, which had all kept the loop-bound attribution and 
 *Registered rather than narrated.* `preregistration/PR-4-permutation-verdict.md` registers
 the permutation rule and records the deviations this round created: that PR-3's band was
 applied before being retired, that its prediction C7 was falsified by the harness fix, and
-that PR-2's five-pair detection curve remains unrun and still rests on the retired band.
+that PR-2's five-pair detection curve remained unrun and still rested on the retired band
+(since discharged: the curve has been run, and the seal file's amendment records it).
 
 Also: policy recall renamed to policy detection and always paired with the patched-arm alarm
 count (3 of 9 for the taint checker); dudect's crop ladder, its excluded second-order test,
@@ -401,9 +426,12 @@ closed, and both went against us.
 compiled into its arms, which is why the curve had gone unrun for two revisions; each now
 guards its constant with `#ifndef AMP`, so the factor is a build-time parameter and the
 default build is byte-identical to what was committed. Run over all five pairs at factors
-one through eight, on both arms, decided by permutation: **four of the five already reject
-their null at factor one**. The nonce pairs read |t| = 17 unamplified, the message pair
-220, the rejection sampler 165. The amplification those pairs carry is therefore not what
+one through eight, on both arms, decided by permutation: **four of the five already
+discriminate at factor one**, each rejecting its null on the vulnerable arm while its
+patched arm reads clean (patched-arm permutation |t| 1.6, 1.6, 1.9, 1.7; p 0.65, 0.75,
+0.87, 0.33; `results/detection_curve_all.json`, `pairs_discriminating_at_factor_one`). On
+the vulnerable arms the nonce pairs read |t| = 17 unamplified, the message pair 220, the
+rejection sampler 165. The amplification those pairs carry is therefore not what
 earns their detections, and the caveat this work has been repeating, that a detection is
 earned at an amplitude we chose, is weaker than we had stated it. The shapes also separate
 three behaviours a single factor hides: the nonce pairs grow with gain (17 to 59,
@@ -494,9 +522,11 @@ needs an exploitable vulnerable arm, so a leak the vendor already closed falls o
 
 Round 1 also forced the headline to be reported to the standard the paper imposes on
 everything else, and that changed the numbers. The recorded values were dudect's own
-printed maximum, which includes the second-order test the permutation null excludes: the
-pre-fix design reads 79 rather than 97, the fixed design 15 rather than 18, the
-same-digit design 213 rather than 1197. Reporting effect sizes alongside makes the
+printed maximum, which includes the second-order test the permutation null excludes: on
+the acquisition then in force the pre-fix design read 79 rather than 97, the fixed design
+15 rather than 18, the same-digit design 213 rather than 1197. All of those predate the
+harness correction of 2026-08-26; the values now in force are the post-correction
+re-acquisition in `measurements_full_report.designs`. Reporting effect sizes alongside makes the
 mechanism argument stronger, not weaker: by the statistic the same-digit and
 different-digit designs are indistinguishable (213 against 218), while in ticks they are
 148,176 against 901,716. The statistic saturates; the difference in ticks keeps scaling
@@ -535,14 +565,17 @@ The last round's most serious finding was an error introduced two rounds earlier
 correcting a different one. The cost of one leading zero was printed as 1,436
 instructions, which is 90,449 divided by 63: the sixty-three-zero average presented as the
 one-zero figure, against the 37,382 the same section gives two paragraphs later. The
-corrected shape is better evidence than the wrong one. The first leading zero accounts for
-37,382 of the 90,449 that sixty-three save, so each further zero adds about 855, and that
-sublinearity independently supports the mechanism: the dummy path never updates the
-accumulators, so the first such iteration is what stops the accumulation and later ones
-run on state that is already small. Were the extra big-integer copies the dominant term,
-the saving would scale with the count instead, since every dummy iteration pays for three
-of them. The lesson worth carrying is that correcting a claim is exactly when a new wrong
-number enters the same paragraph.
+corrected shape is better evidence than the wrong one, and it was corrected AGAIN after the
+harness rebuild, which is the point. Those counts, 37,382 and 90,449, came from the driver
+that passed a zeroed curve coefficient where the library passes NULL, so they timed a
+different curve. Per call, on the corrected driver, one leading zero saves 53,157
+instructions and sixty-three save 53,696 (`results/matrixssl_icount.json`): the same figure
+to within 1.0%, so the count is FLAT in the number of zeros rather than sublinear in it. That is the
+stronger reading and the one the paper now makes: the dummy add and double balance the
+operation count, and the clock moves by nearly two orders of magnitude anyway, which is
+precisely why an instruction count cannot stand in for cost. The lesson worth carrying is
+that correcting a claim is exactly when a new wrong number enters the same paragraph, and
+this paragraph proved it twice.
 
 
 ## Cutting the main body to nineteen pages
@@ -552,21 +585,28 @@ scored pair is a reproduction rather than a wild binary, each result had accumul
 own hedge, and the hedges had started to outweigh what they qualified. The revision moves
 the machinery behind the findings out of the body and leaves the findings in it.
 
-The main body is now seven sections over 19 pages: introduction, background,
+As of 2026-08-26, before the restructure and the house-form rebuild recorded below, the main
+body was seven sections over 19 pages: introduction, background,
 the three deployed fixes, the certified ground truth, one section carrying F1, F2 and F3
 as subsections, the limits, and the conclusion. F1, F2 and F3 were three separate sections
 before; merging them keeps their `sec:blindspots`, `sec:toolchain` and `sec:microarch`
 labels alive as subsection labels, so every cross-reference in the paper still resolves
 without being rewritten. The recall corpus section became Appendix C, and the takeaway
-section folded into the conclusion.
+section folded into the conclusion. (None of those counts describes the tree now: the body
+has nine sections including the indexing section, F1, F2 and F3 are back at section level
+under the same labels, the corpus section sits in Appendix A, the eprint build carries five
+appendices, and the body ends on page 20; see the house-form entry below.)
 
-Six appendices now carry what a reader consults rather than reads: the glossary and
-capability table with the applicability accounting and the verdict semantics (A), the
-statistical rule in full with the retired bands, the registration deviations and both
-amplification sweeps (B), the corpus inventory, census, recovery cards and cost (C), the
-emission control, flag sweep, in-context check and the three per-operation quantities per
-host (D), the remaining limits including the harness artifact this work had to correct
-(E), and the control table (F). Four floats moved with them: the blind-spot figure, which
+At that date six appendices, lettered A to F, carried what a reader consults rather than
+reads: the glossary and capability table with the applicability accounting and the verdict
+semantics (A), the statistical rule in full with the retired bands, the registration
+deviations and both amplification sweeps (B), the corpus inventory, census, recovery cards
+and cost (C), the emission control, flag sweep, in-context check and the three
+per-operation quantities per host (D), the remaining limits including the harness artifact
+this work had to correct (E), and the control table (F). The eprint build now carries five
+(`paper/tches/main-eprint.tex`: app-defs, app-stats, app-measure, app-threats, ep-limits),
+with the corpus inventory folded into Appendix A beside the glossary and the control table
+folded into the further-limits appendix. Four floats moved with them: the blind-spot figure, which
 duplicated the outcome table it sat beside, the detection-curve figure, the glossary and
 the capability table.
 
@@ -577,8 +617,9 @@ that for a measurement seeking a null an instrument that fails produces the same
 observation as the result being sought, with the two-sided instrument sentinels that close
 it. What went is the surrounding apology.
 
-The paper builds at 34 pages, 19 of main body, references on 20 and 21, appendices from
-22. All 18 controls pass, the 14 tests pass, and `paper_check` and `namecheck` are clean.
+At that date the paper built at 34 pages, 19 of main body, references on 20 and 21,
+appendices from 22; the tree now builds twice, the submission ending its body on page 20 and
+the eprint its content on page 34. All 18 controls pass, the 14 tests pass, and `paper_check` and `namecheck` are clean.
 
 ## Thirteen rounds of blind review, and the standard that came out of it
 
@@ -602,11 +643,17 @@ fixed it, and there is a planted-failure test.
 
 What the later rounds actually bought, none of it a caveat:
 
-- **The containment arithmetic.** 42,633,192 retired instructions cannot fit inside a
-  1,015,936-tick signature; that needs 42 instructions per counter tick. It also cannot
-  comfortably fit inside the 5,535,140-tick isolated region, which needs 7.7 per tick
-  sustained on dependency-bound bignum arithmetic. All three figures are mutually
-  impossible and which is wrong is undetermined. The paper says so.
+- **The containment arithmetic, and then its resolution.** 42,633,192 retired instructions
+  cannot fit inside a 1,015,936-tick signature; that needs 42 instructions per counter tick.
+  The paper reported the three figures as mutually impossible with the culprit undetermined,
+  and that stood until the rebuild. It was our own harness: the dudect driver passed a
+  freshly allocated zero as `eccMulmod`'s last argument, which is the curve's `a`
+  coefficient, where the deployed call passes NULL, so it timed scalar multiplication on a
+  different curve at 3.46x the cost of the deployed call (3.42x the library's own key
+  generation). Measured together in one interleaved process the
+  isolated call and the library's own key generation agree to 1.03%, and the corrected call
+  retires about
+  9.62 million instructions in about 1.6 million ticks. There is no anomaly left to report.
 - **A power column.** Every patched arm now carries its class difference and CI half-width.
   The division's patched arm resolves to 0.022 ticks, so that measurement would have caught
   an effect an order of magnitude larger than the 0.001-tick step present there.
@@ -651,7 +698,9 @@ structure and invisible:
   under the old framing, an embarrassment in a caveat. Under this one it is the paper
   applying its own rule to itself and failing the test in public.
 
-Body: 26 pages to 19, ten sections. Appendices: six to four. Total 42 pages to 35. An audit
+At that date: body 26 pages to 19, ten sections; appendices six to four; total 42 pages to
+35. (Superseded by the house-form rebuild below: nine body sections ending on page 20, five
+appendices in the eprint build with its content ending on page 34.) An audit
 found 484 of 2,063 source lines removable across 27 ranges: 34 strong self-commentary
 instances, nine hedging stacks stating one limitation 3 to 6 times, two figures cited once
 and zero times, and the `\nrmark` convention now marking every figure that cannot be
@@ -716,13 +765,16 @@ shipped. The dudect adapter compiles a factor-one row with `-DAMP=1`, overriding
 compiled-in constant: 40 for the ECDSA pairs, 200 for the rejection sampler, 1200 for the
 message pair. Only four of the ten arms are the same binary. The committed message pair reads
 -74,545 ticks against -33 on the rebuild, which should have been the tell and was not.
-The effect comparison is now restricted to the four same-binary arms, where the move is at
-most 1.005 ticks against a 3.485-tick half-width, and the two arms whose intervals had
+The effect comparison is now restricted to the three same-binary arms that also carry a
+committed effect estimate, where the move is at most 1.005 ticks against a 3.485-tick
+half-width. The fourth same-binary arm, the division pair's vulnerable one, has no committed
+estimate to compare against, because `bin/patched_power.py` reports on patched arms only. And the two arms whose intervals had
 disagreed turn out to be exactly the two whose amplification constant is shared by both arms:
 the disagreement was between different binaries, not between a noisy acquisition and a quiet
 one. What the ten-arm agreement supports is that the verdict turns on neither the gain nor the
-run. What nothing here supports is a bound on between-acquisition spread, which needs repeats
-of one binary and exists in this corpus only for the fix-verification case. The comparison is under control REPT-1, because a count of agreement drifts
+run. The three same-binary arms each give one gap between two
+acquisitions of one binary, at most 1.005 ticks. What they do not give is a range, which
+needs more repeats and exists in this corpus only for the fix-verification case. The comparison is under control REPT-1, because a count of agreement drifts
 in the reassuring direction as easily as the other one.
 
 ## Rebuilt to the venue's house form
@@ -818,29 +870,34 @@ path for a different curve. Measured together in one process:
 |---|---|
 | `psEccGenKey`, the signing path's own scalar multiplication | 1,615,380 |
 | `eccMulmod` with the library's `NULL` argument | 1,598,670 |
+| `eccMulmod` as the old harness called it, without the surrounding setup (`mulbare`) | 5,492,464 |
 | whole `psEccDsaSign` | 1,763,724 |
 | `eccMulmod` as the old harness called it | 5,526,240 |
 
 The first two agree to 1.03%, so the corrected harness times the deployed call rather than a
 reconstruction of it, and the deployment link stops being an inference. The old region was
-3.42 times the real one.
+3.46 times the deployed call and 3.42 times the library's own key generation.
 
 **The finding survives and the fix looks worse.** Thirty-six acquisitions, three per design
 across four designs and three releases. The residual at one leading zero is smaller in ticks
-and larger as a fraction of its call, 0.08% against 0.04%, and `|t|` rises from 15 to 17
-because the deployed call is quieter than the wrong one. But the attenuation is **1.44 times,
-not the fivefold the old figures showed**, the latest open release is indistinguishable from
+and larger as a fraction of its call, 0.07% against 0.04%, and `|t|` rises from 15 to 17
+because the deployed call is quieter than the wrong one. The one-leading-zero class difference
+is 1,575 ticks on 4-2-1 (between-acquisition range 155) and 1,093 on 4-3-0 (range 116), and
+**no attenuation ratio is quoted between them**: the two releases are separately built arms,
+which the paper's rule does not divide across, so the fivefold the old figures showed is
+withdrawn rather than replaced. The latest open release is indistinguishable from
 the first fixed one, and where the nonce is short by a whole 64-bit digit the fixed builds are
 **twice as leaky as the pre-fix build**: the dummy operations cost more than the branch they
 replaced.
 
 **The instruction counts carry the sharper result.** Recounted on the corrected driver and
-differenced across two call counts so startup cancels, one leading zero adds 53,157
-instructions and sixty-three add 53,696. The same number. The clock moves over that range by
+differenced across two call counts so startup cancels, one leading zero saves 53,157
+instructions and sixty-three save 53,696, the same figure to within 1.0%. The clock moves over that range by
 nearly two orders of magnitude. The dummy add and double balance the work exactly as designed
 and do not balance the cost, which is the paper's practitioner claim turned from an argument
 into a measurement. The count also fits the clock at 6.02 instructions per tick, where the old
-pair demanded 27.
+pair of figures demanded 42, and the old count over this corrected clock would still
+demand 27.
 
 **What the rebuild retired.** Repeats replace the single acquisition every interval on this
 case rested on, so between-acquisition spread is measured rather than conceded. The three

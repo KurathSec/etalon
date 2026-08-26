@@ -86,14 +86,15 @@ uint8_t do_one_computation(uint8_t *data) {
    * ecc_curve_data.c ("1 if optimized with field parameter A=-3"), so
    * ecc_keygen.c never allocates it and the deployed call passes NULL. NULL
    * selects the fast a = -3 doubling; a non-NULL zero selects the generic path
-   * for a = 0, which is a different curve and 3.45x the cost.
+   * for a = 0, which is a different curve and 3.46x the cost of the deployed call
+   * (3.42x the library's own key generation).
    *
    * An earlier revision of this harness passed a freshly allocated zero here and
    * so timed scalar multiplication on the wrong curve. That is what made the
    * isolated call cost more than a whole signature containing one, which the
    * paper reported as an unresolved contradiction between three figures.
    * Measured together in one process, eccMulmod with NULL and psEccGenKey agree
-   * to within 0.04%. See pairs/matrixssl-minerva/acquire/containment.c. */
+   * to within 1.03%. See pairs/matrixssl-minerva/acquire/containment.c. */
   eccMulmod(NULL, &pre[idx], G, R, &prime, 1, NULL);
   return 0;
 }

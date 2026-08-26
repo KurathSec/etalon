@@ -111,7 +111,7 @@
     {
       "tool": "binsec",
       "pair": "hqc-reject",
-      "outcome": "detected"
+      "outcome": "inconclusive"
     },
     {
       "tool": "dudect",
@@ -335,8 +335,10 @@
     "binsec": {
       "detected": [
         "hmac-timing(tier A)",
-        "hqc-reject(tier C)",
         "kyberslash(tier C)"
+      ],
+      "inconclusive": [
+        "hqc-reject(tier C)"
       ]
     },
     "dudect": {

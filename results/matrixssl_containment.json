@@ -1,145 +1,145 @@
 {
- "finding": "the isolated-call figure was the outlier, and the cause was the harness passing a curve parameter where the library passes NULL",
- "why": "The paper reported three figures for this case that cannot all be what their names\nsay: an isolated scalar-multiplication call, a whole signature that must contain\none, and a retired-instruction count. The signature came out cheaper than the call,\nwhich is impossible for the same quantity, and which of the three was wrong was\nleft undetermined because each came from a different harness on a different run.",
- "reading": "mulnull and genkey agree to within a fraction of a percent, so eccMulmod called with the library's own argument IS the deployed call. sign exceeds genkey by the hashing, inversion and encoding a signature adds. mulmod, the region the earlier harness timed, is several times either, because a non-NULL zero selects the generic doubling for a=0 instead of the optimised a=-3 path. Nothing here is a property of MatrixSSL; it is a property of how this corpus called it.",
- "generator": "bin/matrixssl_containment.py",
- "version": "4-3-0",
- "repeats": 3,
- "median_ticks": {
-  "sign": 1763724,
-  "mulmod": 5526240,
-  "mulbare": 5492464,
-  "mulnull": 1598670,
-  "genkey": 1615380
- },
- "mulnull_vs_genkey_relative_gap": 0.010344315269472198,
- "harness_overstatement_factor": 3.421015488615682,
- "runs": [
-  {
-   "sign": {
-    "n": 1500,
-    "min": 1749078,
-    "p10": 1762382,
-    "median": 1774042,
-    "mean": 1780318,
-    "max": 2423200
-   },
-   "mulmod": {
-    "n": 1500,
-    "min": 5486438,
-    "p10": 5510314,
-    "median": 5529508,
-    "mean": 5534192,
-    "max": 6411846
-   },
-   "mulbare": {
-    "n": 1500,
-    "min": 5449600,
-    "p10": 5475882,
-    "median": 5495420,
-    "mean": 5500071,
-    "max": 6434876
-   },
-   "mulnull": {
-    "n": 1500,
-    "min": 1586772,
-    "p10": 1595778,
-    "median": 1605074,
-    "mean": 1611781,
-    "max": 1682948
-   },
-   "genkey": {
-    "n": 1500,
-    "min": 1596368,
-    "p10": 1610262,
-    "median": 1622982,
-    "mean": 1628223,
-    "max": 1716728
-   }
+  "finding": "the isolated-call figure was the outlier, and the cause was the harness passing a curve parameter where the library passes NULL",
+  "why": "The paper reported three figures for this case that cannot all be what their names\nsay: an isolated scalar-multiplication call, a whole signature that must contain\none, and a retired-instruction count. The signature came out cheaper than the call,\nwhich is impossible for the same quantity, and which of the three was wrong was\nleft undetermined because each came from a different harness on a different run.",
+  "reading": "mulnull and genkey agree to within about one per cent, so eccMulmod called with the library's own argument IS the deployed call. sign exceeds genkey by the hashing, inversion and encoding a signature adds. mulmod, the region the earlier harness timed, is several times either, because a non-NULL zero selects the generic doubling for a=0 instead of the optimised a=-3 path. Nothing here is a property of MatrixSSL; it is a property of how this corpus called it.",
+  "generator": "bin/matrixssl_containment.py",
+  "version": "4-3-0",
+  "repeats": 3,
+  "median_ticks": {
+    "sign": 1763724,
+    "mulmod": 5526240,
+    "mulbare": 5492464,
+    "mulnull": 1598670,
+    "genkey": 1615380
   },
-  {
-   "sign": {
-    "n": 1500,
-    "min": 1733996,
-    "p10": 1754086,
-    "median": 1763428,
-    "mean": 1764634,
-    "max": 2022816
-   },
-   "mulmod": {
-    "n": 1500,
-    "min": 5487636,
-    "p10": 5507790,
-    "median": 5526240,
-    "mean": 5530688,
-    "max": 6311304
-   },
-   "mulbare": {
-    "n": 1500,
-    "min": 5447758,
-    "p10": 5474188,
-    "median": 5492464,
-    "mean": 5495126,
-    "max": 5894436
-   },
-   "mulnull": {
-    "n": 1500,
-    "min": 1580938,
-    "p10": 1590746,
-    "median": 1598670,
-    "mean": 1600697,
-    "max": 1844962
-   },
-   "genkey": {
-    "n": 1500,
-    "min": 1590342,
-    "p10": 1605482,
-    "median": 1615380,
-    "mean": 1617287,
-    "max": 1711522
-   }
-  },
-  {
-   "sign": {
-    "n": 1500,
-    "min": 1740278,
-    "p10": 1755344,
-    "median": 1763724,
-    "mean": 1765842,
-    "max": 4157010
-   },
-   "mulmod": {
-    "n": 1500,
-    "min": 5475944,
-    "p10": 5496056,
-    "median": 5515488,
-    "mean": 5517232,
-    "max": 5839776
-   },
-   "mulbare": {
-    "n": 1500,
-    "min": 5444500,
-    "p10": 5462746,
-    "median": 5483006,
-    "mean": 5484892,
-    "max": 5835970
-   },
-   "mulnull": {
-    "n": 1500,
-    "min": 1582124,
-    "p10": 1588860,
-    "median": 1595866,
-    "mean": 1597178,
-    "max": 1783884
-   },
-   "genkey": {
-    "n": 1500,
-    "min": 1589494,
-    "p10": 1605300,
-    "median": 1613772,
-    "mean": 1615412,
-    "max": 1708176
-   }
-  }
- ]
+  "mulnull_vs_genkey_relative_gap": 0.010344315269472198,
+  "harness_overstatement_factor": 3.421015488615682,
+  "runs": [
+    {
+      "sign": {
+        "n": 1500,
+        "min": 1749078,
+        "p10": 1762382,
+        "median": 1774042,
+        "mean": 1780318,
+        "max": 2423200
+      },
+      "mulmod": {
+        "n": 1500,
+        "min": 5486438,
+        "p10": 5510314,
+        "median": 5529508,
+        "mean": 5534192,
+        "max": 6411846
+      },
+      "mulbare": {
+        "n": 1500,
+        "min": 5449600,
+        "p10": 5475882,
+        "median": 5495420,
+        "mean": 5500071,
+        "max": 6434876
+      },
+      "mulnull": {
+        "n": 1500,
+        "min": 1586772,
+        "p10": 1595778,
+        "median": 1605074,
+        "mean": 1611781,
+        "max": 1682948
+      },
+      "genkey": {
+        "n": 1500,
+        "min": 1596368,
+        "p10": 1610262,
+        "median": 1622982,
+        "mean": 1628223,
+        "max": 1716728
+      }
+    },
+    {
+      "sign": {
+        "n": 1500,
+        "min": 1733996,
+        "p10": 1754086,
+        "median": 1763428,
+        "mean": 1764634,
+        "max": 2022816
+      },
+      "mulmod": {
+        "n": 1500,
+        "min": 5487636,
+        "p10": 5507790,
+        "median": 5526240,
+        "mean": 5530688,
+        "max": 6311304
+      },
+      "mulbare": {
+        "n": 1500,
+        "min": 5447758,
+        "p10": 5474188,
+        "median": 5492464,
+        "mean": 5495126,
+        "max": 5894436
+      },
+      "mulnull": {
+        "n": 1500,
+        "min": 1580938,
+        "p10": 1590746,
+        "median": 1598670,
+        "mean": 1600697,
+        "max": 1844962
+      },
+      "genkey": {
+        "n": 1500,
+        "min": 1590342,
+        "p10": 1605482,
+        "median": 1615380,
+        "mean": 1617287,
+        "max": 1711522
+      }
+    },
+    {
+      "sign": {
+        "n": 1500,
+        "min": 1740278,
+        "p10": 1755344,
+        "median": 1763724,
+        "mean": 1765842,
+        "max": 4157010
+      },
+      "mulmod": {
+        "n": 1500,
+        "min": 5475944,
+        "p10": 5496056,
+        "median": 5515488,
+        "mean": 5517232,
+        "max": 5839776
+      },
+      "mulbare": {
+        "n": 1500,
+        "min": 5444500,
+        "p10": 5462746,
+        "median": 5483006,
+        "mean": 5484892,
+        "max": 5835970
+      },
+      "mulnull": {
+        "n": 1500,
+        "min": 1582124,
+        "p10": 1588860,
+        "median": 1595866,
+        "mean": 1597178,
+        "max": 1783884
+      },
+      "genkey": {
+        "n": 1500,
+        "min": 1589494,
+        "p10": 1605300,
+        "median": 1613772,
+        "mean": 1615412,
+        "max": 1708176
+      }
+    }
+  ]
 }

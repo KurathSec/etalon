@@ -171,6 +171,15 @@ def score(pair_dir: pathlib.Path, arm: str, opt: str | None = None,
             "max_t": float(tvals[-1]) if tvals else None,
             # tau is kept as a REPORTED effect size only; it decides nothing (PR-4).
             "max_tau": max_tau,
+            # The statistic the VERDICT is decided on, as a field rather than only
+            # inside `detail`. It had lived only in the prose string, so a consumer
+            # wanting "the paper's statistic" reached for max_t instead, which is
+            # dudect's own maximum over every test including the second-order one
+            # the permutation rule excludes. On the unamplified message arm the two
+            # read 220 and 138; on the eightfold-amplified one, 1901 and 213
+            # (results/detection_curve_all.json, hmac-timing vulnerable). Anything
+            # downstream must use this one.
+            "permutation_max_abs_t": (perm or {}).get("observed_max_abs_t"),
             "permutation_p": (perm or {}).get("p_value"),
             "permutation_shuffles": (perm or {}).get("permutations"),
             "permutation_null_p95": (perm or {}).get("null_max_abs_t_p95"),

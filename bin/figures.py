@@ -265,9 +265,10 @@ def fig_matrixssl_ladder():
     moves. Plotting |t| here would hide the difference between releases entirely and would
     contradict this paper's own reporting rule.
 
-    No fold-change is drawn between releases. Each arm is one acquisition and nothing
-    here bounds between-acquisition spread, so a ratio across two separately acquired
-    builds is not admissible; the reader can see the fall without being handed a
+    No fold-change is drawn between releases. Each bar is one of three acquisitions
+    of that design from one retained build, and the between-acquisition range IS
+    committed (results/matrixssl_repeats.json); what bars the ratio is that the
+    releases are separately BUILT arms, not that spread is unmeasured; the reader can see the fall without being handed a
     number the corpus cannot support.
     """
     doc = json.loads((REPO / "results" / "fix_verification.json").read_text())

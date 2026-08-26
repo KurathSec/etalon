@@ -47,7 +47,10 @@ GLYPH = {"yes": "\\Yes", "no": "\\Not", "unstated": ""}
 # from the tools the scorer actually runs.
 SCORED_KEY = {"dudect": "dudect", "timecop": "timecop", "binsec": "binsec",
               "varlat": "varlat"}
-ADAPTER = {"data", "microwalk"}
+# Only Microwalk has an adapter here (src/corpus/score/adapters/microwalk.py) and
+# only its pipeline is recorded as validated end to end. DATA is cited as a family
+# member and carries no adapter, so it must not wear the adapter glyph.
+ADAPTER = {"microwalk"}
 # Inventory slug to the key refs.bib actually uses.
 CITE_KEY = {"dudect": "dudect", "timecop": "timecop", "binsec": "binsecrel",
             "ctgrind": "ctgrind", "data": "data", "microwalk": "microwalk",

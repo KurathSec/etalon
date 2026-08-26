@@ -8,10 +8,15 @@
 # fixes created the next round's findings. That is the same failure the corpus already has
 # a control for (INST-1) pointed at the manuscript instead of the instruments.
 #
-# Two rules, both declarative:
-#   [[retired]]  a claim that was withdrawn. It must not appear anywhere in the paper.
-#   [[ratio]]    a printed percentage must equal its printed numerator over its printed
-#                denominator, both read from numbers.tex, within tolerance.
+# Six rule kinds, all declarative, all read by bin/paper_check.py:
+#   [[retired]]      a claim that was withdrawn. It must not appear anywhere in the paper.
+#   [[forbidden]]    vocabulary refused in a named file (the anti-SoK gate).
+#   [[once]]         a claim that must appear in exactly one file.
+#   [[contradiction]] a pair of phrases that must not both appear.
+#   [duplicate]      no normalised window of N words may appear in two files (a single
+#                    table, not an array: it has one window and one exempt list).
+#   [[ratio]]        a printed percentage must equal its printed numerator over its printed
+#                    denominator, both read from numbers.tex, within tolerance.
 
 # ---------------------------------------------------------------- retired claims
 [[retired]]
@@ -60,6 +65,33 @@ retired_in = "main.tex, round 9"
 why = """The attenuation factor was a ratio of two single acquisitions on separately built
 arms on a host whose frequency is not pinned, so the within-run bootstrap intervals do not
 bound it. Directions and class differences are reported instead."""
+
+[[retired]]
+phrase = "not the fivefold"
+retired_in = "results/fix_verification.json and README, round 16"
+why = """The withdrawn fivefold attenuation had been replaced by a 1.44x figure, which is the
+same forbidden quantity: a ratio across two separately built releases. The record now gives
+the two class differences with their between-acquisition ranges and no ratio."""
+
+[[retired]]
+phrase = "replication corroborates direction"
+retired_in = "sec/fixes.tex, round 16"
+why = """The one aarch64 run was acquired hours before the harness correction, so it timed
+scalar multiplication on a different curve, and its dumps are uncommitted. No cross-host
+replication of the MatrixSSL case is carried."""
+
+[[retired]]
+phrase = "reproduces on an unrelated microarchitecture"
+retired_in = "sec/app-threats.tex, round 16"
+why = """Same withdrawal as above: the second-microarchitecture measurement predates the harness
+correction and does not corroborate the corrected finding."""
+
+[[retired]]
+phrase = "routine of indistinguishable cost"
+retired_in = "sec/fixes.tex and shared/front.tex, round 16"
+why = """The deployed call and the library's own key generation are about one per cent apart,
+consistently in sign across every containment run, and the body prints that gap beside the
+claim. A resolution word overstated it."""
 
 [[retired]]
 phrase = "the cross-check that the"
@@ -162,6 +194,28 @@ why = """A universal over a table with rows for six pairs. tab:divergence is sco
 recall-eligible pairs, so the claim must name that scope; the tier-C reproductions carry their
 divergences in their manifests instead."""
 
+[[retired]]
+phrase = "no containers and no hardware"
+retired_in = "sec/intro.tex, round 15"
+why = """The split promised verification from a cold clone with nothing but the repository,
+and that is false for five of the six recall-eligible pairs: their recovery runs inside the
+pinned image, because lattice reduction needs fpylll and upstream's curve module is GPL and
+is kept out of this MIT tree. What is true is no analyser, no measurement and no hardware.
+sec/method.tex states the container cost once and every other site points at it."""
+
+[[retired]]
+phrase = "against\nnothing but the repository"
+retired_in = "sec/method.tex, round 15"
+why = "The same stdlib-only overclaim in the section that defines the split."
+
+[[retired]]
+phrase = "the recall-eligible corner"
+retired_in = "sec/method.tex, round 15"
+why = """tab:blindspot prints the corpus pairs carrying at least one applicable analyser, not
+the recall-eligible ones. Three of its rows are tier C and outside every recall denominator,
+and three recall-eligible pairs have no row in it at all. Calling it the recall-eligible corner
+invites a reader to divide its detections by its rows and read the result as recall."""
+
 # ---------------------------------------------------------------- duplicated prose
 # A duplicate is not a contradiction, which is why it passes every other rule here,
 # and it is precisely how a claim comes to be corrected in one place and left standing
@@ -189,10 +243,12 @@ phrase = "a co-located attacker exploiting a shared cache, and a fault channel, 
 why = "the remit paragraph owns the channel boundary; section 2 stated it a second time"
 
 [[once]]
-phrase = "with no analysers, no containers and no hardware"
+phrase = "no analyser, no measurement and no hardware"
 why = """The cold-clone claim is the artifact pitch and belongs to the Artifact run-in.
 The method section describes the same split as a mechanism and had restated the tail
-verbatim, eight words, which is under the duplicate rule's window."""
+verbatim, eight words, which is under the duplicate rule's window. The phrase this rule
+watches changed in round 15: it used to end "no containers", which was false for five of
+the six recall-eligible pairs, and the retired entry above keeps the old wording out."""
 
 [[once]]
 phrase = "has no maintainer to coordinate with"
@@ -239,8 +295,10 @@ claim = "we do not establish that the deployed signing path executes it"
 against = "no longer an inference"
 why = """The abstract denied the deployment link while the fix section asserted it. The
 paper now states the intermediate claim in both: source dispatch and a whole-signature cost
-budget place a routine of indistinguishable cost inside the signature, and the residual was
-measured on that routine called directly."""
+budget place a routine costing all but the measured gap (mxGenkeyGap) of the signing path's
+own key generation inside the signature, and the residual was measured on that routine
+called directly. "Indistinguishable" is not used for that gap: it is consistent in sign
+across every containment run."""
 
 [[contradiction]]
 claim = "each arm is one acquisition"

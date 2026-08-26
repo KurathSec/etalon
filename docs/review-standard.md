@@ -32,7 +32,7 @@ experiments it cannot run, but **no open C1, C2 or C3 blocking item**.
 ## 2. Never fix a C1 by hand alone
 
 Every C1 gets a rule in `data/paper_consistency.toml` and is enforced by
-`bin/paper_check.py`. Two rule kinds today:
+`bin/paper_check.py`. Six rule kinds today:
 
 - `[[retired]]` a withdrawn claim, which must not appear in any paper source. Matching is
   whitespace-insensitive, because LaTeX wraps and a literal substring test silently misses
@@ -40,6 +40,14 @@ Every C1 gets a rule in `data/paper_consistency.toml` and is enforced by
   which has to be able to quote what it retires.
 - `[[ratio]]` a printed percentage, checked against its printed numerator and denominator
   read from `numbers.tex`. This is what a reader checking the arithmetic does.
+- `[[forbidden]]` vocabulary refused in a named file, the anti-survey gate over the section
+  carrying the analyser matrix.
+- `[[once]]` a claim that must appear in exactly one file, so a limit is stated where it
+  binds and nowhere else.
+- `[[contradiction]]` a pair of phrases that must not both appear; the two share no wording,
+  which is why the other kinds cannot see them (section 6).
+- `[duplicate]` a single table, not an array: no normalised window of N words may appear in
+  two paper files, with a named exemption list.
 
 Plant the failure before believing the control. A rule added without seeing it fail on the
 real defect is decoration.
@@ -82,7 +90,7 @@ pointed at named two. Every one was a claim updated in one place with its opposi
 standing in another. A blind referee found all three; no gate here saw any of them.
 
 They were invisible to the existing rules by construction. `[[retired]]` looks for a
-withdrawn phrase, `[[duplicate]]` for the same passage twice, `[[once]]` for a phrase
+withdrawn phrase, `[duplicate]` for the same passage twice, `[[once]]` for a phrase
 appearing more than once. A contradiction is none of those: the two statements are
 opposites, so they share no wording, and each is individually well formed.
 
@@ -109,3 +117,80 @@ panel's label means is therefore close to nothing. What its finding COMPOSITION 
 everything, and on that reading this paper's round 15 was worse than its round 14: the
 blocking items were no longer bounded evidence, they were the paper disagreeing with
 itself, in a paper whose thesis is that unreconciled numbers are false rather than weak.
+
+## 7. Grade by consequence, and grade down when in doubt
+
+An auditor that reports everything as blocking has not graded, it has listed, and a list
+without an order is one the author has to re-read and re-grade before it can be worked. The
+audit loop's convergence keys on blocking-plus-important, so inflated severity also keeps
+the loop running past the point where it is finding anything worth the pass.
+
+The rule the finders and verifiers now carry:
+
+- **blocking**: a reader who acted on the paper would be wrong about a result, a number, or
+  what was measured. The finding must name the wrong belief the reader would form. If that
+  sentence cannot be written, the finding is not blocking.
+- **important**: a real defect that weakens a claim or leaves a true one unsaid, but that
+  changes no result and misleads nobody about what was measured.
+- **minor**: everything else: wording, a missing pointer, an inconsistency with no
+  consequence.
+
+Between two levels, always the lower. Being right about a triviality does not make it
+important, and the size of the prose describing a defect is not the size of the defect.
+
+## 8. Fix in the round, then aim the next round at the fixes
+
+A pass of the audit is followed by fixes, so the second pass is not a second sweep of the
+same paper: it is a first sweep of a paper that has just been edited in ten places. It is
+pointed at those places, in this order.
+
+1. **Is the fix right?** It replaced a false statement; check the replacement against the
+   source it now rests on, not against the old wording.
+2. **Is it complete?** This is §6 turned into a check. A claim stated in three places and
+   fixed in one is the commonest defect in a revised paper, and it is invisible to a reader
+   who reads only the place that was fixed.
+3. **Did it break a neighbour?** A total, a denominator or a cross-reference that agreed
+   with the old wording and no longer agrees with the new one.
+
+Only after those three does the pass look anywhere new. Broad re-sweeping is what made the
+middle rounds return volume without severity.
+
+## 9. An empty round is a result
+
+The finders are told, from the late rounds on, that returning nothing is valid and expected.
+Without that they will find something, because a lens asked what is wrong with a paper always
+can be, and the cost is not neutral: every invented finding buys a verification pass and a
+place on a list the author has to read and dismiss.
+
+The evidence that this matters is the yield curve. Round 1 returned 93 confirmed findings
+graded 13 blocking, 44 important, 36 minor. Round 2, after those fixes and after severity was
+recalibrated by consequence, returned 37 graded 1 / 14 / 19. Round 3 returned 23 graded
+0 / 10 / 13. The severity is falling faster than the count, which is what convergence looks
+like from inside; a round that returned the same count at the same severity would mean the
+loop had started generating its own work.
+
+## 10. The fix is a workflow, and it is not done until a second agent finds nothing
+
+Rounds 3 and 4 were made almost entirely of the previous round's fixes: a claim corrected at
+one site while two to five siblings kept the old wording, in the paper's appendix, the README, a
+docstring, the `reading` field of a results record, a pair's evidence file. Section 6 said to
+find everywhere a claim is stated; a rule that is not enforced is a habit, and this one lapsed
+whenever a round had fifteen fixes to make by hand.
+
+So a fix now runs as `paperfix`, and a defect is not fixed until three things have happened:
+
+1. **Before any edit, the whole tree is searched** for every old wording and every old number
+   the defect names, and every hit is a site to correct. The search covers the paper, `bin/`,
+   `results/`, `data/`, `docs/`, `README.md`, `pairs/*/evidence`, `preregistration/` and `tests/`.
+2. **A generator that was edited is re-run**, so its committed record cannot contradict it, and
+   a record whose generator cannot be re-run here has its prose corrected by hand to match.
+   Control GEN-1 is what turns the second half into a check: every prose field of a generated
+   record must appear, window by window, among its generator's string literals.
+3. **A different agent tries to show the fix is incomplete**: it searches for survivors, reads
+   every edited site for agreement in substance, and runs every `--check` the fix touched. A
+   defect is complete only at zero survivors, and an incomplete one is retried once and then
+   reported, not chased.
+
+A fixer that disagrees with a finding says so, with the evidence path, and that is surfaced;
+the one thing it may not do is skip in silence. And each round ends in one commit, so the next
+round audits a committed tree and its own fixes are a `git diff` rather than a memory.

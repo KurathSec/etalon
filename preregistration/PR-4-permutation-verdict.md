@@ -80,6 +80,23 @@ resolves the timed call to about seven ticks and 99 distinct values in 400000 me
   five reject their null at factor one, so for those pairs the amplification is not what
   earns the detection, and the paper's standing caveat about detections being earned at a
   chosen amplitude is weaker than it had been stated.
+- **From PR-3, one committed outcome is corrected under the rule PR-3 fixed.** PR-3 separated
+  `inconclusive` from `clean` so that an absence of evidence is never folded into evidence of
+  absence, but the scoring path applied that separation only to the vulnerable arm. A cell whose
+  vulnerable arm reported a leak and whose patched arm reported `budget_exhausted` was recorded
+  as a **detection**, which reads the unresolved arm as clean and so is the exact fold the rule
+  forbids. The rule is now applied to both arms in one function and every committed row is
+  re-derived from its committed arm statuses, running no analyser: `bin/score.py --rescore`.
+  **One row of sixty changes**: binsec on `hqc-reject`, from `detected` to `inconclusive`. It is
+  named here and corrected in the paper rather than quietly adopted, which is what C8 requires
+  of a changed row. No recall denominator moves, because that pair is tier C.
+
+- **From PR-4 itself, the multiplicity family grew.** C9 below is fixed over "18 committed
+  arms". The family the paper reports and corrects over is 22, the row count of
+  `results/dudect_permutation.json`, because two pairs gained committed dumps after this file
+  was written. The prediction is unchanged in substance, at least one uncorrected `p` below
+  0.05 that BH declines, and it is what happened; the denominator is recorded here so a reader
+  comparing the paper's figure against the 18 above finds the reason rather than a discrepancy.
 - **From PR-3, the calibration artifact.** `results/dudect_calibration.json` and
   `bin/dudect_calibrate.py` remain committed as the record of the retired rule. They are not
   read by any verdict.

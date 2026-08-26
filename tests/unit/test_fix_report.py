@@ -70,7 +70,7 @@ def test_ci_loader_refuses_a_misparse_instead_of_returning_a_number():
 def test_fix_report_reproduces_the_committed_block():
     """Every committed MatrixSSL design must fall out of the dumps again.
 
-    This is the slow one: ten designs, ten thousand permutations each. It is worth its
+    This is the slow one: twelve designs, ten thousand permutations each. It is worth its
     runtime because it is the only check that the paper's headline statistics still
     follow from the samples, rather than from a file someone edited.
     """

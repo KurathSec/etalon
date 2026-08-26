@@ -17,8 +17,9 @@ of the two ECDSA pairs, whose AMP is in vulnerable.c alone.
 
 What the whole set supports is that the VERDICT does not turn on the gain or on the
 run. What only the same-binary arms support is a comparison of effect estimates, and
-the effect comparison below is restricted to them. Neither bounds between-acquisition
-spread: that needs repeats of one binary, which this corpus has only for the
+the effect comparison below is restricted to them. Those arms DO each give one gap
+between two acquisitions of one binary, which this file records; what they do not give
+is a RANGE, which needs more repeats and exists in this corpus only for the
 fix-verification case (results/matrixssl_repeats.json).
 """
 import json
@@ -175,9 +176,12 @@ def main() -> int:
             "same-binary arms, because an effect measured at amplification one is not "
             "comparable with one measured at forty or twelve hundred; the committed "
             "message pair reads -74,545 ticks against -33 on the factor-one rebuild. "
-            "Neither comparison bounds between-acquisition spread, which needs repeats "
-            "of one binary and exists in this corpus only for the fix-verification "
-            "case, in results/matrixssl_repeats.json."
+            "The same-binary arms DO give one gap each between two acquisitions of one "
+            "binary, which this file records; what they do not give is a range, which "
+            "needs more repeats and exists in this corpus only for the fix-verification "
+            "case, in results/matrixssl_repeats.json. An earlier revision of this field "
+            "said neither comparison bounds between-acquisition spread at all, which "
+            "understated what the same-binary arms measure."
         ),
         "generator": "bin/repeatability.py",
         "n_arms": len(arms),
@@ -198,12 +202,17 @@ def main() -> int:
             print("repeatability: results/repeatability.json missing", file=sys.stderr)
             return 1
         old = json.loads(OUT.read_text())
+        # The prose fields are checked too, and they are the ones that went stale: this
+        # check compared seven integers, so a generator whose `reading` was edited to
+        # withdraw a claim could sit beside a committed record still asserting it, and
+        # the paper cites the record by name. A count is not the only thing that drifts.
         bad = [
             k
             for k in ("n_arms", "n_status_agree", "n_status_disagree",
                       "n_effect_compared", "n_effect_mutually_inside",
                       "n_gap_below_coarser_half_width",
-                      "n_gap_below_finer_half_width")
+                      "n_gap_below_finer_half_width",
+                      "finding", "why", "reading", "generator")
             if old.get(k) != doc[k]
         ]
         if bad:

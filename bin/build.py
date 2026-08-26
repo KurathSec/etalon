@@ -63,12 +63,17 @@ def run(cmd: list[str]) -> str:
     return r.stdout
 
 
-def probe(image: str, outdir: Path, binary: str, symbol: str,
-          classes: list[str]) -> dict:
-    """Read back what the compiler actually emitted for one entry symbol."""
-    text = run(["podman", "run", "--rm", "--network=none",
-                "-v", f"{outdir}:/out:ro,Z", image, "sh", "-c",
-                f"objdump -d --disassemble='{symbol}' /out/{binary}"])
+def count_leak_class(text: str, classes: list[str] | None) -> dict:
+    """Count leak-class instructions in one objdump listing.
+
+    Factored out of probe() so that INST-1 can exercise THIS counter on the
+    committed textprints rather than a reimplementation of it. The stand-in it
+    replaces matched the mnemonic only, and so would have reported a
+    division-free build for any target where the compiler calls a software
+    helper instead of emitting a divide, which is the quiet failure INST-1
+    exists to catch. A control that reimplements its subject cannot see a
+    defect in the subject.
+    """
     body = [l for l in text.splitlines() if "\t" in l]
     mnemonics, targets = [], []
     for line in body:
@@ -90,14 +95,24 @@ def probe(image: str, outdir: Path, binary: str, symbol: str,
     # programme keeps rediscovering, a default presented as a measurement.
     hits = (sum(1 for m, t in zip(mnemonics, targets) if m in classes or t in classes)
             if classes else None)
-    sec = run(["podman", "run", "--rm", "--network=none",
-               "-v", f"{outdir}:/out:ro,Z", image, "sh", "-c",
-               f"objcopy -O binary --only-section=.text /out/{binary} /tmp/t "
-               f"&& sha256sum /tmp/t"]).split()[0]
     return {"instructions_in_symbol": len(mnemonics),
             "leak_class_instructions": hits,
-            "sha256_text": sec,
             "textprint": "\n".join(body[:400])}
+
+
+def probe(image: str, outdir: Path, binary: str, symbol: str,
+          classes: list[str]) -> dict:
+    """Read back what the compiler actually emitted for one entry symbol."""
+    text = run(["podman", "run", "--rm", "--network=none",
+                "-v", f"{outdir}:/out:ro,Z", image, "sh", "-c",
+                f"objdump -d --disassemble='{symbol}' /out/{binary}"])
+    out = count_leak_class(text, classes)
+    out["sha256_text"] = run(
+        ["podman", "run", "--rm", "--network=none",
+         "-v", f"{outdir}:/out:ro,Z", image, "sh", "-c",
+         f"objcopy -O binary --only-section=.text /out/{binary} /tmp/t "
+         f"&& sha256sum /tmp/t"]).split()[0]
+    return out
 
 
 def main() -> int:

@@ -585,8 +585,9 @@ def evaluate_meta1(results: list) -> Result:
 
 
 def check_inst1() -> Result:
-    """INST-1: every instrument the corpus reports through demonstrates, on inputs whose answer is
-    known, that it can return BOTH a loud positive and a quiet negative.
+    """INST-1: the permutation null, the leak-class counter and the information measure each
+    demonstrate, on committed inputs whose answer is known, that they can return BOTH a loud
+    positive and a quiet negative.
 
     The corpus already demands this of the analysers it scores: SENT-1 and SENT-2
     void a tool's rows unless it detects the planted sentinel and stays clean on the
@@ -602,6 +603,12 @@ def check_inst1() -> Result:
     instruction counter pointed at the wrong symbol reports a division-free build.
     Each of those is a clean result, and this corpus's findings are largely clean
     results, so nothing downstream would question them.
+
+    The three are NAMED rather than quantified over, in this docstring, in the controls
+    table it generates and in the paper. "Every instrument the corpus reports through" was
+    what all three said, and it is a quantifier nothing enforces: the set of instruments
+    whose clean readings the paper reports is not derivable from this function, so the
+    equality was asserted. A list can be checked against the paper by reading it.
 
     A one-sided check cannot catch it, because the failure IS the quiet side. So
     every instrument here is exercised twice, on a positive whose answer is known
@@ -632,8 +639,18 @@ def check_inst1() -> Result:
     except Exception as exc:
         bad.append(f"permutation null could not be exercised: {exc}")
 
-    # 2. The leak-class counter: must count a division where one is emitted and none
-    #    where it is not. Both textprints are committed, so this needs no build.
+    # 2. The leak-class counter, exercised as THE SCRIPT THE PAPER REPORTS THROUGH.
+    #    It must count a division where one is emitted and none where it is not. Both
+    #    textprints are committed, so this needs no build and no container.
+    #
+    #    An earlier version of this check reimplemented the count here, matching the
+    #    mnemonic only. That is a stand-in, and a weaker one than its subject in the
+    #    exact place that matters: bin/build.py also matches the CALL TARGET, because
+    #    on a target with no divide instruction the compiler emits __udivsi3 or
+    #    __aeabi_uidiv and a mnemonic-only counter reports a division-free build. The
+    #    stand-in would have passed its own quiet check on such a build while the real
+    #    counter found the division, which is precisely the quiet failure INST-1 was
+    #    written to catch. It now drives bin/build.py's counter.
     try:
         classes = ["div", "idiv", "divl", "divw"]
         emit_p = (REPO / "locks" / "textprints" / "kyberslash"
@@ -641,14 +658,13 @@ def check_inst1() -> Result:
         quiet_p = (REPO / "locks" / "textprints" / "kyberslash"
                    / "gcc-12.2.0-O2-x86_64-linux-gnu" / "vulnerable.asm")
         if emit_p.exists() and quiet_p.exists():
+            spec = importlib.util.spec_from_file_location(
+                "ct_build", REPO / "bin" / "build.py")
+            bl = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(bl)
             def count(text):
-                n = 0
-                for line in text.splitlines():
-                    parts = line.split("\t")
-                    if len(parts) >= 3 and parts[2].split():
-                        n += parts[2].split()[0] in classes
-                return n
-            checks.append("leak-class counter")
+                return bl.count_leak_class(text, classes)["leak_class_instructions"]
+            checks.append("leak-class counter (bin/build.py)")
             if count(emit_p.read_text()) < 1:
                 bad.append("leak-class counter found no division in a cell recorded "
                            "as emitting one")
@@ -806,13 +822,18 @@ def check_paper_untracked(files: list[str]) -> Result:
 
 
 def check_repeatability() -> Result:
-    """REPT-1: the committed between-acquisition record matches its generator.
+    """REPT-1: the committed re-acquisition record matches its generator.
 
-    results/repeatability.json is the only place this paper compares two
-    acquisitions of the same arm, and the numbers it feeds into the body are
-    counts of agreement. A count of agreement that drifts from its generator
-    is the worst kind to leave unchecked, because drift moves it in the
-    reassuring direction as easily as the other one.
+    results/repeatability.json compares two acquisitions of the same arm, and the
+    numbers it feeds into the body are counts of agreement. A count of agreement
+    that drifts from its generator is the worst kind to leave unchecked, because
+    drift moves it in the reassuring direction as easily as the other one.
+
+    It is NOT a between-acquisition bound, and this docstring said "the only place
+    this paper compares two acquisitions" while the body says the opposite: most of
+    these arms are rebuilt at gain one, so most pairs here are two acquisitions of
+    two binaries. The corpus-wide between-acquisition record, repeats of one binary,
+    is results/matrixssl_repeats.json and exists only for the fix case.
     """
     r = subprocess.run([sys.executable, str(REPO / "bin" / "repeatability.py"),
                         "--check"], cwd=REPO, capture_output=True, text=True)
@@ -824,6 +845,123 @@ def check_repeatability() -> Result:
                       if (r.stderr or r.stdout).strip() else "generator disagrees")
     return Result("REPT-1", PASS, n,
                   "committed re-acquisition record reproduces from its generator")
+
+
+def _generator_script(record: dict) -> str | None:
+    """The bin/*.py a results record names as its generator, or None.
+
+    Only a top-level `generator` string counts, and only when that script plausibly
+    WRITES the record: its source must mention the record's basename or carry a
+    "finding" key literal. A record assembled by hand from a script's stdout says so
+    in its generator field ("by hand") and is skipped, because its prose is the
+    author's and not the script's.
+    """
+    gen = record.get("generator")
+    if not isinstance(gen, str) or "by hand" in gen:
+        return None
+    m = re.search(r"bin/([A-Za-z0-9_]+\.py)", gen)
+    return m.group(1) if m else None
+
+
+def _string_corpus(script: pathlib.Path) -> str:
+    """Every string literal in a script, in source order, whitespace-normalised, with
+    digit-bearing tokens removed so an interpolated number never breaks a window."""
+    import ast
+    tree = ast.parse(script.read_text())
+    parts = [n.value for n in ast.walk(tree)
+             if isinstance(n, ast.Constant) and isinstance(n.value, str)]
+    return _prose_norm(" ".join(parts))
+
+
+def _prose_norm(s: str) -> str:
+    toks = [w for w in re.sub(r"[^a-z0-9 ]", " ", s.lower()).split()
+            if not any(c.isdigit() for c in w)]
+    return " ".join(toks)
+
+
+def check_gen1() -> Result:
+    """GEN-1: every prose field of a generated record appears among its generator's string literals.
+
+    The failure this catches happened twice in one round: a generator's `reading` was
+    rewritten to withdraw a claim, and its committed results file kept the retired
+    text, so the paper's own pointer led a reader to the withdrawn claim. Re-running
+    the generator is not always possible, because most of them measure, so this is a
+    STATIC check: for each results/*.json whose `generator` names a bin/*.py, every
+    six-word window of each prose field (finding, why, reading, *note) must occur in
+    the concatenation of that script's string literals. Digit-bearing tokens are
+    dropped on both sides so a formatted number cannot break a window. A record whose
+    prose was edited by hand to say something its generator does not say fails here,
+    which is the point: the record is the generator's output or it is nothing.
+    """
+    WINDOW = 6
+    examined, bad, skipped = 0, [], []
+    for rp in sorted((REPO / "results").glob("*.json")):
+        try:
+            rec = json.loads(rp.read_text())
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(rec, dict):
+            continue
+        script = _generator_script(rec)
+        if not script:
+            continue
+        sp = REPO / "bin" / script
+        if not sp.exists():
+            bad.append(f"{rp.name}: generator bin/{script} does not exist")
+            continue
+        src = sp.read_text()
+        if rp.name not in src and '"finding"' not in src:
+            skipped.append(f"{rp.name} (bin/{script} does not write it)")
+            continue
+        corpus = _string_corpus(sp)
+        for key, val in rec.items():
+            if not isinstance(val, str):
+                continue
+            if key not in ("finding", "why", "reading") and not key.endswith("note"):
+                continue
+            words = _prose_norm(val).split()
+            if len(words) < WINDOW:
+                continue
+            examined += 1
+            missing = [" ".join(words[i:i + WINDOW])
+                       for i in range(len(words) - WINDOW + 1)
+                       if " ".join(words[i:i + WINDOW]) not in corpus]
+            if missing:
+                bad.append(f"{rp.name}.{key}: {len(missing)} window(s) absent from "
+                           f"bin/{script}, first: '{missing[0]}'")
+    if bad:
+        return Result("GEN-1", FAIL, examined, "; ".join(bad)[:400])
+    if examined == 0:
+        return Result("GEN-1", NA, 0, "no generated record carries a prose field")
+    return Result("GEN-1", PASS, examined,
+                  f"{examined} prose field(s) reproduce from their generators' literals"
+                  + (f"; {len(skipped)} record(s) hand-assembled, skipped" if skipped else ""))
+
+
+def check_gen2() -> Result:
+    """GEN-2: every generator with a --check mode reproduces its committed record.
+
+    The cheap, dynamic half of GEN-1: bin/repeatability.py, bin/analyser_table.py and
+    bin/host_facts.py each re-derive their record from committed inputs in seconds and
+    compare. bin/fix_report.py --check is the same discipline and is exercised by STAT-1
+    and tests/unit/test_fix_report.py rather than here, because its permutations take
+    minutes; bin/build.py --check needs the toolchain images and is BIN-1.
+    """
+    checks = (("repeatability", ["bin/repeatability.py", "--check"]),
+              ("analyser_table", ["bin/analyser_table.py", "--check"]),
+              ("host_facts", ["bin/host_facts.py", "--check"]))
+    bad = []
+    for name, cmd in checks:
+        r = subprocess.run([sys.executable, *cmd], cwd=REPO,
+                           capture_output=True, text=True)
+        if r.returncode != 0:
+            tail = (r.stderr or r.stdout).strip().splitlines()
+            bad.append(f"{name}: {tail[-1][:100] if tail else 'nonzero exit'}")
+    if bad:
+        return Result("GEN-2", FAIL, len(checks), "; ".join(bad))
+    return Result("GEN-2", PASS, len(checks),
+                  "every --check generator reproduces its committed record: "
+                  + ", ".join(n for n, _ in checks))
 
 
 def check_namecheck() -> Result:
@@ -870,6 +1008,8 @@ def main() -> int:
         check_sz1(),
         check_paper_untracked(files),
         check_repeatability(),
+        check_gen1(),
+        check_gen2(),
     ]
 
     # META-1 is evaluated last, over the results the suite just produced.

@@ -1,40 +1,40 @@
 {
- "finding": "the fix balances the instruction count across leading zeros and does not balance the cost",
- "why": "First, containment. The earlier count was 42,633,192 instructions for a call the\npaper measured at 5,535,140 ticks, and neither figure was what its name said: both\ncame from a driver passing a curve parameter where the library passes NULL, so both\ndescribed scalar multiplication on a different curve. Corrected, the call retires\nabout nine and a half million instructions in about 1.6 million ticks, a rate a wide\nout-of-order core reaches. The impossible arithmetic is gone.",
- "reading": "One leading zero and sixty-three retire almost the same number of extra instructions, while the measured time differs by nearly two orders of magnitude. Balancing by operation count is exactly what the vendor's dummy add and double achieve, and it is exactly what does not make this constant time, because the operands the dummy path feeds to the bignum layer are cheaper than the ones the real path feeds it.",
- "generator": "bin/matrixssl_icount.py",
- "version": "4-3-0",
- "method": "callgrind at 100 and 200 calls per class, differenced, so process startup cancels; one nonce class per run with the scalar fixed",
- "per_call": {
-  "256": {
-   "instructions_per_call": 9623216.88,
-   "delta_vs_256": 0.0,
-   "percent_vs_256": 0.0,
-   "leading_zeros": 0,
-   "digits": 4
+  "finding": "the fix balances the instruction count across leading zeros and does not balance the cost",
+  "why": "First, containment. The earlier count was 42,633,192 instructions for a call the\npaper measured at 5,535,140 ticks, and neither figure was what its name said: both\ncame from a driver passing a curve parameter where the library passes NULL, so both\ndescribed scalar multiplication on a different curve. Corrected, the call retires\nabout nine and a half million instructions in about 1.6 million ticks, a rate a wide\nout-of-order core reaches. The impossible arithmetic is gone.",
+  "reading": "One leading zero and sixty-three each SAVE almost the same number of instructions, while the measured time differs by nearly two orders of magnitude, which is why an instruction count cannot stand in for the cost here. delta_vs_256 is the 256-bit count minus the shorter class's, so a positive delta is a saving; an earlier revision of this field read it as an addition and the paper repeated the inverted sign.",
+  "generator": "bin/matrixssl_icount.py",
+  "version": "4-3-0",
+  "method": "callgrind at 100 and 200 calls per class, differenced, so process startup cancels; one nonce class per run with the scalar fixed",
+  "per_call": {
+    "256": {
+      "instructions_per_call": 9623216.88,
+      "delta_vs_256": 0.0,
+      "percent_vs_256": 0.0,
+      "leading_zeros": 0,
+      "digits": 4
+    },
+    "255": {
+      "instructions_per_call": 9570060.36,
+      "delta_vs_256": 53156.520000001416,
+      "percent_vs_256": 0.5523778655604965,
+      "leading_zeros": 1,
+      "digits": 4
+    },
+    "193": {
+      "instructions_per_call": 9569520.42,
+      "delta_vs_256": 53696.460000000894,
+      "percent_vs_256": 0.557988671247747,
+      "leading_zeros": 63,
+      "digits": 4
+    },
+    "192": {
+      "instructions_per_call": 7353694.94,
+      "delta_vs_256": 2269521.9400000004,
+      "percent_vs_256": 23.583817846990062,
+      "leading_zeros": 64,
+      "digits": 3
+    }
   },
-  "255": {
-   "instructions_per_call": 9570060.36,
-   "delta_vs_256": 53156.520000001416,
-   "percent_vs_256": 0.5523778655604965,
-   "leading_zeros": 1,
-   "digits": 4
-  },
-  "193": {
-   "instructions_per_call": 9569520.42,
-   "delta_vs_256": 53696.460000000894,
-   "percent_vs_256": 0.557988671247747,
-   "leading_zeros": 63,
-   "digits": 4
-  },
-  "192": {
-   "instructions_per_call": 7353694.94,
-   "delta_vs_256": 2269521.9400000004,
-   "percent_vs_256": 23.583817846990062,
-   "leading_zeros": 64,
-   "digits": 3
-  }
- },
- "instructions_per_tick": 6.019514271237967,
- "tick_reference": "results/matrixssl_containment.json median_ticks.mulnull"
+  "instructions_per_tick": 6.019514271237967,
+  "tick_reference": "results/matrixssl_containment.json median_ticks.mulnull"
 }

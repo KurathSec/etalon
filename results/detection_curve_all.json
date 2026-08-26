@@ -20,362 +20,408 @@
       "arm": "vulnerable",
       "amp": 1,
       "status": "leak_reported",
-      "max_abs_t": 16.98,
       "permutation_p": 9.999000099990002e-05,
-      "detail": "max |t|=14.3 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.75); effect 1540.970 ticks, 95% CI [1214.591, 1855.246]"
+      "detail": "max |t|=14.3 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.75); effect 1540.970 ticks, 95% CI [1214.591, 1855.246]",
+      "dudect_max_t": 16.98,
+      "permutation_max_abs_t": 14.3
     },
     {
       "pair": "ecdsa-nonce",
       "arm": "patched",
       "amp": 1,
       "status": "clean",
-      "max_abs_t": 2.21,
       "permutation_p": 0.6539346065393461,
-      "detail": "max |t|=1.6 against this run's own permutation null (p=0.6539, 10,000 shuffles, null p95=2.82): the run does not reject its own null. effect -0.715 ticks, 95% CI [-1.878, 0.457]"
+      "detail": "max |t|=1.6 against this run's own permutation null (p=0.6539, 10,000 shuffles, null p95=2.82): the run does not reject its own null. effect -0.715 ticks, 95% CI [-1.878, 0.457]",
+      "dudect_max_t": 2.21,
+      "permutation_max_abs_t": 1.6
     },
     {
       "pair": "ecdsa-nonce",
       "arm": "vulnerable",
       "amp": 2,
       "status": "leak_reported",
-      "max_abs_t": 26.77,
       "permutation_p": 9.999000099990002e-05,
-      "detail": "max |t|=20.7 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=3.35); effect 1932.988 ticks, 95% CI [1672.593, 2204.738]"
+      "detail": "max |t|=20.7 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=3.35); effect 1932.988 ticks, 95% CI [1672.593, 2204.738]",
+      "dudect_max_t": 26.77,
+      "permutation_max_abs_t": 20.7
     },
     {
       "pair": "ecdsa-nonce",
       "arm": "patched",
       "amp": 2,
       "status": "clean",
-      "max_abs_t": 1.11,
       "permutation_p": 0.7455254474552545,
-      "detail": "max |t|=1.5 against this run's own permutation null (p=0.7455, 10,000 shuffles, null p95=2.87): the run does not reject its own null. effect -0.073 ticks, 95% CI [-1.228, 1.100]"
+      "detail": "max |t|=1.5 against this run's own permutation null (p=0.7455, 10,000 shuffles, null p95=2.87): the run does not reject its own null. effect -0.073 ticks, 95% CI [-1.228, 1.100]",
+      "dudect_max_t": 1.11,
+      "permutation_max_abs_t": 1.5
     },
     {
       "pair": "ecdsa-nonce",
       "arm": "vulnerable",
       "amp": 4,
       "status": "leak_reported",
-      "max_abs_t": 45.11,
       "permutation_p": 9.999000099990002e-05,
-      "detail": "max |t|=37.2 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.66); effect 5098.770 ticks, 95% CI [4700.476, 5519.670]"
+      "detail": "max |t|=37.2 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.66); effect 5098.770 ticks, 95% CI [4700.476, 5519.670]",
+      "dudect_max_t": 45.11,
+      "permutation_max_abs_t": 37.2
     },
     {
       "pair": "ecdsa-nonce",
       "arm": "patched",
       "amp": 4,
       "status": "clean",
-      "max_abs_t": 2.19,
       "permutation_p": 0.43755624437556245,
-      "detail": "max |t|=2.0 against this run's own permutation null (p=0.4376, 10,000 shuffles, null p95=2.93): the run does not reject its own null. effect 0.705 ticks, 95% CI [-0.466, 1.908]"
+      "detail": "max |t|=2.0 against this run's own permutation null (p=0.4376, 10,000 shuffles, null p95=2.93): the run does not reject its own null. effect 0.705 ticks, 95% CI [-0.466, 1.908]",
+      "dudect_max_t": 2.19,
+      "permutation_max_abs_t": 2.0
     },
     {
       "pair": "ecdsa-nonce",
       "arm": "vulnerable",
       "amp": 8,
       "status": "leak_reported",
-      "max_abs_t": 59.2,
       "permutation_p": 9.999000099990002e-05,
-      "detail": "max |t|=47.9 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.63); effect 8180.835 ticks, 95% CI [7781.810, 8601.209]"
+      "detail": "max |t|=47.9 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.63); effect 8180.835 ticks, 95% CI [7781.810, 8601.209]",
+      "dudect_max_t": 59.2,
+      "permutation_max_abs_t": 47.9
     },
     {
       "pair": "ecdsa-nonce",
       "arm": "patched",
       "amp": 8,
       "status": "clean",
-      "max_abs_t": 2.46,
       "permutation_p": 0.5955404459554045,
-      "detail": "max |t|=1.8 against this run's own permutation null (p=0.5955, 10,000 shuffles, null p95=3.01): the run does not reject its own null. effect 0.174 ticks, 95% CI [-0.980, 1.348]"
+      "detail": "max |t|=1.8 against this run's own permutation null (p=0.5955, 10,000 shuffles, null p95=3.01): the run does not reject its own null. effect 0.174 ticks, 95% CI [-0.980, 1.348]",
+      "dudect_max_t": 2.46,
+      "permutation_max_abs_t": 1.8
     },
     {
       "pair": "ecdsa-address",
       "arm": "vulnerable",
       "amp": 1,
       "status": "leak_reported",
-      "max_abs_t": 17.55,
       "permutation_p": 9.999000099990002e-05,
-      "detail": "max |t|=14.1 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.69); effect 756.980 ticks, 95% CI [630.291, 887.926]"
+      "detail": "max |t|=14.1 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.69); effect 756.980 ticks, 95% CI [630.291, 887.926]",
+      "dudect_max_t": 17.55,
+      "permutation_max_abs_t": 14.1
     },
     {
       "pair": "ecdsa-address",
       "arm": "patched",
       "amp": 1,
       "status": "clean",
-      "max_abs_t": 1.39,
       "permutation_p": 0.7509249075092491,
-      "detail": "max |t|=1.6 against this run's own permutation null (p=0.7509, 10,000 shuffles, null p95=2.91): the run does not reject its own null. effect 0.126 ticks, 95% CI [-1.030, 1.298]"
+      "detail": "max |t|=1.6 against this run's own permutation null (p=0.7509, 10,000 shuffles, null p95=2.91): the run does not reject its own null. effect 0.126 ticks, 95% CI [-1.030, 1.298]",
+      "dudect_max_t": 1.39,
+      "permutation_max_abs_t": 1.6
     },
     {
       "pair": "ecdsa-address",
       "arm": "vulnerable",
       "amp": 2,
       "status": "leak_reported",
-      "max_abs_t": 28.7,
       "permutation_p": 9.999000099990002e-05,
-      "detail": "max |t|=23.3 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.78); effect 1815.603 ticks, 95% CI [1518.580, 2106.989]"
+      "detail": "max |t|=23.3 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.78); effect 1815.603 ticks, 95% CI [1518.580, 2106.989]",
+      "dudect_max_t": 28.7,
+      "permutation_max_abs_t": 23.3
     },
     {
       "pair": "ecdsa-address",
       "arm": "patched",
       "amp": 2,
       "status": "clean",
-      "max_abs_t": 2.85,
       "permutation_p": 0.38276172382761725,
-      "detail": "max |t|=2.0 against this run's own permutation null (p=0.3828, 10,000 shuffles, null p95=2.87): the run does not reject its own null. effect -0.748 ticks, 95% CI [-1.874, 0.392]"
+      "detail": "max |t|=2.0 against this run's own permutation null (p=0.3828, 10,000 shuffles, null p95=2.87): the run does not reject its own null. effect -0.748 ticks, 95% CI [-1.874, 0.392]",
+      "dudect_max_t": 2.85,
+      "permutation_max_abs_t": 2.0
     },
     {
       "pair": "ecdsa-address",
       "arm": "vulnerable",
       "amp": 4,
       "status": "leak_reported",
-      "max_abs_t": 42.44,
       "permutation_p": 9.999000099990002e-05,
-      "detail": "max |t|=30.6 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.78); effect 2022.014 ticks, 95% CI [1720.569, 2337.201]"
+      "detail": "max |t|=30.6 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.78); effect 2022.014 ticks, 95% CI [1720.569, 2337.201]",
+      "dudect_max_t": 42.44,
+      "permutation_max_abs_t": 30.6
     },
     {
       "pair": "ecdsa-address",
       "arm": "patched",
       "amp": 4,
       "status": "clean",
-      "max_abs_t": 1.82,
       "permutation_p": 0.25777422257774224,
-      "detail": "max |t|=2.3 against this run's own permutation null (p=0.2578, 10,000 shuffles, null p95=2.96): the run does not reject its own null. effect 0.511 ticks, 95% CI [-0.673, 1.719]"
+      "detail": "max |t|=2.3 against this run's own permutation null (p=0.2578, 10,000 shuffles, null p95=2.96): the run does not reject its own null. effect 0.511 ticks, 95% CI [-0.673, 1.719]",
+      "dudect_max_t": 1.82,
+      "permutation_max_abs_t": 2.3
     },
     {
       "pair": "ecdsa-address",
       "arm": "vulnerable",
       "amp": 8,
       "status": "leak_reported",
-      "max_abs_t": 59.44,
       "permutation_p": 9.999000099990002e-05,
-      "detail": "max |t|=48.3 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.67); effect 6250.155 ticks, 95% CI [5712.846, 6784.584]"
+      "detail": "max |t|=48.3 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.67); effect 6250.155 ticks, 95% CI [5712.846, 6784.584]",
+      "dudect_max_t": 59.44,
+      "permutation_max_abs_t": 48.3
     },
     {
       "pair": "ecdsa-address",
       "arm": "patched",
       "amp": 8,
       "status": "clean",
-      "max_abs_t": 2.41,
       "permutation_p": 0.10418958104189581,
-      "detail": "max |t|=3.0 against this run's own permutation null (p=0.1042, 10,000 shuffles, null p95=3.17): the run does not reject its own null. effect -6.669 ticks, 95% CI [-12.786, -0.401]"
+      "detail": "max |t|=3.0 against this run's own permutation null (p=0.1042, 10,000 shuffles, null p95=3.17): the run does not reject its own null. effect -6.669 ticks, 95% CI [-12.786, -0.401]",
+      "dudect_max_t": 2.41,
+      "permutation_max_abs_t": 3.0
     },
     {
       "pair": "kyberslash",
       "arm": "vulnerable",
       "amp": 1,
       "status": "clean",
-      "max_abs_t": 2.25,
       "permutation_p": 0.22097790220977903,
-      "detail": "max |t|=1.7 against this run's own permutation null (p=0.2210, 10,000 shuffles, null p95=2.29): the run does not reject its own null. effect 0.014 ticks, 95% CI [-0.020, 0.049]"
+      "detail": "max |t|=1.7 against this run's own permutation null (p=0.2210, 10,000 shuffles, null p95=2.29): the run does not reject its own null. effect 0.014 ticks, 95% CI [-0.020, 0.049]",
+      "dudect_max_t": 2.25,
+      "permutation_max_abs_t": 1.7
     },
     {
       "pair": "kyberslash",
       "arm": "patched",
       "amp": 1,
       "status": "clean",
-      "max_abs_t": 1.44,
       "permutation_p": 0.7865213478652134,
-      "detail": "max |t|=1.1 against this run's own permutation null (p=0.7865, 10,000 shuffles, null p95=2.49): the run does not reject its own null. effect 0.004 ticks, 95% CI [-0.025, 0.032]"
+      "detail": "max |t|=1.1 against this run's own permutation null (p=0.7865, 10,000 shuffles, null p95=2.49): the run does not reject its own null. effect 0.004 ticks, 95% CI [-0.025, 0.032]",
+      "dudect_max_t": 1.44,
+      "permutation_max_abs_t": 1.1
     },
     {
       "pair": "kyberslash",
       "arm": "vulnerable",
       "amp": 2,
       "status": "clean",
-      "max_abs_t": 1.18,
       "permutation_p": 0.8829117088291171,
-      "detail": "max |t|=0.9 against this run's own permutation null (p=0.8829, 10,000 shuffles, null p95=2.38): the run does not reject its own null. effect -0.005 ticks, 95% CI [-0.049, 0.035]"
+      "detail": "max |t|=0.9 against this run's own permutation null (p=0.8829, 10,000 shuffles, null p95=2.38): the run does not reject its own null. effect -0.005 ticks, 95% CI [-0.049, 0.035]",
+      "dudect_max_t": 1.18,
+      "permutation_max_abs_t": 0.9
     },
     {
       "pair": "kyberslash",
       "arm": "patched",
       "amp": 2,
       "status": "clean",
-      "max_abs_t": 1.66,
       "permutation_p": 0.4203579642035796,
-      "detail": "max |t|=2.0 against this run's own permutation null (p=0.4204, 10,000 shuffles, null p95=3.06): the run does not reject its own null. effect 0.021 ticks, 95% CI [-0.009, 0.051]"
+      "detail": "max |t|=2.0 against this run's own permutation null (p=0.4204, 10,000 shuffles, null p95=3.06): the run does not reject its own null. effect 0.021 ticks, 95% CI [-0.009, 0.051]",
+      "dudect_max_t": 1.66,
+      "permutation_max_abs_t": 2.0
     },
     {
       "pair": "kyberslash",
       "arm": "vulnerable",
       "amp": 4,
       "status": "clean",
-      "max_abs_t": 2.22,
       "permutation_p": 0.1984801519848015,
-      "detail": "max |t|=2.2 against this run's own permutation null (p=0.1985, 10,000 shuffles, null p95=2.78): the run does not reject its own null. effect -0.002 ticks, 95% CI [-0.021, 0.017]"
+      "detail": "max |t|=2.2 against this run's own permutation null (p=0.1985, 10,000 shuffles, null p95=2.78): the run does not reject its own null. effect -0.002 ticks, 95% CI [-0.021, 0.017]",
+      "dudect_max_t": 2.22,
+      "permutation_max_abs_t": 2.2
     },
     {
       "pair": "kyberslash",
       "arm": "patched",
       "amp": 4,
       "status": "clean",
-      "max_abs_t": 1.0,
       "permutation_p": 0.7237276272372762,
-      "detail": "max |t|=1.2 against this run's own permutation null (p=0.7237, 10,000 shuffles, null p95=2.54): the run does not reject its own null. effect 0.012 ticks, 95% CI [-0.020, 0.041]"
+      "detail": "max |t|=1.2 against this run's own permutation null (p=0.7237, 10,000 shuffles, null p95=2.54): the run does not reject its own null. effect 0.012 ticks, 95% CI [-0.020, 0.041]",
+      "dudect_max_t": 1.0,
+      "permutation_max_abs_t": 1.2
     },
     {
       "pair": "kyberslash",
       "arm": "vulnerable",
       "amp": 8,
       "status": "clean",
-      "max_abs_t": 2.24,
       "permutation_p": 0.42475752424757524,
-      "detail": "max |t|=2.4 against this run's own permutation null (p=0.4248, 10,000 shuffles, null p95=3.43): the run does not reject its own null. effect 0.023 ticks, 95% CI [-0.011, 0.057]"
+      "detail": "max |t|=2.4 against this run's own permutation null (p=0.4248, 10,000 shuffles, null p95=3.43): the run does not reject its own null. effect 0.023 ticks, 95% CI [-0.011, 0.057]",
+      "dudect_max_t": 2.24,
+      "permutation_max_abs_t": 2.4
     },
     {
       "pair": "kyberslash",
       "arm": "patched",
       "amp": 8,
       "status": "clean",
-      "max_abs_t": 0.45,
       "permutation_p": 0.5966403359664033,
-      "detail": "max |t|=1.5 against this run's own permutation null (p=0.5966, 10,000 shuffles, null p95=2.69): the run does not reject its own null. effect -0.005 ticks, 95% CI [-0.026, 0.016]"
+      "detail": "max |t|=1.5 against this run's own permutation null (p=0.5966, 10,000 shuffles, null p95=2.69): the run does not reject its own null. effect -0.005 ticks, 95% CI [-0.026, 0.016]",
+      "dudect_max_t": 0.45,
+      "permutation_max_abs_t": 1.5
     },
     {
       "pair": "hqc-reject",
       "arm": "vulnerable",
       "amp": 1,
       "status": "leak_reported",
-      "max_abs_t": 164.71,
       "permutation_p": 9.999000099990002e-05,
-      "detail": "max |t|=116.8 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.96); effect -118.318 ticks, 95% CI [-120.789, -116.010]"
+      "detail": "max |t|=116.8 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.96); effect -118.318 ticks, 95% CI [-120.789, -116.010]",
+      "dudect_max_t": 164.71,
+      "permutation_max_abs_t": 116.8
     },
     {
       "pair": "hqc-reject",
       "arm": "patched",
       "amp": 1,
       "status": "clean",
-      "max_abs_t": 1.96,
       "permutation_p": 0.3334666533346665,
-      "detail": "max |t|=1.7 against this run's own permutation null (p=0.3335, 10,000 shuffles, null p95=2.41): the run does not reject its own null. effect 0.098 ticks, 95% CI [-0.582, 0.772]"
+      "detail": "max |t|=1.7 against this run's own permutation null (p=0.3335, 10,000 shuffles, null p95=2.41): the run does not reject its own null. effect 0.098 ticks, 95% CI [-0.582, 0.772]",
+      "dudect_max_t": 1.96,
+      "permutation_max_abs_t": 1.7
     },
     {
       "pair": "hqc-reject",
       "arm": "vulnerable",
       "amp": 2,
       "status": "leak_reported",
-      "max_abs_t": 166.44,
       "permutation_p": 9.999000099990002e-05,
-      "detail": "max |t|=116.6 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=3.12); effect -178.289 ticks, 95% CI [-181.918, -174.561]"
+      "detail": "max |t|=116.6 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=3.12); effect -178.289 ticks, 95% CI [-181.918, -174.561]",
+      "dudect_max_t": 166.44,
+      "permutation_max_abs_t": 116.6
     },
     {
       "pair": "hqc-reject",
       "arm": "patched",
       "amp": 2,
       "status": "clean",
-      "max_abs_t": 1.58,
       "permutation_p": 0.3651634836516348,
-      "detail": "max |t|=1.9 against this run's own permutation null (p=0.3652, 10,000 shuffles, null p95=2.65): the run does not reject its own null. effect 0.579 ticks, 95% CI [-0.652, 1.921]"
+      "detail": "max |t|=1.9 against this run's own permutation null (p=0.3652, 10,000 shuffles, null p95=2.65): the run does not reject its own null. effect 0.579 ticks, 95% CI [-0.652, 1.921]",
+      "dudect_max_t": 1.58,
+      "permutation_max_abs_t": 1.9
     },
     {
       "pair": "hqc-reject",
       "arm": "vulnerable",
       "amp": 4,
       "status": "leak_reported",
-      "max_abs_t": 165.13,
       "permutation_p": 9.999000099990002e-05,
-      "detail": "max |t|=116.7 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.95); effect -299.936 ticks, 95% CI [-306.036, -294.017]"
+      "detail": "max |t|=116.7 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.95); effect -299.936 ticks, 95% CI [-306.036, -294.017]",
+      "dudect_max_t": 165.13,
+      "permutation_max_abs_t": 116.7
     },
     {
       "pair": "hqc-reject",
       "arm": "patched",
       "amp": 4,
       "status": "leak_reported",
-      "max_abs_t": 3.89,
       "permutation_p": 0.0007999200079992001,
-      "detail": "max |t|=3.7 against this run's own permutation null (p=0.0008, 10,000 shuffles, null p95=2.66); effect 5.100 ticks, 95% CI [1.949, 8.542]"
+      "detail": "max |t|=3.7 against this run's own permutation null (p=0.0008, 10,000 shuffles, null p95=2.66); effect 5.100 ticks, 95% CI [1.949, 8.542]",
+      "dudect_max_t": 3.89,
+      "permutation_max_abs_t": 3.7
     },
     {
       "pair": "hqc-reject",
       "arm": "vulnerable",
       "amp": 8,
       "status": "leak_reported",
-      "max_abs_t": 164.76,
       "permutation_p": 9.999000099990002e-05,
-      "detail": "max |t|=116.8 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.97); effect -642.239 ticks, 95% CI [-654.887, -629.609]"
+      "detail": "max |t|=116.8 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.97); effect -642.239 ticks, 95% CI [-654.887, -629.609]",
+      "dudect_max_t": 164.76,
+      "permutation_max_abs_t": 116.8
     },
     {
       "pair": "hqc-reject",
       "arm": "patched",
       "amp": 8,
       "status": "clean",
-      "max_abs_t": 1.27,
       "permutation_p": 0.6954304569543046,
-      "detail": "max |t|=1.3 against this run's own permutation null (p=0.6954, 10,000 shuffles, null p95=2.61): the run does not reject its own null. effect -0.591 ticks, 95% CI [-8.903, 7.836]"
+      "detail": "max |t|=1.3 against this run's own permutation null (p=0.6954, 10,000 shuffles, null p95=2.61): the run does not reject its own null. effect -0.591 ticks, 95% CI [-8.903, 7.836]",
+      "dudect_max_t": 1.27,
+      "permutation_max_abs_t": 1.3
     },
     {
       "pair": "hmac-timing",
       "arm": "vulnerable",
       "amp": 1,
       "status": "leak_reported",
-      "max_abs_t": 219.87,
       "permutation_p": 9.999000099990002e-05,
-      "detail": "max |t|=138.5 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.92); effect -33.137 ticks, 95% CI [-33.714, -32.566]"
+      "detail": "max |t|=138.5 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.92); effect -33.137 ticks, 95% CI [-33.714, -32.566]",
+      "dudect_max_t": 219.87,
+      "permutation_max_abs_t": 138.5
     },
     {
       "pair": "hmac-timing",
       "arm": "patched",
       "amp": 1,
       "status": "clean",
-      "max_abs_t": 1.8,
       "permutation_p": 0.8736126387361264,
-      "detail": "max |t|=1.9 against this run's own permutation null (p=0.8736, 10,000 shuffles, null p95=3.42): the run does not reject its own null. effect -0.176 ticks, 95% CI [-2.652, 2.286]"
+      "detail": "max |t|=1.9 against this run's own permutation null (p=0.8736, 10,000 shuffles, null p95=3.42): the run does not reject its own null. effect -0.176 ticks, 95% CI [-2.652, 2.286]",
+      "dudect_max_t": 1.8,
+      "permutation_max_abs_t": 1.9
     },
     {
       "pair": "hmac-timing",
       "arm": "vulnerable",
       "amp": 2,
       "status": "leak_reported",
-      "max_abs_t": 281.77,
       "permutation_p": 9.999000099990002e-05,
-      "detail": "max |t|=156.2 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.83); effect -35.696 ticks, 95% CI [-36.230, -35.154]"
+      "detail": "max |t|=156.2 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.83); effect -35.696 ticks, 95% CI [-36.230, -35.154]",
+      "dudect_max_t": 281.77,
+      "permutation_max_abs_t": 156.2
     },
     {
       "pair": "hmac-timing",
       "arm": "patched",
       "amp": 2,
       "status": "clean",
-      "max_abs_t": 1.3,
       "permutation_p": 0.7288271172882712,
-      "detail": "max |t|=1.9 against this run's own permutation null (p=0.7288, 10,000 shuffles, null p95=3.19): the run does not reject its own null. effect 1.271 ticks, 95% CI [-0.409, 2.933]"
+      "detail": "max |t|=1.9 against this run's own permutation null (p=0.7288, 10,000 shuffles, null p95=3.19): the run does not reject its own null. effect 1.271 ticks, 95% CI [-0.409, 2.933]",
+      "dudect_max_t": 1.3,
+      "permutation_max_abs_t": 1.9
     },
     {
       "pair": "hmac-timing",
       "arm": "vulnerable",
       "amp": 4,
       "status": "leak_reported",
-      "max_abs_t": 754.58,
       "permutation_p": 9.999000099990002e-05,
-      "detail": "max |t|=207.4 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.87); effect -77.079 ticks, 95% CI [-77.970, -76.171]"
+      "detail": "max |t|=207.4 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.87); effect -77.079 ticks, 95% CI [-77.970, -76.171]",
+      "dudect_max_t": 754.58,
+      "permutation_max_abs_t": 207.4
     },
     {
       "pair": "hmac-timing",
       "arm": "patched",
       "amp": 4,
       "status": "clean",
-      "max_abs_t": 2.16,
       "permutation_p": 0.47885211478852113,
-      "detail": "max |t|=2.0 against this run's own permutation null (p=0.4789, 10,000 shuffles, null p95=2.97): the run does not reject its own null. effect 0.047 ticks, 95% CI [-0.345, 0.413]"
+      "detail": "max |t|=2.0 against this run's own permutation null (p=0.4789, 10,000 shuffles, null p95=2.97): the run does not reject its own null. effect 0.047 ticks, 95% CI [-0.345, 0.413]",
+      "dudect_max_t": 2.16,
+      "permutation_max_abs_t": 2.0
     },
     {
       "pair": "hmac-timing",
       "arm": "vulnerable",
       "amp": 8,
       "status": "leak_reported",
-      "max_abs_t": 1900.76,
       "permutation_p": 9.999000099990002e-05,
-      "detail": "max |t|=213.1 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.75); effect -164.341 ticks, 95% CI [-166.202, -162.422]"
+      "detail": "max |t|=213.1 against this run's own permutation null (p=0.0001, 10,000 shuffles, null p95=2.75); effect -164.341 ticks, 95% CI [-166.202, -162.422]",
+      "dudect_max_t": 1900.76,
+      "permutation_max_abs_t": 213.1
     },
     {
       "pair": "hmac-timing",
       "arm": "patched",
       "amp": 8,
       "status": "clean",
-      "max_abs_t": 1.72,
       "permutation_p": 0.8287171282871713,
-      "detail": "max |t|=1.4 against this run's own permutation null (p=0.8287, 10,000 shuffles, null p95=2.87): the run does not reject its own null. effect -0.008 ticks, 95% CI [-0.305, 0.296]"
+      "detail": "max |t|=1.4 against this run's own permutation null (p=0.8287, 10,000 shuffles, null p95=2.87): the run does not reject its own null. effect -0.008 ticks, 95% CI [-0.305, 0.296]",
+      "dudect_max_t": 1.72,
+      "permutation_max_abs_t": 1.4
     }
   ],
   "generator": "bin/detection_curve_all.py",
-  "discharges": "the PR-2 commitment recorded as outstanding in PR-3 and again in PR-4"
+  "discharges": "the PR-2 commitment recorded as outstanding in PR-3 and again in PR-4",
+  "pairs_discriminating_at_factor_one": [
+    "ecdsa-address",
+    "ecdsa-nonce",
+    "hmac-timing",
+    "hqc-reject"
+  ]
 }

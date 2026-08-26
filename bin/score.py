@@ -113,6 +113,34 @@ def _facet_names() -> set[str]:
 FACET_NAMES = _facet_names()
 
 
+UNRESOLVED = ("budget_exhausted", "error", "inconclusive")
+
+
+def decide(vuln_status: str, patched_status: str) -> str:
+    """The outcome rule, as a pure function of the two arm statuses.
+
+    Factored out so that --rescore applies exactly the rule a fresh run applies. It
+    was inline once, and when the rule changed the committed rows kept the outcome
+    the old rule gave: a grounded audit found binsec/hqc-reject still recorded as a
+    detection under a rule that had already been changed to refuse one.
+
+    A detection requires the patched arm to be RESOLVED clean, not merely "not red".
+    An unresolved patched arm cannot underwrite a discrimination: the tool may simply
+    not have run long enough to flag it, and counting that as a detection inflates
+    recall.
+    """
+    hit, fp = vuln_status == "leak_reported", patched_status == "leak_reported"
+    if hit and patched_status in UNRESOLVED:
+        return "inconclusive"
+    if hit and not fp:
+        return "detected"              # red on the bug, green on the fix
+    if hit and fp:
+        return "non_discriminating"    # flags both arms
+    if vuln_status in UNRESOLVED:
+        return vuln_status
+    return "missed"
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", action="store_true")
@@ -127,7 +155,31 @@ def main() -> int:
                     "its rows, leaving the other tools' committed rows untouched (used "
                     "to re-acquire dudect under the PR-3 verdict rule without disturbing "
                     "the deterministic taint and symbolic rows).")
+    ap.add_argument("--rescore", action="store_true",
+                    help="re-derive every committed outcome from its committed arm "
+                         "statuses under the rule now in force, running no analyser. "
+                         "The statuses are what the adapters observed; the outcome is a "
+                         "pure function of them, so when the rule changes this is how "
+                         "the committed rows catch up.")
     a = ap.parse_args()
+
+    if a.rescore:
+        vp = REPO / "results" / "verdicts.jsonl"
+        rows = [json.loads(l) for l in vp.read_text().splitlines() if l.strip()]
+        changed = []
+        for r in rows:
+            v, pt = r.get("vulnerable_status"), r.get("patched_status")
+            if not r.get("applicable") or v is None or pt is None:
+                continue
+            want = decide(v, pt)
+            if want != r.get("outcome"):
+                changed.append((r["tool"], r["pair"], r["outcome"], want))
+                r["outcome"] = want
+        vp.write_text("\n".join(json.dumps(r) for r in rows) + "\n")
+        for tool, pair, was, now in changed:
+            print(f"rescore: {tool}/{pair} {was} -> {now}")
+        print(f"rescore: {len(changed)} row(s) changed of {len(rows)}")
+        return 0
 
     tools = tomllib.loads((REPO / "data" / "tools.toml").read_text())["tool"]
     pairs = sorted(p.parent for p in (REPO / "pairs").glob("*/pair.toml"))
@@ -172,23 +224,7 @@ def main() -> int:
             # Run the adapter on both arms.
             vuln = adapter.score(pair, "vulnerable")
             patch = adapter.score(pair, "patched")
-            hit = vuln["status"] == "leak_reported"
-            fp = patch["status"] == "leak_reported"
-            # A detection requires the patched arm to be RESOLVED clean, not merely
-            # "not red". An unresolved patched arm (budget exhausted, error) cannot
-            # underwrite a discrimination: the tool may simply not have run long
-            # enough to flag it, and counting that as a detection inflates recall.
-            unresolved = ("budget_exhausted", "error", "inconclusive")
-            if hit and patch["status"] in unresolved:
-                outcome = "inconclusive"
-            elif hit and not fp:
-                outcome = "detected"        # red on the bug, green on the fix
-            elif hit and fp:
-                outcome = "non_discriminating"  # flags both arms
-            elif vuln["status"] in unresolved:
-                outcome = vuln["status"]
-            else:
-                outcome = "missed"
+            outcome = decide(vuln["status"], patch["status"])
             row.update({"applicable": True, "outcome": outcome,
                         "vulnerable_status": vuln["status"],
                         "patched_status": patch["status"],

@@ -71,7 +71,49 @@ def corpus_section() -> dict:
         "recall_eligible_pairs": eligible,
         "recall_eligible_names": sorted(
             tiers.get("A", []) + tiers.get("B", [])),
+        # Two partitions of the recall-eligible set that the paper had been
+        # describing in prose and getting wrong. Both are read off declarations
+        # the corpus already makes, so neither can drift from what runs.
+        #
+        # By recovery runtime: the split's promise is that verification reruns
+        # from a cold clone, and for most of these pairs that is true only given
+        # the pinned recovery image, because lattice reduction needs fpylll and
+        # the upstream curve module is GPL and so lives in the image rather than
+        # in this MIT tree. Only the pairs declaring runtime = "pure" rerun on a
+        # stock interpreter alone.
+        **_recovery_runtime_split(tiers),
+        # By whether any analyser is applicable at all. tab:blindspot prints one
+        # row per corpus pair carrying at least one applicable analyser row, which
+        # is NOT the recall-eligible set: it takes in tier C and leaves out every
+        # pair whose observations come with no program to run.
+        **_analyser_reach_split(corpus, tiers),
     }
+
+
+def _recovery_runtime_split(tiers: dict) -> dict:
+    names = tiers.get("A", []) + tiers.get("B", [])
+    pure = []
+    for n in names:
+        d = tomllib.loads((REPO / "pairs" / n / "pair.toml").read_text())
+        if d.get("recovery", {}).get("runtime") == "pure":
+            pure.append(n)
+    return {"recall_eligible_pure_recovery": len(pure),
+            "recall_eligible_pure_recovery_names": sorted(pure),
+            "recall_eligible_image_recovery": len(names) - len(pure)}
+
+
+def _analyser_reach_split(corpus: list, tiers: dict) -> dict:
+    reach = {}
+    for row in read_jsonl(REPO / "results" / "verdicts.jsonl"):
+        if row.get("applicable"):
+            reach[row["pair"]] = reach.get(row["pair"], 0) + 1
+    scored = sorted(n for n, _ in corpus if reach.get(n))
+    eligible = set(tiers.get("A", []) + tiers.get("B", []))
+    return {"analyser_scored_pairs": len(scored),
+            "analyser_scored_names": scored,
+            # The two ways the scored set and the recall-eligible set differ.
+            "analyser_scored_not_eligible": len([n for n in scored if n not in eligible]),
+            "eligible_no_analyser": len([n for n in sorted(eligible) if not reach.get(n)])}
 
 
 def _facet_names() -> set[str]:
@@ -338,12 +380,26 @@ def as_tex(report: dict) -> str:
             _ids += len(re.split(r"\s*(?:and|/)\s*", _cid))
         emit("nControlIds", _ids)
         emit("nControlsDeclared", len(_m.declared(_src)))
+        # How many instruments INST-1 turns the sentinel discipline on. Counted from
+        # the control's own source, the same way the control count is, so the paper
+        # cannot say "every instrument" over a list of three or go stale when a
+        # fourth is added. The names come from the check labels the control prints.
+        _inst = re.search(r"def [a-z_]*inst[_0-9]*\(.*?(?=\ndef )", _src,
+                          re.S | re.I)
+        if _inst:
+            _labels = re.findall(r'checks\.append\("([^"]+)"\)', _inst.group(0))
+            emit("nInstrumentsExercised", len(_labels))
 
     c = report["corpus"]
     emit("nPairs", c["pairs_total"])
     emit("nPairsCorpus", c["pairs_corpus"])
     emit("nPairsSentinel", c["pairs_sentinel"])
     emit("nRecallEligible", c["recall_eligible_pairs"])
+    emit("nRecallPureRecovery", c["recall_eligible_pure_recovery"])
+    emit("nRecallImageRecovery", c["recall_eligible_image_recovery"])
+    emit("nBlindspotPairs", c["analyser_scored_pairs"])
+    emit("nBlindspotTierC", c["analyser_scored_not_eligible"])
+    emit("nEligibleNoAnalyser", c["eligible_no_analyser"])
 
     cen = report["census"]
     emit("nCensusEntries", cen["census_entries"])
@@ -744,12 +800,11 @@ def as_tex(report: dict) -> str:
         # The four-design decomposition that locates the residual in the leading-zero
         # phase rather than the loop bound. Reported as |t| against each run's own
         # permutation null, because tau is not comparable across these budgets.
-        xh = mxl.get("cross_host_replication", {}).get("abs_t_by_host", {})
-        arm = xh.get("aarch64 Neoverse-V1", {})
-        if arm.get("4-3-0_bit255v256") is not None:
-            out.append(tex_macro("mxTFixedArm", f"{arm['4-3-0_bit255v256']:.0f}"))
-            out.append(tex_macro("mxTPrefixArm", f"{arm['4-2-1_bit255v256']:.0f}"))
-        dec = mxl.get("decomposition_4_3_0", {})
+        # mxTFixedArm and mxTPrefixArm are no longer emitted. The aarch64 figures they
+        # carried were acquired five hours before the harness correction that stopped
+        # dudect_mx.c timing scalar multiplication on the wrong curve, so they measured
+        # a different curve; the block is retired in results/fix_verification.json and
+        # the paper no longer claims a cross-host replication of this case.
         # Every MatrixSSL statistic now comes from the one full-report pass over the
         # committed dumps, so the paper reports n, p and an effect size beside each |t|
         # rather than a bare statistic, and every value is decided by the rule in force.
@@ -919,6 +974,17 @@ def as_tex(report: dict) -> str:
         _n = _zlib.decompress(tr.read_bytes()).count(b"\n") - 1   # minus the header line
         out.append(tex_macro("mxTraceN", f"{_n:,}"))
 
+    # How many fix-verification designs share a decision. Printed as a word in the
+    # statistical appendix, where it drifted the moment the corpus gained two dumps.
+    _fvp = REPO / "results" / "fix_verification.json"
+    if _fvp.exists():
+        _des = (json.loads(_fvp.read_text())["libraries"]["matrixssl"]
+                .get("measurements_full_report", {}).get("designs", {}))
+        if _des:
+            out.append(tex_macro("nFixDesigns", str(len(_des))))
+            out.append(tex_macro("nFixDesignsWord",
+                                 WORDS[len(_des)] if len(_des) < len(WORDS) else str(len(_des))))
+
     # The containment resolution. These replace the three mutually impossible figures
     # the paper used to print: measured together in one process they are consistent,
     # and the one that was wrong was this corpus's own harness.
@@ -932,6 +998,12 @@ def as_tex(report: dict) -> str:
         out.append(tex_macro("mxOldRegionTicks", f"{m['mulmod']:,}"))
         out.append(tex_macro("mxHarnessFactor",
                              f"{cj['harness_overstatement_factor']:.2f}"))
+        # Two denominators, one per cent apart, and the paper had spent them the wrong
+        # way round: harness_overstatement_factor divides by the library's own key
+        # generation (genkey), and a sentence whose referent is the deployed call
+        # (mulnull) needs the other ratio, computed here from the same record.
+        out.append(tex_macro("mxHarnessFactorDeployed",
+                             f"{m['mulmod'] / m['mulnull']:.2f}"))
         out.append(tex_macro("mxGenkeyGap",
                              f"{cj['mulnull_vs_genkey_relative_gap'] * 100:.2f}\\%"))
         out.append(tex_macro("mxContainmentReps", str(cj["repeats"])))
@@ -1005,13 +1077,14 @@ def as_tex(report: dict) -> str:
         out.append(tex_macro("aucLibgcrypt", f"{gc['auc_full']:.2f}"))
         out.append(tex_macro("aucMatrixN", f"{mx['n_full']:,}"))
         out.append(tex_macro("aucLibgcryptN", f"{gc['n_full']:,}"))
-        out.append(tex_macro("selMatrixMatched",
-                             f"{mx['top90_contaminated_matched'] * 100:.0f}\\%"))
         out.append(tex_macro("selMatrixFull",
                              f"{mx['top90_contaminated_full'] * 100:.0f}\\%"))
         out.append(tex_macro("selLibgcrypt",
                              f"{gc['top90_contaminated_full'] * 100:.1f}\\%"))
-        out.append(tex_macro("selMatchedN", f"{mx['n_matched']:,}"))
+        # selMatrixMatched and selMatchedN are gone. They came from a matched-budget row
+        # on a 6,000-signature 4.2.1 trace for which this repository carries no key, so
+        # they could not be regenerated, and the arm they sat beside was mislabelled as
+        # the patched build. Both are dropped rather than carried as unregenerable.
     # The END-TO-END basis for the residual, from the 250k whole-signature trace. The
     # site measurement (bin/fix_report.py) times one isolated eccMulmod call, which on
     # this host costs several times a whole signature's own scalar multiplication, so a
@@ -1039,14 +1112,29 @@ def as_tex(report: dict) -> str:
             out.append(tex_macro("mxLadderPerZero", f"{dmax / zmax:,.0f}"))
     # The residual as retired instructions, on the isolated call, so the two instruments
     # on the SAME region can be compared as fractions rather than only in sign.
-    icp = REPO / "pairs" / "matrixssl-minerva" / "evidence" / "instruction_counts.json"
+    # It reads results/matrixssl_icount.json, the counts in force. It used to read the
+    # pair's evidence/instruction_counts.json, whose per_call block was retired as
+    # wrong-curve figures, and it would have gone on silently emitting nothing once that
+    # block was renamed, which is a number disappearing from the paper without anyone
+    # being told. Fail closed instead.
+    icp = REPO / "results" / "matrixssl_icount.json"
     if icp.exists():
         pc = json.loads(icp.read_text()).get("per_call", {})
+        if "256" not in pc or "255" not in pc:
+            raise SystemExit("matrixssl icount: no per-call counts for the residual fraction")
         # The same residual as a fraction of the same region, by the other instrument,
         # named for its region for the same reason.
-        if "256" in pc and "255" in pc:
-            out.append(tex_macro("icResidualOfCall",
-                                 f"{abs(pc['255']['percent_vs_256']):.2f}\\%"))
+        out.append(tex_macro("icResidualOfCall",
+                             f"{abs(pc['255']['percent_vs_256']):.2f}\\%"))
+
+    # eccMulmodCt is byte-identical across the two fixed releases, which is a stronger
+    # statement than the statistical "indistinguishable" the paper had been making.
+    bcp = REPO / "pairs" / "matrixssl-minerva" / "evidence" / "binary_confirmation.json"
+    if bcp.exists():
+        _bi = json.loads(bcp.read_text()).get("byte_identity", "")
+        _m = re.search(r"same (\d[\d,]*) instructions", _bi)
+        if _m and "IDENTICAL" in _bi:
+            out.append(tex_macro("mxCtInsns", _m.group(1)))
     # What the original authors report their recovery needs, beside ours (S8). Read
     # from the committed record so the comparison cannot drift from its source.
     pwp = REPO / "results" / "prior_work_budgets.json"
@@ -1079,6 +1167,12 @@ def as_tex(report: dict) -> str:
                            ("icDeltaDigitShort", "192")):
             if key in pc:
                 out.append(tex_macro(macro, f"{abs(pc[key]['delta_vs_256']):,.0f}"))
+        # How close "the same number" actually is. The paper had said "the same
+        # number" of two figures differing by 539 instructions, which is a claim a
+        # reader can falsify by dividing the two macros beside it.
+        if "255" in pc and "193" in pc:
+            a, b = (abs(pc[k]["delta_vs_256"]) for k in ("255", "193"))
+            out.append(tex_macro("icDeltaSpreadPercent", f"{abs(b - a) / b * 100:.1f}\\%"))
         if "192" in pc:
             out.append(tex_macro("icPercentDigitShort",
                                  f"{abs(pc['192']['percent_vs_256']):.0f}\\%"))
@@ -1172,16 +1266,37 @@ def as_tex(report: dict) -> str:
         dca = json.loads(dcap.read_text())
         out.append(tex_macro("nCurvePairs",
                              str(len({r["pair"] for r in dca["rows"] if r.get("status")}))))
+        # The paper says these pairs DISCRIMINATE at factor one, which is both arms.
+        # The macro used to count the vulnerable half only, so the prose claimed more
+        # than the emitter computed. Fail closed rather than fall back to the weaker
+        # list, because falling back is how the two came apart.
+        if "pairs_discriminating_at_factor_one" not in dca:
+            raise SystemExit("detection curve: no discrimination list; re-run "
+                             "bin/detection_curve_all.py or backfill it")
         out.append(tex_macro("nCurveDetectAtOne",
-                             str(len(dca["pairs_detecting_at_factor_one"]))))
+                             str(len(dca["pairs_discriminating_at_factor_one"]))))
         by = {(r["pair"], r["amp"]): r for r in dca["rows"]
               if r.get("status") and r["arm"] == "vulnerable"}
         for pair, macro in (("kyberslash", "Division"), ("hqc-reject", "Rejection"),
                             ("hmac-timing", "Hmac"), ("ecdsa-nonce", "NonceLatency")):
-            ts = [by[(pair, a)]["max_abs_t"] for a in (1, 2, 4, 8) if (pair, a) in by]
+            # The VERDICT statistic, never dudect's own max over every test. The two
+            # differ by more than a rounding: on the amplified message arm they read
+            # 213 and 1901, unamplified 138 and 220, and "climbs steeply" was a property of the
+            # wrong one. Fail closed rather than fall back, because a fallback here
+            # is how the wrong statistic got printed in the first place.
+            ts = [by[(pair, a)]["permutation_max_abs_t"] for a in (1, 2, 4, 8)
+                  if (pair, a) in by]
+            if any(v is None for v in ts):
+                raise SystemExit(f"detection curve: {pair} has a row with no verdict "
+                                 f"statistic; run bin/detection_curve_all.py --backfill")
             if len(ts) == 4:
                 out.append(tex_macro(f"curveOne{macro}", f"{ts[0]:.0f}"))
                 out.append(tex_macro(f"curveEight{macro}", f"{ts[-1]:.0f}"))
+            # The other statistic, printed once beside the first so the paper can say
+            # they are not interchangeable without the reader taking that on trust.
+            if pair == "hmac-timing" and (pair, 8) in by:
+                out.append(tex_macro("dudectOwnMaxHmac",
+                                     f"{by[(pair, 8)]['dudect_max_t']:.0f}"))
     # The count of deployed remediations the paper grades was typed as a literal 3,
     # which is the one thing this file exists to prevent. It is the number of candidates
     # in the committed triage that were actually built and measured.

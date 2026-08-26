@@ -13,7 +13,8 @@ the curve's `a` coefficient, forwarded to eccProjectiveDblPoint. secp256r1 is
 flagged isOptimized in ecc_curve_data.c ("1 if optimized with field parameter
 A=-3"), so ecc_keygen.c never allocates it and the deployed call passes NULL, which
 selects the fast doubling. Passing a non-NULL zero selects the generic path for a
-different curve, at 3.45x the cost.
+different curve, at 3.46x the cost of the deployed call and 3.42x the
+library's own key generation, which is the ratio this script records.
 
 Usage: matrixssl_containment.py <work-dir-from-matrixssl_rebuild> [repeats]
 """
@@ -76,7 +77,7 @@ def main() -> int:
                     "harness passing a curve parameter where the library passes NULL"),
         "why": __doc__.strip().split("\n\n")[1],
         "reading": (
-            "mulnull and genkey agree to within a fraction of a percent, so eccMulmod "
+            "mulnull and genkey agree to within about one per cent, so eccMulmod "
             "called with the library's own argument IS the deployed call. sign exceeds "
             "genkey by the hashing, inversion and encoding a signature adds. mulmod, "
             "the region the earlier harness timed, is several times either, because a "
@@ -97,7 +98,8 @@ def main() -> int:
     OUT.write_text(json.dumps(doc, indent=1) + "\n")
     print(f"containment: genkey {med['genkey']:,} vs mulnull {med['mulnull']:,} ticks "
           f"({agree:.2%} apart); the earlier harness's region was "
-          f"{doc['harness_overstatement_factor']:.2f}x the deployed call")
+          f"{med['mulmod'] / med['mulnull']:.2f}x the deployed call "
+          f"({doc['harness_overstatement_factor']:.2f}x the library's own key generation)")
     return 0
 
 

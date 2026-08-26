@@ -103,15 +103,16 @@ digest-pinned images: a statistical timing test, a dynamic-taint checker, the
 patched Valgrind that detects variable-latency instructions, and a relational
 symbolic execution engine. A fifth, a differential address-trace analyser, is
 validated end to end on a pure-C address leak but its per-pair integration is
-outstanding. Nineteen controls pass and the oracle verifies eight pairs.
+outstanding. Twenty-one controls pass and the oracle verifies eight pairs.
 
 Two measured findings so far. A tool-by-class matrix in which each analyser has a
 different blind spot: the timing test detects both nonce classes and misses the
 division-timing leak on x86, while the patched Valgrind and the symbolic engine
 both detect that same leak, each by a different mechanism, and the taint checker
-cannot see the variable-latency class at all; on the rejection sampler the taint
-checker and the symbolic engine detect the secret-dependent branch the timing test
-could not decide within budget. And a toolchain-pinning result, now measured
+cannot see the variable-latency class at all; on the rejection sampler the timing
+test and the taint checker detect the secret-dependent branch, while the symbolic
+engine flagged the vulnerable arm, exhausted its budget on the patched one, and is
+filed inconclusive (`results/verdicts.jsonl`). And a toolchain-pinning result, now measured
 across two compilers and three microarchitectures: the same vulnerable source
 emits a hardware division only at certain (vendor, optimisation) cells, two
 compilers disagree on which, and a rented Graviton3 confirms the leak extends to
@@ -130,7 +131,8 @@ Corrected 2026-08-26 (UTC): every count in the section above had gone stale and 
 the earlier dated corrections had caught it, which is the drift this one records. The corpus
 gained libgcrypt-minerva (tier A) and the two tier-B observation datasets, so it holds nine
 corpus pairs rather than seven and six are recall-eligible rather than four; the control
-suite grew from twelve to nineteen and the oracle verifies eight pairs rather than six; and
+suite grew from twelve to twenty-one (GEN-1, GEN-2 and FW-1 being this revision's additions)
+and the oracle verifies eight pairs rather than six; and
 coverage moved to seven of eleven attested cells. The counts here are the generated ones as
 of that date (\nPairsCorpus, \nRecallEligible, \nControls, \nCoveredCells in
 paper/tches/numbers.tex); this section is prose and not generated, which is exactly why it
@@ -396,12 +398,15 @@ review's own reference to four uncovered cells.
 *Exploitability is now measured rather than argued.* `results/exploit_budget.json` records,
 on the same host and estimator, an AUC between signing time and nonce shortness of 0.63 for
 the MatrixSSL residual against 0.80 for the libgcrypt leak that does yield, with the fastest
-90 signatures 44% contaminated against 3.3% at a matched budget, improving only to 27% when
-this arm's budget is raised forty-fold. That is what "recovery pending" means quantitatively.
-Getting there required catching a key/trace mismatch: pairing the 250k trace with the wrong
-private key gives an AUC of 0.4993, which is the signature of random labels rather than a
-finding. The libgcrypt key is not assumed; it is what that pair's own committed recovery
-returns. The retracted claims are out of `results/fix_verification.json`, the acquisition
+90 signatures 28.9% contaminated against 3.3% (CORRECTED 2026-08-26: this paragraph used to
+quote 44% at a matched budget improving only to 27% at a forty-fold larger budget; both
+figures came from an uncommitted 250,000-signature trace that was the 4.2.1 pre-fix build,
+so the matched-budget row and the budget sweep are withdrawn and the contamination is now
+read from the committed 25,000-signature 4-3-0 trace and key, see `_correction` in that
+record). That is what "recovery pending" means quantitatively. Getting there required
+catching a key/trace mismatch: pairing the committed 4-3-0 key with the 4-2-1 trace gives
+an AUC of 0.5047, which is the signature of random labels rather than a finding. The
+libgcrypt key is not assumed; it is what that pair's own committed recovery returns. The retracted claims are out of `results/fix_verification.json`, the acquisition
 script and the evidence note, which had all kept the loop-bound attribution and the
 "host-conditional" excuse after the paper dropped them.
 

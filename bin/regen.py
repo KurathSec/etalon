@@ -851,6 +851,8 @@ def as_tex(report: dict) -> str:
         # Effect sizes in ticks for each design, which separate the mechanisms far more
         # clearly than |t| does: |t| saturates once an effect is large, while the class
         # difference keeps scaling with the work the design actually changes.
+        # mxEffectPrefix is one committed dump (the first acquisition of the pre-fix
+        # arm); its three-acquisition mean is mxRepPrefixMeanEffect, emitted below.
         for macro, dump in (("mxEffectPrefix", "mx4-2-1_bit255v256"),
                             ("mxEffectSameDigit", "mx430_samedigit"),
                             ("mxEffectDiffDigit", "mx430_diffdigit")):
@@ -1022,6 +1024,20 @@ def as_tex(report: dict) -> str:
             out.append(tex_macro("mxRepHi", f"{d['max_effect_ticks']:,.0f}"))
             out.append(tex_macro("mxRepExcl",
                                  str(d["reps_with_interval_excluding_zero"])))
+        # The pre-fix arm on the same footing. mxEffectPrefix is the committed single
+        # dump (the first of these three acquisitions); a mean beside a single dump
+        # reads as a fall the artifact does not support, so the pre-fix mean and its
+        # between-acquisition spread are emitted from the same record as the fixed arm's.
+        pre = "4-2-1.bit255"
+        if pre in rj:
+            d = rj[pre]
+            out.append(tex_macro("mxRepPrefixMeanEffect",
+                                 f"{d['mean_effect_ticks']:,.0f}"))
+            out.append(tex_macro("mxRepPrefixLo", f"{d['min_effect_ticks']:,.0f}"))
+            out.append(tex_macro("mxRepPrefixHi", f"{d['max_effect_ticks']:,.0f}"))
+            out.append(tex_macro("mxRepPrefixReps", str(d["repeats"])))
+            out.append(tex_macro("mxRepPrefixExcl",
+                                 str(d["reps_with_interval_excluding_zero"])))
         ctl = "4-3-0.same"
         if ctl in rj:
             out.append(tex_macro("mxRepCtlExcl",
@@ -1085,13 +1101,14 @@ def as_tex(report: dict) -> str:
         # on a 6,000-signature 4.2.1 trace for which this repository carries no key, so
         # they could not be regenerated, and the arm they sat beside was mislabelled as
         # the patched build. Both are dropped rather than carried as unregenerable.
-    # The END-TO-END basis for the residual, from the 250k whole-signature trace. The
-    # site measurement (bin/fix_report.py) times one isolated eccMulmod call, which on
-    # this host costs several times a whole signature's own scalar multiplication, so a
-    # residual expressed as a fraction of it is NOT on the same basis as a residual
-    # expressed per signature. Both bases are emitted, each labelled with its region,
-    # because the only comparison that means anything against another library's
-    # per-signature figure is the per-signature one.
+    # The END-TO-END basis for the residual, from the committed 25,000-signature 4-3-0
+    # trace (results/exploit_budget_matrixssl.json). The site measurement
+    # (bin/fix_report.py) times one eccMulmod call, which with the library's own NULL
+    # argument is within about one per cent of the library's key generation
+    # (results/matrixssl_containment.json, emitted above as mxGenkeyGap), so the two
+    # bases are close on this host; the per-signature basis is still emitted separately,
+    # labelled with its region, because the comparison against libgcrypt is per
+    # signature and that is the only basis on which the two libraries can be compared.
     ebm = REPO / "results" / "exploit_budget_matrixssl.json"
     if ebm.exists():
         lad = json.loads(ebm.read_text()).get("leading_zero_ladder", {})

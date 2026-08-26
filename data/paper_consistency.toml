@@ -155,8 +155,32 @@ why = "The threat model instantiates the attack-model index and belongs with the
 phrase = "Selecting the fastest"
 retired_in = "sec/fixes.tex -> sec/app-measure.tex, restructure"
 allow_in = ["sec/app-measure.tex"]
-why = """The selection-contamination analysis defends a negative the reframe no longer needs
-defended, and every number in it comes from a trace the artifact does not carry."""
+why = """The selection-contamination analysis belongs with the exploitability paragraph in the
+measurement appendix and must not reappear in the body; since 2026-08-26 its numbers regenerate
+from the committed 4-3-0 trace and key."""
+
+[[retired]]
+phrase = "rest on a trace this artifact does not carry"
+retired_in = "sec/fixes.tex (tab:fixes, MatrixSSL row), round 5 of the fifth review"
+why = """The cell said the diagnostics at the aucMatrixN budget rest on an uncommitted trace.
+Since the round-4 re-emission that macro counts the committed 25,000-signature 4-3-0 trace,
+whose key is committed beside it; the only uncommitted thing is the one lattice attempt at a
+larger budget, which the cell now names without a figure."""
+
+[[retired]]
+phrase = "belongs to a trace the repository does not carry"
+retired_in = "sec/app-threats.tex, round 5 of the fifth review"
+why = """The reason INST-1 was live used to be that the committed MatrixSSL key was orphaned.
+The key now labels the committed 4-3-0 trace; the live failure is the earlier pairing with the
+uncommitted 250,000-signature pre-fix trace, and the appendix says so instead."""
+
+[[retired]]
+phrase = "the pre-fix build reads"
+retired_in = "sec/fixes.tex, round 5 of the fifth review"
+why = """A single committed dump (mxEffectPrefix) was printed as the pre-fix counterpart of the
+fixed build's three-acquisition mean. Both arms are now reported as means over the same three
+acquisitions (mxRepPrefixMeanEffect against mxRepMeanEffect); a single-dump figure may appear
+only labelled as the committed dump beside its mean."""
 
 [[retired]]
 phrase = "tool-by-item rows"

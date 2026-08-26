@@ -259,11 +259,11 @@ def fig_detection_curve():
 def fig_matrixssl_ladder():
     """The MatrixSSL fix, as four designs across three releases.
 
-    Plots the class difference in ticks with its bootstrap interval, NOT the test
-    statistic. On the same-digit designs |t| sits between 212 and 220 on all three
-    releases, indistinguishable, while the effect falls five-fold: the statistic has
-    saturated and only the quantity with units still moves. Plotting |t| here would
-    hide the fix entirely and would contradict this paper's own reporting rule.
+    Plots the class difference in ticks, NOT the test statistic. On the same-digit
+    designs |t| sits above 200 on all three releases, indistinguishable, while the effect
+    falls by a third: the statistic has saturated and only the quantity with units still
+    moves. Plotting |t| here would hide the difference between releases entirely and would
+    contradict this paper's own reporting rule.
 
     No fold-change is drawn between releases. Each arm is one acquisition and nothing
     here bounds between-acquisition spread, so a ratio across two separately acquired

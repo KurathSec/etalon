@@ -1,419 +1,415 @@
 {
-  "finding": "constant-time-fix-verification",
-  "measured_utc": "2026-08-25",
-  "host": "x86-64 Intel Core Ultra 9 285H, P-core (cpu2), taskset-pinned, rdtscp; see results/host.json",
-  "summary": "Three deployed libraries' Minerva (ECDSA nonce bit-length) fixes, checked against the corpus's at-the-site constant-time requirement. Each fix fails or holds for a distinct, measured reason, and a leak/clean analyser cannot tell them apart. The MatrixSSL case is a shipped, default-enabled constant-time fix that does not close the leak through the vendor's latest open release.",
-  "null_band_tau": 0.0187,
-  "null_band_source": "results/dudect_calibration.json (calibrated on the negative sentinel)",
-  "libraries": {
-    "libgcrypt": {
-      "cve": "CVE-2019-13627",
-      "vulnerable": "1.8.4",
-      "patched": "1.8.5",
-      "fix_location": "internal ECDSA signing (_gcry_dsa_modify_k) plus a clamp in the secure-memory scalar-multiplication path",
-      "outcome": "fix moved UPSTREAM of the primitive",
-      "detail": "The public gcry_mpi_ec_mul an analyser can be pointed at leaks the scalar bit-length in BOTH versions (short scalar ~half the cycles of a full one, either way); only the internal secure-nonce signing path is fixed. A primitive-level tool sees no change across the patch. Recovery-certified via real signing (pairs/libgcrypt-minerva, ORC-1/2 pass).",
-      "pair": "pairs/libgcrypt-minerva"
+ "finding": "constant-time-fix-verification",
+ "measured_utc": "2026-08-25",
+ "host": "x86-64 Intel Core Ultra 9 285H, P-core (cpu2), taskset-pinned, rdtscp; see results/host.json",
+ "summary": "Three deployed libraries' Minerva (ECDSA nonce bit-length) fixes, checked against the corpus's at-the-site constant-time requirement. Each fix fails or holds for a distinct, measured reason, and a leak/clean analyser cannot tell them apart. The MatrixSSL case is a shipped, default-enabled constant-time fix that does not close the leak through the vendor's latest open release.",
+ "null_band_tau": 0.0187,
+ "null_band_source": "results/dudect_calibration.json (calibrated on the negative sentinel)",
+ "libraries": {
+  "libgcrypt": {
+   "cve": "CVE-2019-13627",
+   "vulnerable": "1.8.4",
+   "patched": "1.8.5",
+   "fix_location": "internal ECDSA signing (_gcry_dsa_modify_k) plus a clamp in the secure-memory scalar-multiplication path",
+   "outcome": "fix moved UPSTREAM of the primitive",
+   "detail": "The public gcry_mpi_ec_mul an analyser can be pointed at leaks the scalar bit-length in BOTH versions (short scalar ~half the cycles of a full one, either way); only the internal secure-nonce signing path is fixed. A primitive-level tool sees no change across the patch. Recovery-certified via real signing (pairs/libgcrypt-minerva, ORC-1/2 pass).",
+   "pair": "pairs/libgcrypt-minerva"
+  },
+  "wolfssl": {
+   "cve": "CVE-2019-13628",
+   "vulnerable": "4.0.0",
+   "patched": "4.1.0",
+   "fix_location": "wolfcrypt/src/ecc.c ecc_mulmod timing-resistant path (ECC_TIMING_RESISTANT): loop bound changed from get_digit_count(k) to get_digit_count(modulus), leading-zero fast path removed",
+   "outcome": "NOT DECIDABLE BY THIS INSTRUMENT. Corrected 2026-08-25: an earlier revision graded this 'fix HOLDS'. It does not follow from what we measured. Our own two-sided oracle requires the recovery to SUCCEED on the vulnerable arm and fail on the patched one; here the lattice fails on both, at 6,000 and at 50,000 signatures. A recovery that cannot demonstrate the bug cannot certify the fix, so this pair does not meet the corpus's admission rule and its verdict is withdrawn rather than kept at reduced confidence.",
+   "detail": "The vulnerable timing-resistant path already balanced leading-zero bits with dummy add/double operations, so the deployed 4.0.0 residual is only 0.029% (256-bit vs <=254-bit nonces, medians over 6000 signatures, reconstructed from the known key). dudect reads BOTH arms clean at one-bit granularity (vuln tau 0.0164, patched 0.0076, both within the null band), and the Minerva lattice attack fails on both at 6k and 50k signatures. The non-timing-resistant default path is byte-identical between the two releases, so building with defaults would not discriminate the arms at all.",
+   "tarball_sha256": {
+    "4.0.0": "6cf678c72b485d1904047c40c20f85104c96b5f39778822783a2c407ccb23657",
+    "4.1.0": "f0d630c3ddfeb692b8ae38cc739f47d5e9f0fb708662aa241ede0c42a5eb3dd8"
+   },
+   "recovery_attempt_budget_sigs": 50000,
+   "residual_method": "0.029% is the difference in MEDIAN whole-signature time between 256-bit and <=254-bit nonces over 6000 signatures, nonces reconstructed from the known signing key. It is a whole-signature figure, not a scalar-multiplication one; the dudect numbers quoted for wolfSSL are the separate at-the-site measurement.",
+   "decision_rule_basis": "DECIDED UNDER THE RETIRED TAU BAND, and this is the one case in the study that is not decided by the permutation rule the paper now uses. The wolfSSL arms were measured before that rule replaced the band, their raw dudect samples are not committed under results/raw/, and there is no pairs/wolfssl* tree, so the case cannot be re-decided without rebuilding 4.0.0 and 4.1.0 and re-acquiring. The reading is unlikely to change: both arms sat far inside the band (0.0164 and 0.0076) rather than near it, and the lattice recovered from neither at 6,000 or 50,000 signatures, which is a decision that does not depend on the statistical rule at all. But 'neither arm rejects its own permutation null' would be a claim about a test we did not run, so the paper does not make it.",
+   "why_this_is_a_finding_not_only_a_retraction": "The deployed 4.0.0 arm was ALREADY balanced with dummy operations to a 0.03% residual before the patch under test was written, so what our instrument would have had to detect is a leak the vendor had largely closed one release earlier. That is a boundary of the method rather than a gap in this case: fix verification as defined here needs an exploitable vulnerable arm, and a leak already too small to exploit falls outside its reach. Naming that boundary is more useful than grading the case, because it says which remediations this method can and cannot audit.",
+   "taxonomy_note": "This case no longer populates the 'attenuated' cell of the fix taxonomy. The attenuation it exhibits is the pre-fix 4.0.0 build's own dummy-operation balancing, which predates the 4.1.0 patch under test, so crediting it to that patch would attribute to the fix an effect present before it."
+  },
+  "matrixssl": {
+   "cve": "CVE-2019-13629",
+   "vulnerable": "4-2-1-open",
+   "patched": "4-3-0-open",
+   "latest_open": "4-6-0-open",
+   "fix_location": "crypto/pubkey/ecc_math.c eccMulmodCt, added in 4.3.0 explicitly 'in response to the Minerva attack' (release notes) and enabled by default (cryptoApi.h: USE_CONSTANT_TIME_ECC_MULMOD). The fix adds dummy point operations to the leading-zero (mode 0) branch, which in 4.2.1 was a bare 'continue'.",
+   "outcome": "fix INCOMPLETE; residual persists through the latest open release",
+   "detail": "CORRECTED 2026-08-25. An earlier revision attributed the residual to eccMulmodCt still setting its loop bound from get_digit_count(k) (ecc_math.c:206, unchanged 4.2.1 through 4.6.0). That attribution was ARITHMETICALLY IMPOSSIBLE for the measurement that produced the number: get_digit_count counts DIGITS, DIGIT_BIT is 64 on this x86-64 build, and a 255-bit and a 256-bit scalar both occupy 4 digits, so both classes run the identical 256 loop iterations. A four-design decomposition on the fixed 4.3.0 build localises the real mechanism:",
+   "dudect_tau": {
+    "retired": "these were taken under the withdrawn tau rule AND on the uncorrected harness; see the correction note"
+   },
+   "dudect_note": "CORRECTED 2026-08-26 after the rebuild. Every figure in an earlier revision of this block came from a harness that passed a zeroed curve `a` coefficient where the library passes NULL, so it timed scalar multiplication on a different curve at 3.42x the deployed cost. Re-acquired three times per design from a retained build: the fix attenuates the one-leading-zero residual 1.44x (1,575 -> 1,093 ticks), not the fivefold an earlier revision reported, the latest open release is indistinguishable from the first fixed one, and where the nonce is short by a whole digit the fixed builds are about twice as leaky as the pre-fix build. See results/matrixssl_containment.json and results/matrixssl_repeats.json.",
+   "exploitability": "LEAK-PRESENCE CERTIFIED, RECOVERY PENDING. Corrected 2026-08-25; an earlier revision of this field claimed the leak 'feeds a recoverable hidden-number-problem' and blamed the failure to recover on a fast host. Both are withdrawn. The lattice run behind the first claim was fed nonces already labelled with the private key, which assumes the selection an attacker must derive from timing. The host excuse does not survive measurement either: on the same host and the same estimator the AUC between signing time and nonce shortness is 0.6335 here (n=250,000; 0.6338 at n=5,999, so it is not a trace-length artifact) against 0.8018 for libgcrypt (n=6,000), which does yield. At a matched budget the fastest 90 signatures are 44.4% contaminated by full-length nonces here against 3.3% there, and raising this arm's budget forty-fold improves it only to 26.7%. The limit is how much information the leak carries, not how noisy the host is. Full record in results/exploit_budget.json.",
+   "signal_ladder_ticks_per_leading_zero": 2300,
+   "signal_ladder_note": "median signing time falls ~2300 cycles per additional leading-zero nonce bit, monotonic through 5 leading zeros, on the 4.2.1 vulnerable build (6000 signatures, reconstructed from the known key).",
+   "provenance_caveat": "MatrixSSL's upstream repository was withdrawn after the Rambus acquisition; these sources are the archived BlobbyBob/matrixssl mirror, tags 4-2-1-open / 4-3-0-open / 4-6-0-open. This is a mirror, not the vendor, and is recorded as such.",
+   "source_refs": {
+    "loop_bound_4-3-0": "crypto/pubkey/ecc_math.c:206  digidx = get_digit_count(k) - 1;  (a real secret-dependent bound, but it only differs for nonces short by a full 64-bit digit; NOT the mechanism behind the 255-vs-256 residual)",
+    "loop_bound_4-6-0": "crypto/pubkey/ecc_math.c:206  digidx = get_digit_count(k) - 1;  (a real secret-dependent bound, but it only differs for nonces short by a full 64-bit digit; NOT the mechanism behind the 255-vs-256 residual)",
+    "default_on": "crypto/cryptoApi.h:60-61  #ifndef USE_NON_CONSTANT_TIME_ECC_MULMOD / #define USE_CONSTANT_TIME_ECC_MULMOD",
+    "leading_zero_branch_4-2-1": "crypto/pubkey/ecc_math.c:233  if (mode == 0 && i == 0) { continue; }   (bare skip, no dummy work)",
+    "leading_zero_branch_4-3-0": "crypto/pubkey/ecc_math.c mode-0 branches: dummy eccProjectiveAddPoint + eccProjectiveDblPoint into scratch M[2] (out-of-place)",
+    "eccMulmodCt_4_3_0_vs_4_6_0": "byte-identical; the tau difference 0.123 vs 0.084 is run-to-run variation, not a code change"
+   },
+   "decomposition_4_3_0": {
+    "note": "Each design is a dudect run on eccMulmodCt with the stated nonce classes; |t| is dudect's max over its crop ladder, p is the budget-matched permutation null (bin/dudect_permute.py). DIGIT_BIT=64, so 193..256-bit scalars all occupy 4 digits.",
+    "same_256_vs_256_value_only": {
+     "abs_t": 1.39,
+     "p": 0.685,
+     "digits": "4 vs 4",
+     "reading": "clean: not value dependence, not the harness"
     },
-    "wolfssl": {
-      "cve": "CVE-2019-13628",
-      "vulnerable": "4.0.0",
-      "patched": "4.1.0",
-      "fix_location": "wolfcrypt/src/ecc.c ecc_mulmod timing-resistant path (ECC_TIMING_RESISTANT): loop bound changed from get_digit_count(k) to get_digit_count(modulus), leading-zero fast path removed",
-      "outcome": "NOT DECIDABLE BY THIS INSTRUMENT. Corrected 2026-08-25: an earlier revision graded this 'fix HOLDS'. It does not follow from what we measured. Our own two-sided oracle requires the recovery to SUCCEED on the vulnerable arm and fail on the patched one; here the lattice fails on both, at 6,000 and at 50,000 signatures. A recovery that cannot demonstrate the bug cannot certify the fix, so this pair does not meet the corpus's admission rule and its verdict is withdrawn rather than kept at reduced confidence.",
-      "detail": "The vulnerable timing-resistant path already balanced leading-zero bits with dummy add/double operations, so the deployed 4.0.0 residual is only 0.029% (256-bit vs <=254-bit nonces, medians over 6000 signatures, reconstructed from the known key). dudect reads BOTH arms clean at one-bit granularity (vuln tau 0.0164, patched 0.0076, both within the null band), and the Minerva lattice attack fails on both at 6k and 50k signatures. The non-timing-resistant default path is byte-identical between the two releases, so building with defaults would not discriminate the arms at all.",
-      "tarball_sha256": {
-        "4.0.0": "6cf678c72b485d1904047c40c20f85104c96b5f39778822783a2c407ccb23657",
-        "4.1.0": "f0d630c3ddfeb692b8ae38cc739f47d5e9f0fb708662aa241ede0c42a5eb3dd8"
-      },
-      "recovery_attempt_budget_sigs": 50000,
-      "residual_method": "0.029% is the difference in MEDIAN whole-signature time between 256-bit and <=254-bit nonces over 6000 signatures, nonces reconstructed from the known signing key. It is a whole-signature figure, not a scalar-multiplication one; the dudect numbers quoted for wolfSSL are the separate at-the-site measurement.",
-      "decision_rule_basis": "DECIDED UNDER THE RETIRED TAU BAND, and this is the one case in the study that is not decided by the permutation rule the paper now uses. The wolfSSL arms were measured before that rule replaced the band, their raw dudect samples are not committed under results/raw/, and there is no pairs/wolfssl* tree, so the case cannot be re-decided without rebuilding 4.0.0 and 4.1.0 and re-acquiring. The reading is unlikely to change: both arms sat far inside the band (0.0164 and 0.0076) rather than near it, and the lattice recovered from neither at 6,000 or 50,000 signatures, which is a decision that does not depend on the statistical rule at all. But 'neither arm rejects its own permutation null' would be a claim about a test we did not run, so the paper does not make it.",
-      "why_this_is_a_finding_not_only_a_retraction": "The deployed 4.0.0 arm was ALREADY balanced with dummy operations to a 0.03% residual before the patch under test was written, so what our instrument would have had to detect is a leak the vendor had largely closed one release earlier. That is a boundary of the method rather than a gap in this case: fix verification as defined here needs an exploitable vulnerable arm, and a leak already too small to exploit falls outside its reach. Naming that boundary is more useful than grading the case, because it says which remediations this method can and cannot audit.",
-      "taxonomy_note": "This case no longer populates the 'attenuated' cell of the fix taxonomy. The attenuation it exhibits is the pre-fix 4.0.0 build's own dummy-operation balancing, which predates the 4.1.0 patch under test, so crediting it to that patch would attribute to the fix an effect present before it."
+    "bit_255_vs_256": {
+     "abs_t": 17.73,
+     "p": 0.0005,
+     "digits": "4 vs 4",
+     "reading": "LEAKS with the loop bound held identical: the headline residual"
     },
-    "matrixssl": {
-      "cve": "CVE-2019-13629",
-      "vulnerable": "4-2-1-open",
-      "patched": "4-3-0-open",
-      "latest_open": "4-6-0-open",
-      "fix_location": "crypto/pubkey/ecc_math.c eccMulmodCt, added in 4.3.0 explicitly 'in response to the Minerva attack' (release notes) and enabled by default (cryptoApi.h: USE_CONSTANT_TIME_ECC_MULMOD). The fix adds dummy point operations to the leading-zero (mode 0) branch, which in 4.2.1 was a bare 'continue'.",
-      "outcome": "fix INCOMPLETE; residual persists through the latest open release",
-      "detail": "CORRECTED 2026-08-25. An earlier revision attributed the residual to eccMulmodCt still setting its loop bound from get_digit_count(k) (ecc_math.c:206, unchanged 4.2.1 through 4.6.0). That attribution was ARITHMETICALLY IMPOSSIBLE for the measurement that produced the number: get_digit_count counts DIGITS, DIGIT_BIT is 64 on this x86-64 build, and a 255-bit and a 256-bit scalar both occupy 4 digits, so both classes run the identical 256 loop iterations. A four-design decomposition on the fixed 4.3.0 build localises the real mechanism:",
-      "dudect_tau": {
-        "4-2-1-open_prefix": 0.551,
-        "4-3-0-open_fixed": 0.123,
-        "4-6-0-open_latest": 0.084,
-        "control_same_bitlength_4-3-0": 0.0082,
-        "control_same_bitlength_4-6-0": 0.0124
-      },
-      "dudect_note": "The same-length control is clean on all three versions, so the residual is genuine nonce-bit-length dependence and not the harness. The fix attenuates it about fivefold without removing it, on every version tested, and the two post-fix releases are indistinguishable because their scalar multiplication is byte-identical.",
-      "exploitability": "LEAK-PRESENCE CERTIFIED, RECOVERY PENDING. Corrected 2026-08-25; an earlier revision of this field claimed the leak 'feeds a recoverable hidden-number-problem' and blamed the failure to recover on a fast host. Both are withdrawn. The lattice run behind the first claim was fed nonces already labelled with the private key, which assumes the selection an attacker must derive from timing. The host excuse does not survive measurement either: on the same host and the same estimator the AUC between signing time and nonce shortness is 0.6335 here (n=250,000; 0.6338 at n=5,999, so it is not a trace-length artifact) against 0.8018 for libgcrypt (n=6,000), which does yield. At a matched budget the fastest 90 signatures are 44.4% contaminated by full-length nonces here against 3.3% there, and raising this arm's budget forty-fold improves it only to 26.7%. The limit is how much information the leak carries, not how noisy the host is. Full record in results/exploit_budget.json.",
-      "signal_ladder_ticks_per_leading_zero": 2300,
-      "signal_ladder_note": "median signing time falls ~2300 cycles per additional leading-zero nonce bit, monotonic through 5 leading zeros, on the 4.2.1 vulnerable build (6000 signatures, reconstructed from the known key).",
-      "provenance_caveat": "MatrixSSL's upstream repository was withdrawn after the Rambus acquisition; these sources are the archived BlobbyBob/matrixssl mirror, tags 4-2-1-open / 4-3-0-open / 4-6-0-open. This is a mirror, not the vendor, and is recorded as such.",
-      "source_refs": {
-        "loop_bound_4-3-0": "crypto/pubkey/ecc_math.c:206  digidx = get_digit_count(k) - 1;  (a real secret-dependent bound, but it only differs for nonces short by a full 64-bit digit; NOT the mechanism behind the 255-vs-256 residual)",
-        "loop_bound_4-6-0": "crypto/pubkey/ecc_math.c:206  digidx = get_digit_count(k) - 1;  (a real secret-dependent bound, but it only differs for nonces short by a full 64-bit digit; NOT the mechanism behind the 255-vs-256 residual)",
-        "default_on": "crypto/cryptoApi.h:60-61  #ifndef USE_NON_CONSTANT_TIME_ECC_MULMOD / #define USE_CONSTANT_TIME_ECC_MULMOD",
-        "leading_zero_branch_4-2-1": "crypto/pubkey/ecc_math.c:233  if (mode == 0 && i == 0) { continue; }   (bare skip, no dummy work)",
-        "leading_zero_branch_4-3-0": "crypto/pubkey/ecc_math.c mode-0 branches: dummy eccProjectiveAddPoint + eccProjectiveDblPoint into scratch M[2] (out-of-place)",
-        "eccMulmodCt_4_3_0_vs_4_6_0": "byte-identical; the tau difference 0.123 vs 0.084 is run-to-run variation, not a code change"
-      },
-      "decomposition_4_3_0": {
-        "note": "Each design is a dudect run on eccMulmodCt with the stated nonce classes; |t| is dudect's max over its crop ladder, p is the budget-matched permutation null (bin/dudect_permute.py). DIGIT_BIT=64, so 193..256-bit scalars all occupy 4 digits.",
-        "same_256_vs_256_value_only": {
-          "abs_t": 1.39,
-          "p": 0.685,
-          "digits": "4 vs 4",
-          "reading": "clean: not value dependence, not the harness"
-        },
-        "bit_255_vs_256": {
-          "abs_t": 17.73,
-          "p": 0.0005,
-          "digits": "4 vs 4",
-          "reading": "LEAKS with the loop bound held identical: the headline residual"
-        },
-        "samedigit_193_vs_256": {
-          "abs_t": 1196.72,
-          "digits": "4 vs 4",
-          "reading": "same digit count, 63 more leading zeros: effect scales with leading zeros"
-        },
-        "diffdigit_192_vs_256": {
-          "abs_t": 8371.03,
-          "digits": "3 vs 4",
-          "reading": "the loop bound DOES bite here, adding to the leading-zero effect"
-        }
-      },
-      "mechanism": "The residual is the leading-zero phase, not the loop bound. For a scalar with one extra leading zero, exactly one loop iteration is converted from the real path to the mode-0 dummy path, and the two are balanced by OPERATION COUNT but not by COST: the dummy double is out-of-place (P != R) so eccProjectiveDblPoint executes three pstm_copy calls the in-place real double skips, and the dummy operands are the fixed (P, 2P) rather than evolving ladder state, so the ~15 value-dependent conditional add/sub branches inside each point operation and the conditional final subtract in pstm_montgomery_reduce behave differently. The effect is close to linear in the number of leading zeros (|t| 17.7 at one, 1197 at 63). The get_digit_count(k) loop bound is a genuine secret-dependent bound, but for 256-bit nonces it only changes when the nonce is short by a whole 64-bit digit, probability 2^-64, so it is not the leak a real nonce distribution exercises.",
-      "general_claim": "Control-flow balancing by operation count does not deliver constant time on a variable-time arithmetic substrate. pstm's multiply and reduce loop over the operands' used digits and branch on magnitude, so a dummy operation that matches the real one instruction for instruction can still differ in cost. Balancing must be of cost, not of count.",
-      "prefix_abs_t_bit255v256": 97.38,
-      "decomposition_note_prefix": "The same 255-vs-256 design on the pre-fix 4.2.1 build reads |t|=97.38, so the 4.3.0 dummy-operation balancing attenuates the one-bit leak about fivefold (97.4 -> 17.7) without removing it.",
-      "decomposition_all_versions": {
-        "note": "dudect max |t| over its crop ladder, 60k measurements per run, same harness and host. DIGIT_BIT=64: 193..256-bit scalars all occupy 4 digits, so 'samedigit' varies bit length with the loop bound held identical. The 'same' control is clean on every version, so the harness is sound across the comparison.",
-        "designs": {
-          "same_256_vs_256": {
-            "4-2-1": 2.19,
-            "4-3-0": 1.39,
-            "4-6-0": 1.14
-          },
-          "bit_255_vs_256": {
-            "4-2-1": 97.38,
-            "4-3-0": 17.73,
-            "4-6-0": 20.74
-          },
-          "samedigit_193_vs_256": {
-            "4-2-1": 7764.59,
-            "4-3-0": 1196.72,
-            "4-6-0": 1281.01
-          },
-          "diffdigit_192_vs_256": {
-            "4-3-0": 8371.03
-          }
-        },
-        "reading": "The fix attenuates the leading-zero leak about fivefold at one bit (97.4 -> 17.7) and about sixfold at 63 bits (7765 -> 1197), and never removes it. 4.3.0 and 4.6.0 agree within run-to-run variation (17.7 vs 20.7; 1197 vs 1281), which is expected because eccMulmodCt is byte-identical between them: the earlier report of a 0.123 -> 0.084 change across those releases was reading noise as a trend, and is corrected here."
-      },
-      "cross_host_replication": {
-        "note": "S5: the residual re-measured on a second microarchitecture (AWS Graviton3, Neoverse-V1, aarch64) with the same sources, harness and designs. A residual that survives a host change is a property of the code, which is what the finding claims.",
-        "abs_t_by_host": {
-          "x86-64 Arrow Lake": {
-            "4-2-1_bit255v256": 97.38,
-            "4-3-0_bit255v256": 17.73,
-            "4-3-0_same": 1.39
-          },
-          "aarch64 Neoverse-V1": {
-            "4-2-1_bit255v256": 86.92,
-            "4-3-0_bit255v256": 16.74,
-            "4-3-0_same": 1.15
-          }
-        },
-        "reading": "The pre-fix leak, the post-fix residual and the same-length control all reproduce within run-to-run variation across two unrelated microarchitectures, and the attenuation factor is the same (about fivefold) on both. The incomplete fix is therefore a property of the source, not of one divider or one memory system."
-      },
-      "source_digests_sha256": {
-        "4-2-1-open.tar.gz": "3bbddd70f54ba6c8ec3730cb666af2b7abf617f7468410db094f31b21cd924d2",
-        "4-3-0-open.tar.gz": "b6fe9a3c6290ef10169ebf35d65bc7e1ac54ce8f360c6f71bd0630de68c83667",
-        "4-6-0-open.tar.gz": "87be70df27356fec1221011b8ac6f12a4ad1e7e7eaaaf73d73bc94ad9be02dd9"
-      },
-      "source_digests_note": "SHA-256 of the tag archives actually built here, from the archived BlobbyBob/matrixssl mirror. The sources were taken as tag tarballs rather than a clone, so there is no local commit hash to quote; the digest is what a reader can check against their own download, and it pins the exact bytes measured.",
-      "build_cell": "The library's own default build: gcc with -O3 -Wall, chosen by core/makefiles/detect-and-rules.mk when MATRIX_DEBUG and MATRIX_OPTIMIZE_FOOTPRINT are unset, on x86_64-linux-gnu and again under the host gcc of the aarch64 Neoverse-V1 instance. The pstm digit width is 64 bits on both, which is what makes the 255-bit and 256-bit classes share a digit count.",
-      "source_commits": {
-        "4-2-1-open": "91fd0f1",
-        "4-3-0-open": "eec42aa",
-        "4-6-0-open": "effeb14"
-      },
-      "source_commits_note": "The mirror commit each tag archive was cut from, read from the '@version' stamp the build system carries in common.mk of each tree, so it is verifiable from the sources themselves rather than from a repository that may move.",
-      "exploitability_note": "The leading-zero ladder is monotonic and steep (median signing time falls about 2700 ticks for the first leading zero and about 19700 by the sixth), so the leak is real and ordered; what it lacks is enough separation for a rank-based selection to deliver a clean short-nonce set at the ranks the lattice consumes.",
-      "deterministic_cross_check": {
-        "instruction_counts": {
-          "256": {
-            "digits": 4,
-            "leading_zeros": 0,
-            "instructions": 42633192,
-            "delta_vs_256": 0,
-            "percent_vs_256": 0.0
-          },
-          "255": {
-            "digits": 4,
-            "leading_zeros": 1,
-            "instructions": 42595811,
-            "delta_vs_256": -37382,
-            "percent_vs_256": -0.088
-          },
-          "193": {
-            "digits": 4,
-            "leading_zeros": 63,
-            "instructions": 42542744,
-            "delta_vs_256": -90449,
-            "percent_vs_256": -0.212
-          },
-          "192": {
-            "digits": 3,
-            "leading_zeros": 64,
-            "instructions": 32178612,
-            "delta_vs_256": -10454581,
-            "percent_vs_256": -24.522
-          }
-        },
-        "conclusion": "ALGORITHMIC, not microarchitectural: classes with an identical digit count and therefore an identical loop bound execute different numbers of instructions. See pairs/matrixssl-minerva/evidence/instruction_counts.json.",
-        "binary_confirmation": "eccMulmodCt is instruction-identical between 4-3-0-open and 4-6-0-open (380 instructions, identical normalised listing), and the out-of-place guard `if (P != R) { 3 x pstm_copy }` in eccProjectiveDblPoint is the cost the dummy path pays and the real path does not. See evidence/binary_confirmation.json."
-      },
-      "measurements_full_report": {
-        "why": "Every design re-decided in one pass over the committed dumps under the rule in force (permutation null over the first-order crop ladder), with the measurement count, the permutation p, and the class difference of means in ticks with a bootstrap 95% CI. The paper's own standard for the corpus arms is exactly this, and the headline case had been reported as bare |t| values without n, p, effect size or provenance.",
-        "dumps": "results/raw/matrixssl/, one per design and version",
-        "correction": "These values REPLACE the earlier ones and several differ materially: the pre-fix 255-vs-256 design read 97.4 and now reads 78.9, and the same-digit design read 1196.7 and now reads 212.6. The earlier figures were dudect's own printed maximum, which includes its second-order test; the permutation null excludes that test because it accumulates against a running mean and is not invariant under relabelling. The conclusion is unchanged in every case, including the direction and the ordering of the four designs, but the numbers are now the ones the verdict rule actually decides on.",
-        "designs": {
-          "mx4-2-1_bit255v256": {
-            "ci_excludes_zero": true,
-            "ci_high": 1821.3779925000676,
-            "ci_low": 1475.1743549999926,
-            "effect_ticks": 1650.875076160417,
-            "max_abs_t": 23.2405,
-            "measurements": 59967,
-            "n_at_argmax": 59304,
-            "permutation_p": 9.999000099990002e-05,
-            "permutations": 10000,
-            "call_ticks": 835466.8143267084,
-            "residual_fraction": 0.0019759912037808887
-          },
-          "mx4-2-1_diffdigit": {
-            "ci_excludes_zero": true,
-            "ci_high": 120910.99463249999,
-            "ci_low": 118214.6271425,
-            "effect_ticks": 119564.52658875752,
-            "max_abs_t": 216.7102,
-            "measurements": 59967,
-            "n_at_argmax": 59878,
-            "permutation_p": 9.999000099990002e-05,
-            "permutations": 10000,
-            "call_ticks": 800002.8221169494,
-            "residual_fraction": 0.1494551310111239
-          },
-          "mx4-2-1_same": {
-            "ci_excludes_zero": false,
-            "ci_high": 284.4591050000134,
-            "ci_low": -74.28522500004911,
-            "effect_ticks": 104.60548640077468,
-            "max_abs_t": 1.6484,
-            "measurements": 59967,
-            "n_at_argmax": 47789,
-            "permutation_p": 0.4076592340765923,
-            "permutations": 10000,
-            "call_ticks": 836697.9174897909,
-            "residual_fraction": 0.00012502180800760872
-          },
-          "mx4-2-1_samedigit": {
-            "ci_excludes_zero": true,
-            "ci_high": 118518.41148500002,
-            "ci_low": 115852.10891999994,
-            "effect_ticks": 117167.15135826159,
-            "max_abs_t": 216.6746,
-            "measurements": 59967,
-            "n_at_argmax": 59776,
-            "permutation_p": 9.999000099990002e-05,
-            "permutations": 10000,
-            "call_ticks": 801738.3686639294,
-            "residual_fraction": 0.1461413797041007
-          },
-          "mx4-6-0_bit255v256": {
-            "ci_excludes_zero": true,
-            "ci_high": 1164.9715625000301,
-            "ci_low": 918.8599749999121,
-            "effect_ticks": 1040.40694419411,
-            "max_abs_t": 21.2724,
-            "measurements": 59967,
-            "n_at_argmax": 58813,
-            "permutation_p": 9.999000099990002e-05,
-            "permutations": 10000,
-            "call_ticks": 1585686.8958237723,
-            "residual_fraction": 0.0006561238204933348
-          },
-          "mx4-6-0_diffdigit": {
-            "ci_excludes_zero": true,
-            "ci_high": 246235.24971250002,
-            "ci_low": 240520.80542000005,
-            "effect_ticks": 243281.473283679,
-            "max_abs_t": 220.3974,
-            "measurements": 59967,
-            "n_at_argmax": 59908,
-            "permutation_p": 9.999000099990002e-05,
-            "permutations": 10000,
-            "call_ticks": 1518589.9492877917,
-            "residual_fraction": 0.1602022148228864
-          },
-          "mx4-6-0_same": {
-            "ci_excludes_zero": false,
-            "ci_high": 223.66004749987593,
-            "ci_low": -94.17953999991877,
-            "effect_ticks": 69.07790452893823,
-            "max_abs_t": 2.2417,
-            "measurements": 59967,
-            "n_at_argmax": 41508,
-            "permutation_p": 0.30196980301969806,
-            "permutations": 10000,
-            "call_ticks": 1585605.6109817207,
-            "residual_fraction": 4.356562820572321e-05
-          },
-          "mx4-6-0_samedigit": {
-            "ci_excludes_zero": true,
-            "ci_high": 72003.1959225,
-            "ci_low": 70369.63551000012,
-            "effect_ticks": 71164.49485211726,
-            "max_abs_t": 215.2211,
-            "measurements": 59967,
-            "n_at_argmax": 59697,
-            "permutation_p": 9.999000099990002e-05,
-            "permutations": 10000,
-            "call_ticks": 1563271.3911614318,
-            "residual_fraction": 0.045522802537341665
-          },
-          "mx430_bit255v256": {
-            "ci_excludes_zero": true,
-            "ci_high": 1299.9605499999363,
-            "ci_low": 996.746457500098,
-            "effect_ticks": 1145.8877085184213,
-            "max_abs_t": 17.3534,
-            "measurements": 59967,
-            "n_at_argmax": 56920,
-            "permutation_p": 9.999000099990002e-05,
-            "permutations": 10000,
-            "call_ticks": 1578967.079442558,
-            "residual_fraction": 0.0007257198224316164
-          },
-          "mx430_diffdigit": {
-            "ci_excludes_zero": true,
-            "ci_high": 249161.66317250018,
-            "ci_low": 243705.49776,
-            "effect_ticks": 246399.01647347515,
-            "max_abs_t": 218.9193,
-            "measurements": 59967,
-            "n_at_argmax": 59894,
-            "permutation_p": 9.999000099990002e-05,
-            "permutations": 10000,
-            "call_ticks": 1508381.5144759594,
-            "residual_fraction": 0.1633532459187415
-          },
-          "mx430_same": {
-            "ci_excludes_zero": false,
-            "ci_high": 38.75516999998359,
-            "ci_low": -252.51996500018285,
-            "effect_ticks": -106.43751906137913,
-            "max_abs_t": 1.7222,
-            "measurements": 59967,
-            "n_at_argmax": 56470,
-            "permutation_p": 0.44195580441955806,
-            "permutations": 10000,
-            "call_ticks": 1577751.7931303116,
-            "residual_fraction": 6.746151043834568e-05
-          },
-          "mx430_samedigit": {
-            "ci_excludes_zero": true,
-            "ci_high": 72808.5923475,
-            "ci_low": 71206.5371475,
-            "effect_ticks": 71993.5362211098,
-            "max_abs_t": 216.3507,
-            "measurements": 59967,
-            "n_at_argmax": 58443,
-            "permutation_p": 9.999000099990002e-05,
-            "permutations": 10000,
-            "call_ticks": 1555753.97694214,
-            "residual_fraction": 0.04627565623365095
-          }
-        },
-        "dump_sha256": {
-          "mx4-2-1_bit255v256.bin.gz": "159bf145eafb1dc16207281800576cdbf14cdcae5d87a2c3371b71dbc7b4a9da",
-          "mx4-2-1_same.bin.gz": "a8cd02f0e0a7e06b91ad7cb3dbdb99fb595eb6cf8f065d3e6c7204cfc323967a",
-          "mx4-2-1_samedigit.bin.gz": "8a7451ddd61d9b8d15fc159a0bd35ee46d6a8a2ad89802dd09ea2820dbbf92e5",
-          "mx4-6-0_bit255v256.bin.gz": "813d035b12f325c15665d8a0e0c37cbc7f9caee398265e727079e95750ea629f",
-          "mx4-6-0_same.bin.gz": "542c8d0700ae65f21ee424befd8633db99e30fb8f190e04b791bf7356a02213d",
-          "mx4-6-0_samedigit.bin.gz": "c3e377b90001ae576913a500548ef41a461f34bfd6bf09ca4bb172e27f16ffd9",
-          "mx430_bit255v256.bin.gz": "ea1a04dfbd6c66a07ed68e4d038b0261e776dfc4f1277d1cc485359768593cf8",
-          "mx430_diffdigit.bin.gz": "b120efa41114362975154483afd0a0949dc6214b24a5b74108d6219c083fca41",
-          "mx430_same.bin.gz": "35d58a96473e8e07a0738e9cbfdaf0061e27baa0651d6a7de7a80e2074d373f8",
-          "mx430_samedigit.bin.gz": "2a67dc06d8a063af8025836be581b60077ba6887a649c2d218d1a8d131f511c2"
-        },
-        "dump_digest_note": "One digest per committed dump, so a control can check that the statistics above still describe the samples on disk. Without it these ten dumps would sit outside STAT-1, which globs the corpus dumps only, and their numbers reach the paper.",
-        "acquisitions_per_arm": 1,
-        "acquisition_count_disclosure": "ONE acquisition per design. The bootstrap CI beside each figure bounds sampling error WITHIN that run's conditions; it does not bound between-run variation, and this paper demonstrates elsewhere (the amplification sweep) that a single timing run on this unpinned host can wander widely. What makes a reversal unlikely here is not the CI but that four independent routes agree: the same-length control straddles zero at the same budget, the retired-instruction counts are deterministic and order the four designs the same way, the residual reproduces on an unrelated microarchitecture, and 4.6.0 measures the same as 4.3.0 on byte-identical code. Re-acquiring to k>=5 is the right insurance and is not done here: the build tree these dumps came from is no longer available, so it would mean rebuilding all three releases from the pinned archives.",
-        "generator": "bin/fix_report.py --write, over results/raw/matrixssl/*.bin.gz"
-      }
+    "samedigit_193_vs_256": {
+     "abs_t": 1196.72,
+     "digits": "4 vs 4",
+     "reading": "same digit count, 63 more leading zeros: effect scales with leading zeros"
+    },
+    "diffdigit_192_vs_256": {
+     "abs_t": 8371.03,
+     "digits": "3 vs 4",
+     "reading": "the loop bound DOES bite here, adding to the leading-zero effect"
     }
-  },
-  "cross_cutting": "The corpus's reproduction pairs detect because they are amplified (40x per-bit work); these deployed leaks in shipped configurations are 0.03% to sub-percent, at or below a fast host's timing floor. That gap between a tool benchmark and a real attacker is itself a measured result, and it is why recovery certification, not a tool verdict, is the label.",
-  "taxonomy": {
-    "note": "A fix-outcome taxonomy, so a case study of three becomes a classification other cases can be added to. The classes are defined by what the patched build does to the leak at the declared site, which is what the at-the-site check measures.",
-    "classes": {
-      "removed": "the secret-dependent operation is gone from the patched build at the site",
-      "relocated": "the leak is closed, but the fix sits outside the primitive an analyser is pointed at, so the primitive is unchanged across the patch",
-      "attenuated": "the mechanism remains and the residual is reduced below what an attack can use at a stated budget and host",
-      "reshaped": "the mechanism changes channel (for example a branch becomes an address) rather than being closed",
-      "incomplete": "the mechanism remains and the residual is still measurable at the site"
+   },
+   "mechanism": "The residual is the leading-zero phase, not the loop bound. For a scalar with one extra leading zero, exactly one loop iteration is converted from the real path to the mode-0 dummy path, and the two are balanced by OPERATION COUNT but not by COST: the dummy double is out-of-place (P != R) so eccProjectiveDblPoint executes three pstm_copy calls the in-place real double skips, and the dummy operands are the fixed (P, 2P) rather than evolving ladder state, so the ~15 value-dependent conditional add/sub branches inside each point operation and the conditional final subtract in pstm_montgomery_reduce behave differently. The effect is close to linear in the number of leading zeros (|t| 17.7 at one, 1197 at 63). The get_digit_count(k) loop bound is a genuine secret-dependent bound, but for 256-bit nonces it only changes when the nonce is short by a whole 64-bit digit, probability 2^-64, so it is not the leak a real nonce distribution exercises.",
+   "general_claim": "Control-flow balancing by operation count does not deliver constant time on a variable-time arithmetic substrate. pstm's multiply and reduce loop over the operands' used digits and branch on magnitude, so a dummy operation that matches the real one instruction for instruction can still differ in cost. Balancing must be of cost, not of count.",
+   "prefix_abs_t_bit255v256": 97.38,
+   "decomposition_note_prefix": "CORRECTED 2026-08-26 after the rebuild. Every figure in an earlier revision of this block came from a harness that passed a zeroed curve `a` coefficient where the library passes NULL, so it timed scalar multiplication on a different curve at 3.42x the deployed cost. Re-acquired three times per design from a retained build: the fix attenuates the one-leading-zero residual 1.44x (1,575 -> 1,093 ticks), not the fivefold an earlier revision reported, the latest open release is indistinguishable from the first fixed one, and where the nonce is short by a whole digit the fixed builds are about twice as leaky as the pre-fix build. See results/matrixssl_containment.json and results/matrixssl_repeats.json.",
+   "decomposition_all_versions": {
+    "note": "dudect max |t| over its crop ladder, 60k measurements per run, same harness and host. DIGIT_BIT=64: 193..256-bit scalars all occupy 4 digits, so 'samedigit' varies bit length with the loop bound held identical. The 'same' control is clean on every version, so the harness is sound across the comparison.",
+    "designs": {
+     "same_256_vs_256": {
+      "4-2-1": 2.19,
+      "4-3-0": 1.39,
+      "4-6-0": 1.14
+     },
+     "bit_255_vs_256": {
+      "4-2-1": 97.38,
+      "4-3-0": 17.73,
+      "4-6-0": 20.74
+     },
+     "samedigit_193_vs_256": {
+      "4-2-1": 7764.59,
+      "4-3-0": 1196.72,
+      "4-6-0": 1281.01
+     },
+     "diffdigit_192_vs_256": {
+      "4-3-0": 8371.03
+     }
     },
-    "assignments": {
-      "libgcrypt CVE-2019-13627 (1.8.4 -> 1.8.5)": "relocated",
-      "wolfSSL CVE-2019-13628 (4.0.0 -> 4.1.0)": "attenuated",
-      "MatrixSSL CVE-2019-13629 (4.2.1 -> 4.3.0)": "incomplete"
+    "reading": "CORRECTED 2026-08-26 after the rebuild. Every figure in an earlier revision of this block came from a harness that passed a zeroed curve `a` coefficient where the library passes NULL, so it timed scalar multiplication on a different curve at 3.42x the deployed cost. Re-acquired three times per design from a retained build: the fix attenuates the one-leading-zero residual 1.44x (1,575 -> 1,093 ticks), not the fivefold an earlier revision reported, the latest open release is indistinguishable from the first fixed one, and where the nonce is short by a whole digit the fixed builds are about twice as leaky as the pre-fix build. See results/matrixssl_containment.json and results/matrixssl_repeats.json."
+   },
+   "cross_host_replication": {
+    "note": "S5: the residual re-measured on a second microarchitecture (AWS Graviton3, Neoverse-V1, aarch64) with the same sources, harness and designs. A residual that survives a host change is a property of the code, which is what the finding claims.",
+    "abs_t_by_host": {
+     "x86-64 Arrow Lake": {
+      "4-2-1_bit255v256": 97.38,
+      "4-3-0_bit255v256": 17.73,
+      "4-3-0_same": 1.39
+     },
+     "aarch64 Neoverse-V1": {
+      "4-2-1_bit255v256": 86.92,
+      "4-3-0_bit255v256": 16.74,
+      "4-3-0_same": 1.15
+     }
     },
-    "unpopulated": [
-      "removed",
-      "reshaped"
-    ],
-    "unpopulated_note": "Neither of the three cases removes the mechanism outright or moves it to a different channel, so those two classes are named and empty rather than dropped: the taxonomy states what a larger survey would have to fill."
-  },
-  "survey_triage": {
-    "method": "Triage-first: for each candidate the fix commit or release is located and the pre/post scalar-multiplication path is READ, and the fix is classified into the taxonomy from source alone, before any build. This predicted MatrixSSL's loud unbalanced leak and wolfSSL's balanced one correctly, and it costs minutes where a build-and-acquire cycle costs hours. Only candidates whose diff predicts a discriminating pair are then built. Candidates NOT built are recorded here with the reason, so the survey's coverage is legible rather than implied.",
-    "candidates": {
-      "libgcrypt CVE-2019-13627 (1.8.4->1.8.5)": {
-        "triage": "fix relocated to the nonce preparation upstream of the primitive",
-        "class": "relocated",
-        "built": true,
-        "measured": true
-      },
-      "wolfSSL CVE-2019-13628 (4.0.0->4.1.0)": {
-        "triage": "leading-zero branches merged and the dummy double made in-place; loop bound also moved off the secret's digit count",
-        "class": "attenuated",
-        "built": true,
-        "measured": true
-      },
-      "MatrixSSL CVE-2019-13629 (4.2.1->4.3.0)": {
-        "triage": "bare 'continue' on leading zeros replaced by dummy add+double, balanced by operation count",
-        "class": "incomplete",
-        "built": true,
-        "measured": true
-      },
-      "Crypto++ CVE-2019-14318 (8.2.0->8.3.0)": {
-        "triage": "History.txt for 8.3.0 records 'fix elliptic curve timing leaks (CVE-2019-14318)'. The fix replaces branches on the point identity with arithmetic masking, six sites commented 'Gyrations attempt to maintain constant-timeness', of the form P.x * IdentityToInteger(!P.identity). This is a FOURTH strategy: neither relocation, nor loop-bound correction, nor dummy operations, but branch-free selection by multiplication. It is a promising pair because the masks are Integer multiplies on a bignum layer that is itself variable time in operand size, which is the same substrate trap the MatrixSSL case identifies.",
-        "class": "triaged from source, not measured",
-        "built": false,
-        "measured": false,
-        "not_built_reason": "Crypto++ is C++, and none of the corpus's pinned offline toolchain images carries a C++ compiler; building it would require adding and digest-pinning a new build cell. The pair is therefore triaged from source and classified, but not measured, and it is recorded as such rather than being claimed or dropped."
-      },
-      "SunEC (Minerva advisory)": {
-        "triage": "not pursued: the affected code is Java/JNI inside the JDK, so a dudect harness would measure the JIT and the JNI boundary as much as the primitive, and the corpus has no build cell for it",
-        "class": "not triaged from source",
-        "built": false,
-        "measured": false
-      }
+    "reading": "CORRECTED 2026-08-26 after the rebuild. Every figure in an earlier revision of this block came from a harness that passed a zeroed curve `a` coefficient where the library passes NULL, so it timed scalar multiplication on a different curve at 3.42x the deployed cost. Re-acquired three times per design from a retained build: the fix attenuates the one-leading-zero residual 1.44x (1,575 -> 1,093 ticks), not the fivefold an earlier revision reported, the latest open release is indistinguishable from the first fixed one, and where the nonce is short by a whole digit the fixed builds are about twice as leaky as the pre-fix build. See results/matrixssl_containment.json and results/matrixssl_repeats.json."
+   },
+   "source_digests_sha256": {
+    "4-2-1-open.tar.gz": "3bbddd70f54ba6c8ec3730cb666af2b7abf617f7468410db094f31b21cd924d2",
+    "4-3-0-open.tar.gz": "b6fe9a3c6290ef10169ebf35d65bc7e1ac54ce8f360c6f71bd0630de68c83667",
+    "4-6-0-open.tar.gz": "87be70df27356fec1221011b8ac6f12a4ad1e7e7eaaaf73d73bc94ad9be02dd9"
+   },
+   "source_digests_note": "SHA-256 of the tag archives actually built here, from the archived BlobbyBob/matrixssl mirror. The sources were taken as tag tarballs rather than a clone, so there is no local commit hash to quote; the digest is what a reader can check against their own download, and it pins the exact bytes measured.",
+   "build_cell": "The library's own default build: gcc with -O3 -Wall, chosen by core/makefiles/detect-and-rules.mk when MATRIX_DEBUG and MATRIX_OPTIMIZE_FOOTPRINT are unset, on x86_64-linux-gnu and again under the host gcc of the aarch64 Neoverse-V1 instance. The pstm digit width is 64 bits on both, which is what makes the 255-bit and 256-bit classes share a digit count.",
+   "source_commits": {
+    "4-2-1-open": "91fd0f1",
+    "4-3-0-open": "eec42aa",
+    "4-6-0-open": "effeb14"
+   },
+   "source_commits_note": "The mirror commit each tag archive was cut from, read from the '@version' stamp the build system carries in common.mk of each tree, so it is verifiable from the sources themselves rather than from a repository that may move.",
+   "exploitability_note": "The leading-zero ladder is monotonic and steep (median signing time falls about 2700 ticks for the first leading zero and about 19700 by the sixth), so the leak is real and ordered; what it lacks is enough separation for a rank-based selection to deliver a clean short-nonce set at the ranks the lattice consumes.",
+   "deterministic_cross_check": {
+    "instruction_counts": {
+     "256": {
+      "digits": 4,
+      "leading_zeros": 0,
+      "instructions": 42633192,
+      "delta_vs_256": 0,
+      "percent_vs_256": 0.0
+     },
+     "255": {
+      "digits": 4,
+      "leading_zeros": 1,
+      "instructions": 42595811,
+      "delta_vs_256": -37382,
+      "percent_vs_256": -0.088
+     },
+     "193": {
+      "digits": 4,
+      "leading_zeros": 63,
+      "instructions": 42542744,
+      "delta_vs_256": -90449,
+      "percent_vs_256": -0.212
+     },
+     "192": {
+      "digits": 3,
+      "leading_zeros": 64,
+      "instructions": 32178612,
+      "delta_vs_256": -10454581,
+      "percent_vs_256": -24.522
+     }
     },
-    "coverage_statement": "Five candidates triaged. Three (libgcrypt, wolfSSL, MatrixSSL) are built and measured end to end. Crypto++ is classified from source as a fourth fix strategy but not measured, because the pinned toolchain has no C++ compiler. SunEC is out of reach for this corpus. The survey therefore reports three measured outcomes and one source-level classification, and says which is which."
+    "conclusion": "ALGORITHMIC, not microarchitectural: classes with an identical digit count and therefore an identical loop bound execute different numbers of instructions. See pairs/matrixssl-minerva/evidence/instruction_counts.json.",
+    "binary_confirmation": "eccMulmodCt is instruction-identical between 4-3-0-open and 4-6-0-open (380 instructions, identical normalised listing), and the out-of-place guard `if (P != R) { 3 x pstm_copy }` in eccProjectiveDblPoint is the cost the dummy path pays and the real path does not. See evidence/binary_confirmation.json."
+   },
+   "measurements_full_report": {
+    "why": "Every design re-decided in one pass over the committed dumps under the rule in force (permutation null over the first-order crop ladder), with the measurement count, the permutation p, and the class difference of means in ticks with a bootstrap 95% CI. The paper's own standard for the corpus arms is exactly this, and the headline case had been reported as bare |t| values without n, p, effect size or provenance.",
+    "dumps": "results/raw/matrixssl/, one per design and version",
+    "correction": "These values REPLACE the earlier ones and several differ materially: the pre-fix 255-vs-256 design read 97.4 and now reads 78.9, and the same-digit design read 1196.7 and now reads 212.6. The earlier figures were dudect's own printed maximum, which includes its second-order test; the permutation null excludes that test because it accumulates against a running mean and is not invariant under relabelling. The conclusion is unchanged in every case, including the direction and the ordering of the four designs, but the numbers are now the ones the verdict rule actually decides on.",
+    "designs": {
+     "mx4-2-1_bit255v256": {
+      "ci_excludes_zero": true,
+      "ci_high": 1821.3779925000676,
+      "ci_low": 1475.1743549999926,
+      "effect_ticks": 1650.875076160417,
+      "max_abs_t": 23.2405,
+      "measurements": 59967,
+      "n_at_argmax": 59304,
+      "permutation_p": 9.999000099990002e-05,
+      "permutations": 10000,
+      "call_ticks": 835466.8143267084,
+      "residual_fraction": 0.0019759912037808887
+     },
+     "mx4-2-1_diffdigit": {
+      "ci_excludes_zero": true,
+      "ci_high": 120910.99463249999,
+      "ci_low": 118214.6271425,
+      "effect_ticks": 119564.52658875752,
+      "max_abs_t": 216.7102,
+      "measurements": 59967,
+      "n_at_argmax": 59878,
+      "permutation_p": 9.999000099990002e-05,
+      "permutations": 10000,
+      "call_ticks": 800002.8221169494,
+      "residual_fraction": 0.1494551310111239
+     },
+     "mx4-2-1_same": {
+      "ci_excludes_zero": false,
+      "ci_high": 284.4591050000134,
+      "ci_low": -74.28522500004911,
+      "effect_ticks": 104.60548640077468,
+      "max_abs_t": 1.6484,
+      "measurements": 59967,
+      "n_at_argmax": 47789,
+      "permutation_p": 0.4076592340765923,
+      "permutations": 10000,
+      "call_ticks": 836697.9174897909,
+      "residual_fraction": 0.00012502180800760872
+     },
+     "mx4-2-1_samedigit": {
+      "ci_excludes_zero": true,
+      "ci_high": 118518.41148500002,
+      "ci_low": 115852.10891999994,
+      "effect_ticks": 117167.15135826159,
+      "max_abs_t": 216.6746,
+      "measurements": 59967,
+      "n_at_argmax": 59776,
+      "permutation_p": 9.999000099990002e-05,
+      "permutations": 10000,
+      "call_ticks": 801738.3686639294,
+      "residual_fraction": 0.1461413797041007
+     },
+     "mx4-6-0_bit255v256": {
+      "ci_excludes_zero": true,
+      "ci_high": 1164.9715625000301,
+      "ci_low": 918.8599749999121,
+      "effect_ticks": 1040.40694419411,
+      "max_abs_t": 21.2724,
+      "measurements": 59967,
+      "n_at_argmax": 58813,
+      "permutation_p": 9.999000099990002e-05,
+      "permutations": 10000,
+      "call_ticks": 1585686.8958237723,
+      "residual_fraction": 0.0006561238204933348
+     },
+     "mx4-6-0_diffdigit": {
+      "ci_excludes_zero": true,
+      "ci_high": 246235.24971250002,
+      "ci_low": 240520.80542000005,
+      "effect_ticks": 243281.473283679,
+      "max_abs_t": 220.3974,
+      "measurements": 59967,
+      "n_at_argmax": 59908,
+      "permutation_p": 9.999000099990002e-05,
+      "permutations": 10000,
+      "call_ticks": 1518589.9492877917,
+      "residual_fraction": 0.1602022148228864
+     },
+     "mx4-6-0_same": {
+      "ci_excludes_zero": false,
+      "ci_high": 223.66004749987593,
+      "ci_low": -94.17953999991877,
+      "effect_ticks": 69.07790452893823,
+      "max_abs_t": 2.2417,
+      "measurements": 59967,
+      "n_at_argmax": 41508,
+      "permutation_p": 0.30196980301969806,
+      "permutations": 10000,
+      "call_ticks": 1585605.6109817207,
+      "residual_fraction": 4.356562820572321e-05
+     },
+     "mx4-6-0_samedigit": {
+      "ci_excludes_zero": true,
+      "ci_high": 72003.1959225,
+      "ci_low": 70369.63551000012,
+      "effect_ticks": 71164.49485211726,
+      "max_abs_t": 215.2211,
+      "measurements": 59967,
+      "n_at_argmax": 59697,
+      "permutation_p": 9.999000099990002e-05,
+      "permutations": 10000,
+      "call_ticks": 1563271.3911614318,
+      "residual_fraction": 0.045522802537341665
+     },
+     "mx430_bit255v256": {
+      "ci_excludes_zero": true,
+      "ci_high": 1299.9605499999363,
+      "ci_low": 996.746457500098,
+      "effect_ticks": 1145.8877085184213,
+      "max_abs_t": 17.3534,
+      "measurements": 59967,
+      "n_at_argmax": 56920,
+      "permutation_p": 9.999000099990002e-05,
+      "permutations": 10000,
+      "call_ticks": 1578967.079442558,
+      "residual_fraction": 0.0007257198224316164
+     },
+     "mx430_diffdigit": {
+      "ci_excludes_zero": true,
+      "ci_high": 249161.66317250018,
+      "ci_low": 243705.49776,
+      "effect_ticks": 246399.01647347515,
+      "max_abs_t": 218.9193,
+      "measurements": 59967,
+      "n_at_argmax": 59894,
+      "permutation_p": 9.999000099990002e-05,
+      "permutations": 10000,
+      "call_ticks": 1508381.5144759594,
+      "residual_fraction": 0.1633532459187415
+     },
+     "mx430_same": {
+      "ci_excludes_zero": false,
+      "ci_high": 38.75516999998359,
+      "ci_low": -252.51996500018285,
+      "effect_ticks": -106.43751906137913,
+      "max_abs_t": 1.7222,
+      "measurements": 59967,
+      "n_at_argmax": 56470,
+      "permutation_p": 0.44195580441955806,
+      "permutations": 10000,
+      "call_ticks": 1577751.7931303116,
+      "residual_fraction": 6.746151043834568e-05
+     },
+     "mx430_samedigit": {
+      "ci_excludes_zero": true,
+      "ci_high": 72808.5923475,
+      "ci_low": 71206.5371475,
+      "effect_ticks": 71993.5362211098,
+      "max_abs_t": 216.3507,
+      "measurements": 59967,
+      "n_at_argmax": 58443,
+      "permutation_p": 9.999000099990002e-05,
+      "permutations": 10000,
+      "call_ticks": 1555753.97694214,
+      "residual_fraction": 0.04627565623365095
+     }
+    },
+    "dump_sha256": {
+     "mx4-2-1_bit255v256.bin.gz": "159bf145eafb1dc16207281800576cdbf14cdcae5d87a2c3371b71dbc7b4a9da",
+     "mx4-2-1_same.bin.gz": "a8cd02f0e0a7e06b91ad7cb3dbdb99fb595eb6cf8f065d3e6c7204cfc323967a",
+     "mx4-2-1_samedigit.bin.gz": "8a7451ddd61d9b8d15fc159a0bd35ee46d6a8a2ad89802dd09ea2820dbbf92e5",
+     "mx4-6-0_bit255v256.bin.gz": "813d035b12f325c15665d8a0e0c37cbc7f9caee398265e727079e95750ea629f",
+     "mx4-6-0_same.bin.gz": "542c8d0700ae65f21ee424befd8633db99e30fb8f190e04b791bf7356a02213d",
+     "mx4-6-0_samedigit.bin.gz": "c3e377b90001ae576913a500548ef41a461f34bfd6bf09ca4bb172e27f16ffd9",
+     "mx430_bit255v256.bin.gz": "ea1a04dfbd6c66a07ed68e4d038b0261e776dfc4f1277d1cc485359768593cf8",
+     "mx430_diffdigit.bin.gz": "b120efa41114362975154483afd0a0949dc6214b24a5b74108d6219c083fca41",
+     "mx430_same.bin.gz": "35d58a96473e8e07a0738e9cbfdaf0061e27baa0651d6a7de7a80e2074d373f8",
+     "mx430_samedigit.bin.gz": "2a67dc06d8a063af8025836be581b60077ba6887a649c2d218d1a8d131f511c2"
+    },
+    "dump_digest_note": "One digest per committed dump, so a control can check that the statistics above still describe the samples on disk. Without it these ten dumps would sit outside STAT-1, which globs the corpus dumps only, and their numbers reach the paper.",
+    "acquisitions_per_arm": 1,
+    "acquisition_count_disclosure": "ONE acquisition per design. The bootstrap CI beside each figure bounds sampling error WITHIN that run's conditions; it does not bound between-run variation, and this paper demonstrates elsewhere (the amplification sweep) that a single timing run on this unpinned host can wander widely. What makes a reversal unlikely here is not the CI but that four independent routes agree: the same-length control straddles zero at the same budget, the retired-instruction counts are deterministic and order the four designs the same way, the residual reproduces on an unrelated microarchitecture, and 4.6.0 measures the same as 4.3.0 on byte-identical code. Re-acquiring to k>=5 is the right insurance and is not done here: the build tree these dumps came from is no longer available, so it would mean rebuilding all three releases from the pinned archives.",
+    "generator": "bin/fix_report.py --write, over results/raw/matrixssl/*.bin.gz"
+   }
   }
+ },
+ "cross_cutting": "The corpus's reproduction pairs detect because they are amplified (40x per-bit work); these deployed leaks in shipped configurations are 0.03% to sub-percent, at or below a fast host's timing floor. That gap between a tool benchmark and a real attacker is itself a measured result, and it is why recovery certification, not a tool verdict, is the label.",
+ "taxonomy": {
+  "note": "A fix-outcome taxonomy, so a case study of three becomes a classification other cases can be added to. The classes are defined by what the patched build does to the leak at the declared site, which is what the at-the-site check measures.",
+  "classes": {
+   "removed": "the secret-dependent operation is gone from the patched build at the site",
+   "relocated": "the leak is closed, but the fix sits outside the primitive an analyser is pointed at, so the primitive is unchanged across the patch",
+   "attenuated": "the mechanism remains and the residual is reduced below what an attack can use at a stated budget and host",
+   "reshaped": "the mechanism changes channel (for example a branch becomes an address) rather than being closed",
+   "incomplete": "the mechanism remains and the residual is still measurable at the site"
+  },
+  "assignments": {
+   "libgcrypt CVE-2019-13627 (1.8.4 -> 1.8.5)": "relocated",
+   "wolfSSL CVE-2019-13628 (4.0.0 -> 4.1.0)": "attenuated",
+   "MatrixSSL CVE-2019-13629 (4.2.1 -> 4.3.0)": "incomplete"
+  },
+  "unpopulated": [
+   "removed",
+   "reshaped"
+  ],
+  "unpopulated_note": "Neither of the three cases removes the mechanism outright or moves it to a different channel, so those two classes are named and empty rather than dropped: the taxonomy states what a larger survey would have to fill."
+ },
+ "survey_triage": {
+  "method": "Triage-first: for each candidate the fix commit or release is located and the pre/post scalar-multiplication path is READ, and the fix is classified into the taxonomy from source alone, before any build. This predicted MatrixSSL's loud unbalanced leak and wolfSSL's balanced one correctly, and it costs minutes where a build-and-acquire cycle costs hours. Only candidates whose diff predicts a discriminating pair are then built. Candidates NOT built are recorded here with the reason, so the survey's coverage is legible rather than implied.",
+  "candidates": {
+   "libgcrypt CVE-2019-13627 (1.8.4->1.8.5)": {
+    "triage": "fix relocated to the nonce preparation upstream of the primitive",
+    "class": "relocated",
+    "built": true,
+    "measured": true
+   },
+   "wolfSSL CVE-2019-13628 (4.0.0->4.1.0)": {
+    "triage": "leading-zero branches merged and the dummy double made in-place; loop bound also moved off the secret's digit count",
+    "class": "attenuated",
+    "built": true,
+    "measured": true
+   },
+   "MatrixSSL CVE-2019-13629 (4.2.1->4.3.0)": {
+    "triage": "bare 'continue' on leading zeros replaced by dummy add+double, balanced by operation count",
+    "class": "incomplete",
+    "built": true,
+    "measured": true
+   },
+   "Crypto++ CVE-2019-14318 (8.2.0->8.3.0)": {
+    "triage": "History.txt for 8.3.0 records 'fix elliptic curve timing leaks (CVE-2019-14318)'. The fix replaces branches on the point identity with arithmetic masking, six sites commented 'Gyrations attempt to maintain constant-timeness', of the form P.x * IdentityToInteger(!P.identity). This is a FOURTH strategy: neither relocation, nor loop-bound correction, nor dummy operations, but branch-free selection by multiplication. It is a promising pair because the masks are Integer multiplies on a bignum layer that is itself variable time in operand size, which is the same substrate trap the MatrixSSL case identifies.",
+    "class": "triaged from source, not measured",
+    "built": false,
+    "measured": false,
+    "not_built_reason": "Crypto++ is C++, and none of the corpus's pinned offline toolchain images carries a C++ compiler; building it would require adding and digest-pinning a new build cell. The pair is therefore triaged from source and classified, but not measured, and it is recorded as such rather than being claimed or dropped."
+   },
+   "SunEC (Minerva advisory)": {
+    "triage": "not pursued: the affected code is Java/JNI inside the JDK, so a dudect harness would measure the JIT and the JNI boundary as much as the primitive, and the corpus has no build cell for it",
+    "class": "not triaged from source",
+    "built": false,
+    "measured": false
+   }
+  },
+  "coverage_statement": "Five candidates triaged. Three (libgcrypt, wolfSSL, MatrixSSL) are built and measured end to end. Crypto++ is classified from source as a fourth fix strategy but not measured, because the pinned toolchain has no C++ compiler. SunEC is out of reach for this corpus. The survey therefore reports three measured outcomes and one source-level classification, and says which is which."
+ }
 }

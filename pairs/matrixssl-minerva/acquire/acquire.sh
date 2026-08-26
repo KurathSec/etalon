@@ -3,9 +3,11 @@
 # nonce-bit-length residual on the ECC scalar multiplication. This is the headline
 # fix-verification case: MatrixSSL added a constant-time eccMulmod in 4.3.0 "in
 # response to the Minerva attack" (release notes), enabled by default, that balances the
-# leading-zero phase by operation count but not by cost, so the fix attenuates the leak
-# about fivefold without removing it and the residual persists through the latest open
-# release. NOTE: an earlier revision of this script blamed the loop bound taken from
+# leading-zero phase by operation count but not by cost, so the residual persists through
+# the latest open release. SUPERSEDED 2026-08-26: this script deletes its build tree and
+# its harness passed the wrong curve parameter. Use bin/matrixssl_rebuild.sh, which
+# retains the tree, and bin/matrixssl_acquire.sh, which repeats each design. The
+# attenuation is 1.44x, not the fivefold an earlier revision of this comment claimed. NOTE: an earlier revision of this script blamed the loop bound taken from
 # get_digit_count(k). That is arithmetically impossible for the design measured here:
 # a pstm digit is 64 bits, so 255-bit and 256-bit nonces occupy the same four digits and
 # run the identical iteration count. See the four-design decomposition in

@@ -309,8 +309,8 @@ digit count fixed while varying bit length, locates the leading-zero phase inste
 dummy add and double are balanced by operation count but not by cost (the dummy double is
 out-of-place, forcing three big-integer copies on magnitude-variable arithmetic). `|t|`
 runs 1.4 at equal length, 18 at one leading zero, 1197 at sixty-three, and 8371 once the
-digit count really differs. Pre-fix 97 to fixed 18 is about fivefold attenuation, not
-removal, and it replicates on aarch64 (87 to 17, control 1.15). The loop bound is real but
+digit count really differs. Pre-fix 97 to fixed 18 read as about fivefold attenuation (CORRECTED 2026-08-26: that
+harness timed the wrong curve; the real attenuation is 1.44x, see the rebuild section), and it replicates on aarch64 (87 to 17, control 1.15). The loop bound is real but
 needs a nonce short by a whole digit, which a uniform nonce is 2^-64 likely to be. The
 general claim is stronger than the old one: balancing control flow by operation count does
 not give constant time on variable-time arithmetic.
@@ -785,3 +785,61 @@ excluding per cent signs that also matched newlines, so a greedy prefix swallowe
 the other matched `Citation \`key' undefined` where LaTeX writes `Citation \`key' on page N
 undefined`. Both were caught by planting the failure, which is the rule that says a control is
 decoration until you have watched it fail.
+
+### The rebuild, and what it found in our own harness
+
+The environment gained network access, so the MatrixSSL case was rebuilt from its pinned
+checksums rather than reasoned about. All three tarballs fetch and verify, the trees build in
+the pinned image, and `eccMulmodCt` is absent in 4.2.1 and present in both fixed releases,
+which is the default-on claim checked rather than quoted.
+
+**The containment anomaly was ours.** The paper had reported three figures that cannot all be
+what their names say: an isolated `eccMulmod` call at 5,535,140 ticks, a whole signature
+containing one at 1,015,936, and 42,633,192 retired instructions. A signature cannot be
+cheaper than the scalar multiplication inside it, and which figure was wrong was left
+undetermined because each came from a different harness on a different run.
+
+The last argument of `eccMulmod` is not scratch. It is the curve's `a` coefficient, forwarded
+to the projective doubling, and `ecc_curve_data.c` flags secp256r1 `isOptimized` with the
+comment "1 if optimized with field parameter A=-3", so `ecc_keygen.c` never allocates it and
+passes `NULL`. Our harness allocated a zeroed integer and passed that, selecting the generic
+path for a different curve. Measured together in one process:
+
+| region | median ticks |
+|---|---|
+| `psEccGenKey`, the signing path's own scalar multiplication | 1,615,380 |
+| `eccMulmod` with the library's `NULL` argument | 1,598,670 |
+| whole `psEccDsaSign` | 1,763,724 |
+| `eccMulmod` as the old harness called it | 5,526,240 |
+
+The first two agree to 1.03%, so the corrected harness times the deployed call rather than a
+reconstruction of it, and the deployment link stops being an inference. The old region was
+3.42 times the real one.
+
+**The finding survives and the fix looks worse.** Thirty-six acquisitions, three per design
+across four designs and three releases. The residual at one leading zero is smaller in ticks
+and larger as a fraction of its call, 0.08% against 0.04%, and `|t|` rises from 15 to 17
+because the deployed call is quieter than the wrong one. But the attenuation is **1.44 times,
+not the fivefold the old figures showed**, the latest open release is indistinguishable from
+the first fixed one, and where the nonce is short by a whole 64-bit digit the fixed builds are
+**twice as leaky as the pre-fix build**: the dummy operations cost more than the branch they
+replaced.
+
+**The instruction counts carry the sharper result.** Recounted on the corrected driver and
+differenced across two call counts so startup cancels, one leading zero adds 53,157
+instructions and sixty-three add 53,696. The same number. The clock moves over that range by
+nearly two orders of magnitude. The dummy add and double balance the work exactly as designed
+and do not balance the cost, which is the paper's practitioner claim turned from an argument
+into a measurement. The count also fits the clock at 6.02 instructions per tick, where the old
+pair demanded 27.
+
+**What the rebuild retired.** Repeats replace the single acquisition every interval on this
+case rested on, so between-acquisition spread is measured rather than conceded. The three
+builds, the timing harness, the instruction-count driver and the signing driver are all
+committed, along with 25,000 signatures and the key that labels them. Of the three groups of
+numbers the paper marked as not recomputable, one and a half remain.
+
+Two generators refuse to write a result that is not there: the containment one fails if the
+library's call and the corrected one differ by more than two per cent, and the instruction one
+fails if the implied retire rate exceeds what a core can reach. Either would have caught the
+original defect.

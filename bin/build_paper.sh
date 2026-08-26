@@ -59,6 +59,14 @@ run_latex() {
 build_one() {
   run_latex "$1"
   bibtex "$1" >/dev/null 2>&1 || true
+  # bibtex tolerates a malformed entry: it reports the problem, DROPS the rest of that
+  # entry, and exits successfully, and this line used to end in `|| true`. A duplicate
+  # key shipped that way and the only trace was one line in the .blg nobody read.
+  if grep -qE "^I was expecting|^I'm skipping|Repeated entry|There (was|were) [0-9]+ error" "$1.blg"; then
+    echo "build_paper: bibtex reported a problem in $1.blg:" >&2
+    grep -E "^I was expecting|^I'm skipping|Repeated entry|error message" "$1.blg" | head -5 >&2
+    exit 1
+  fi
   run_latex "$1"
   run_latex "$1"
   # A dangling cross-reference renders as ?? and no other gate sees it. The split makes

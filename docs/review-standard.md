@@ -67,3 +67,45 @@ and the last three rounds show that surface is where the findings come from.
 Track blocking items by class across rounds. The recommendation label is a poor signal
 because C5 findings hold it down permanently. What shows progress is C1 and C2 going to
 zero and staying there.
+
+## 6. Before you change a claim, find everywhere it is stated
+
+Rounds 6 to 8 taught that a fix creates the next round's finding. Round 15 taught the
+specific mechanism, and it is worth naming because the protocol above did not stop it.
+
+In one day of editing, three contradictions shipped. The abstract said the MatrixSSL
+deployment link was not established while the fix section said it was no longer an
+inference. A figure caption said each arm was one acquisition while the section beside it
+said three, and the same caption claimed to draw no ratio while printing one. The
+introduction promised three groups of non-recomputable quantities and the section it
+pointed at named two. Every one was a claim updated in one place with its opposite left
+standing in another. A blind referee found all three; no gate here saw any of them.
+
+They were invisible to the existing rules by construction. `[[retired]]` looks for a
+withdrawn phrase, `[[duplicate]]` for the same passage twice, `[[once]]` for a phrase
+appearing more than once. A contradiction is none of those: the two statements are
+opposites, so they share no wording, and each is individually well formed.
+
+**The procedure, before the edit and not after it.** Enumerate every site that states the
+claim: the abstract, the introduction, the section, every float caption, the conclusion,
+every appendix, and the generated tables. Then choose, in this order:
+
+1. **State it once and point at it.** Two sites cannot disagree if only one of them
+   asserts. This is what the count of non-recomputable groups now does.
+2. **If it must appear twice, make both print the same macro.** Two sites cannot disagree
+   if the same generator fills both. This is why every quantity in this paper is a macro.
+3. **If neither is possible, register the pair.** `[[contradiction]]` holds phrases that
+   must not both appear. It does not detect contradiction in general and does not pretend
+   to; it is a register of pairs that have contradicted once, so they cannot again.
+
+**A caption is prose.** Two of the three shipped in captions, which are the easiest text to
+forget because they are written once and read as furniture. Captions carry claims, and the
+sweep covers them.
+
+**The score is not the signal, and round 15 measured how little.** A published best paper
+from this venue, lightly anonymised and put through the same panel, drew three major
+revisions with five blocking items, against this paper's two majors and a minor. What the
+panel's label means is therefore close to nothing. What its finding COMPOSITION means is
+everything, and on that reading this paper's round 15 was worse than its round 14: the
+blocking items were no longer bounded evidence, they were the paper disagreeing with
+itself, in a paper whose thesis is that unreconciled numbers are false rather than weak.

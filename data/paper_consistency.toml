@@ -226,3 +226,32 @@ why = "same"
 phrase = "our classification of the field"
 in_files = ["sec/f1-blindspots.tex"]
 why = "same: the classification axes are ours, the rows are not"
+
+# ---------------------------------------------------------------- cannot both be true
+# The register of claim pairs that have contradicted each other once. The duplicate and
+# once rules cannot see this class, because the two statements share no wording: they are
+# opposites, not copies. All three entries below shipped on 2026-08-26 in a single day of
+# editing, each because a claim was updated in one place and its opposite left standing in
+# another, and all three were found by a blind referee rather than by any gate here.
+
+[[contradiction]]
+claim = "we do not establish that the deployed signing path executes it"
+against = "no longer an inference"
+why = """The abstract denied the deployment link while the fix section asserted it. The
+paper now states the intermediate claim in both: source dispatch and a whole-signature cost
+budget place a routine of indistinguishable cost inside the signature, and the residual was
+measured on that routine called directly."""
+
+[[contradiction]]
+claim = "each arm is one acquisition"
+against = "acquired \\mxReps{} times"
+why = """The ladder figure's caption still described the single-acquisition regime after the
+rebuild replaced it with three acquisitions per design, and in the same caption claimed to
+draw no ratio while printing one."""
+
+[[contradiction]]
+claim = "says which three groups those are"
+against = "after the rebuild two remain"
+why = """The introduction promised three groups of non-recomputable quantities and the fix
+section named two. The count is now stated in exactly one place and pointed at from the
+other."""

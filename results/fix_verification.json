@@ -369,7 +369,7 @@
   },
   "assignments": {
    "libgcrypt CVE-2019-13627 (1.8.4 -> 1.8.5)": "relocated",
-   "wolfSSL CVE-2019-13628 (4.0.0 -> 4.1.0)": "attenuated",
+   "wolfSSL CVE-2019-13628 (4.0.0 -> 4.1.0)": "UNASSIGNED: predicted attenuated from source, not decidable by this instrument",
    "MatrixSSL CVE-2019-13629 (4.2.1 -> 4.3.0)": "incomplete"
   },
   "unpopulated": [
@@ -389,9 +389,11 @@
    },
    "wolfSSL CVE-2019-13628 (4.0.0->4.1.0)": {
     "triage": "leading-zero branches merged and the dummy double made in-place; loop bound also moved off the secret's digit count",
-    "class": "attenuated",
     "built": true,
-    "measured": true
+    "measured": true,
+    "class_predicted_from_source": "attenuated",
+    "class_confirmed": false,
+    "class_note": "The source-level triage PREDICTED attenuated. The measurement cannot confirm or refute it, because every timing reading of this case was taken under the retired verdict rule on samples that were never committed, so the paper declines to grade it and the taxonomy's attenuated cell stays empty rather than being filled by a prediction. Corrected 2026-08-26: an earlier revision carried the prediction as an assignment here and in taxonomy.assignments, which contradicted this library's own outcome field and the paper. A blind referee found it."
    },
    "MatrixSSL CVE-2019-13629 (4.2.1->4.3.0)": {
     "triage": "bare 'continue' on leading zeros replaced by dummy add+double, balanced by operation count",

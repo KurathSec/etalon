@@ -40,6 +40,13 @@ def main() -> int:
 
     fv = load("fix_verification.json")
     cand = fv["survey_triage"]["candidates"]
+    built = sum(1 for c in cand.values() if c.get("built"))
+    # A measurement this paper will not stand behind is not a measurement it retains.
+    # wolfSSL was built and timed, and every reading was taken under a retired rule on
+    # samples that were never committed, so the fix section declines to grade it. Counting
+    # it as "measured" in the summary table contradicted that.
+    retained = sum(1 for c in cand.values()
+                   if c.get("measured") and c.get("class_confirmed") is not False)
     measured = sum(1 for c in cand.values() if c.get("measured"))
 
     b1 = load("bin1_check.json")
@@ -57,7 +64,8 @@ def main() -> int:
          f"{applicable} applicable of {rows_total} rows", "\\ref{sec:blindspots}"),
         ("fix site and facet", "$(s, f, \\mathcal{A}, B)$",
          "closed, incomplete, and outside the domain",
-         f"{measured} measured of {len(cand)} examined", "\\ref{sec:fixes}"),
+         f"{built} built, {retained} yielding a retained measurement, "
+         f"of {len(cand)} examined", "\\ref{sec:fixes}"),
     ]
     for r in rows:
         for cell in r:

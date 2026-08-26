@@ -214,6 +214,25 @@ def _consistency(texts: dict[str, str], paper: Path) -> list[str]:
                 f"{len(where)}: {', '.join(where) if where else 'none'}. "
                 f"{entry.get('why', '')}")
 
+    # Two claims that cannot both be true. This is the class that the duplicate and
+    # once rules cannot see, because the two statements share no wording: the abstract
+    # says a link is not established while the body says it is no longer an inference;
+    # a caption says each arm is one acquisition while the section says three; the
+    # introduction promises three groups and the section names two. Every one of those
+    # shipped in a single day's editing, each because a claim was updated in one place
+    # and its opposite left standing in another.
+    #
+    # The rule is deliberately narrow. It does not detect contradiction in general; it
+    # holds a register of pairs that have contradicted once, so they cannot again.
+    for entry in spec.get("contradiction", []):
+        a, b = flat(entry["claim"]), flat(entry["against"])
+        wa = sorted(n for n, text in texts.items() if a in flat(text))
+        wb = sorted(n for n, text in texts.items() if b in flat(text))
+        if wa and wb:
+            bad.append(
+                f"contradiction: {entry['claim']!r} in {', '.join(wa)} against "
+                f"{entry['against']!r} in {', '.join(wb)}. {entry.get('why', '')}")
+
     # Duplicated prose. Five of the largest deletions this restructure makes are the
     # same passage written twice, and not one of them is a retired claim, so no rule
     # above can see them. A duplicate is not a contradiction, which is why it survives
@@ -288,7 +307,9 @@ def _consistency(texts: dict[str, str], paper: Path) -> list[str]:
 
 
 _LABEL = re.compile(r"\\label\{((?:fig|tab|lst):[A-Za-z0-9:_-]+)\}")
-_REF = re.compile(r"\\(?:auto|C|c)?ref\{([^{}]*)\}")
+# \epref{label}{fallback} IS a reference: it renders as \Cref in the eprint build,
+# and omitting it made a float that only \epref points at look unreferenced.
+_REF = re.compile(r"\\(?:auto|C|c|ep)?ref\{([^{}]*)\}")
 _INPUT = re.compile(r"^[^%\n]*\\input\{([^{}]+)\}", re.M)
 
 

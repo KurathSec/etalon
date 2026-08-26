@@ -637,6 +637,7 @@ def as_tex(report: dict) -> str:
     # both read it from here, so the caption and the plot cannot drift apart.
     ks_hdr = REPO / "pairs" / "kyberslash" / "src" / "kyber_slash.h"
     ks_q = int(re.search(r"#define\s+KYBER_Q\s+(\d+)", ks_hdr.read_text()).group(1))
+    out.append(tex_macro("ksModulus", str(ks_q)))
     out.append(tex_macro("ksOperandLo", str(ks_q // 2)))
     out.append(tex_macro("ksOperandHi", str((ks_q - 1) * 2 + ks_q // 2)))
     # The amplification factor applied to the nonce pairs' per-bit work, read from

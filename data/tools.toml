@@ -36,7 +36,7 @@ platform_sensitive = true
 
 [tool.timecop]
 version = "valgrind-3.19.0"
-capability_source = "Schwabe, TIMECOP (ctgrind lineage) [timecop]: poisons secret bytes under memcheck and reports secret-dependent branches and memory accesses; does not model variable-latency instructions on defined data."
+capability_source = "Neikes, TIMECOP (ctgrind lineage) [timecop]: poisons secret bytes under memcheck and reports secret-dependent branches and memory accesses. The exclusion of variable-latency instructions is the tool's own statement, not our inference: its page says 'Valgrind cannot spot cases where variable-time code is caused by variable-time CPU instructions' (retrieved 2026-08-26)."
 scored_against = "policy"  # reports a secret-dependent branch/address, exploitable or not
 image   = "localhost/ct-toolchain/timecop:1"
 technique = "dynamic-taint"
@@ -46,6 +46,11 @@ level     = "binary"
 # variable-latency instruction operating on defined data, which is the KyberSlash
 # class; detecting that is exactly what the KyberSlash paper had to patch valgrind
 # to do. Encoding that boundary here is what makes the applicability honest.
+# That boundary is quoted rather than inferred: the tool's own page states
+# "Valgrind cannot spot cases where variable-time code is caused by variable-time
+# CPU instructions." Authorship corrected 2026-08-26: the tool is by Moritz Neikes
+# (contact moritz@post-apocalyptic-crypto.org), not Peter Schwabe as an earlier
+# revision of this file and of refs.bib both had it.
 observes  = ["address-data", "address-code"]
 # Both mechanisms, not just the branch: memcheck reports an UninitCondition for a
 # branch on poisoned data and an UninitValue for a memory access indexed by it, and
@@ -83,12 +88,20 @@ platform_sensitive = false
 
 [tool.binsec]
 version = "binsec-checkct"
-capability_source = "Daniel, Bardin, Rezk, Binsec/Rel, S&P 2020 [binsecrel]: relational symbolic execution deciding constant-time over explored paths; the divisor/dividend features are the later extension that reaches the division class."
+capability_source = "Daniel, Bardin, Rezk, Binsec/Rel, S&P 2020 [binsecrel]: relational symbolic execution deciding constant-time over explored paths; the divisor/dividend features are the later extension that reaches the division class. Probed directly from the pinned image on 2026-08-26: `binsec -checkct-help` lists `-checkct-features control-flow, memory-access, multiplication, dividend and divisor` and states that the multiplication and division checks are experimental."
 scored_against = "policy"  # decides a constant-time policy over explored paths
-# Provenance: binsec's divisor/dividend constant-time features may postdate the
-# KyberSlash disclosure, so its detection of that pair carries the same
-# by-construction caveat as varlat. The pair is tier C and outside every denominator.
-provenance = "possibly-postdates:kyberslash"
+# Provenance, dated rather than hedged (2026-08-26). An earlier revision of this file
+# said these features "may postdate" the KyberSlash disclosure. They do: BINSEC's
+# CHANGES.md puts `-checkct-features control-flow,memory-access,multiplication,
+# dividend,divisor` in release 0.10.0 of 2025-02-16, after the disclosure. The
+# capability is nonetheless correct for the image actually run, which is not an
+# inference from a version string: the pinned image was probed and its own option
+# list carries both features. What follows is a weaker cousin of varlat's caveat.
+# varlat was WRITTEN to detect this class, so its detection is by construction;
+# binsec is a general tool that GAINED the check after the class became salient, so
+# its detection is not evidence that a tool predating the disclosure would have
+# caught the pair. The pair is tier C and outside every denominator either way.
+provenance = "postdates:kyberslash"
 image   = "docker.io/binsec/binsec@sha256:2a51e455f055874d71cbf030a778e8be19455876bcd57c1845c163fed6fc482f"
 technique = "symbolic-relse"
 level     = "binary"

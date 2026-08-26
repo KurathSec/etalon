@@ -16,6 +16,7 @@ python3 "$REPO/bin/regen.py" --tex "$TCHES/numbers.tex"
 python3 "$REPO/bin/figures.py"
 python3 "$REPO/bin/recovery_cards.py"
 python3 "$REPO/bin/listing.py"
+python3 "$REPO/bin/survey_table.py"
 python3 "$REPO/bin/capability_table.py"
 python3 "$REPO/bin/controls_table.py"
 

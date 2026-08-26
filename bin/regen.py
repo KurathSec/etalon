@@ -1038,6 +1038,19 @@ def as_tex(report: dict) -> str:
             out.append(tex_macro("mxRepPrefixReps", str(d["repeats"])))
             out.append(tex_macro("mxRepPrefixExcl",
                                  str(d["reps_with_interval_excluding_zero"])))
+        # The latest open release on the same footing, so that "the residual falls once
+        # and does not fall again" is a printed range overlapping the first fixed
+        # release's and disjoint from the pre-fix one, not a shape read off a bar.
+        lat = "4-6-0.bit255"
+        if lat in rj:
+            d = rj[lat]
+            out.append(tex_macro("mxRepLatestMeanEffect",
+                                 f"{d['mean_effect_ticks']:,.0f}"))
+            out.append(tex_macro("mxRepLatestLo", f"{d['min_effect_ticks']:,.0f}"))
+            out.append(tex_macro("mxRepLatestHi", f"{d['max_effect_ticks']:,.0f}"))
+            out.append(tex_macro("mxRepLatestReps", str(d["repeats"])))
+            out.append(tex_macro("mxRepLatestExcl",
+                                 str(d["reps_with_interval_excluding_zero"])))
         ctl = "4-3-0.same"
         if ctl in rj:
             out.append(tex_macro("mxRepCtlExcl",

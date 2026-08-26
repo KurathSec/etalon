@@ -164,15 +164,45 @@ phrase = "rest on a trace this artifact does not carry"
 retired_in = "sec/fixes.tex (tab:fixes, MatrixSSL row), round 5 of the fifth review"
 why = """The cell said the diagnostics at the aucMatrixN budget rest on an uncommitted trace.
 Since the round-4 re-emission that macro counts the committed 25,000-signature 4-3-0 trace,
-whose key is committed beside it; the only uncommitted thing is the one lattice attempt at a
-larger budget, which the cell now names without a figure."""
+whose key is committed beside it. The cell must not name a lattice attempt on the fixed
+build either: the one lattice run in the record was key-ordered on the uncommitted
+250,000-signature 4.2.1 pre-fix trace, so no timing-ordered recovery on the fixed build has
+been attempted, and the cell says so."""
+
+[[retired]]
+phrase = "one lattice attempt, at a larger budget"
+retired_in = "sec/fixes.tex (tab:fixes, MatrixSSL row), round 6 of the fifth review"
+why = """The cell attributed a lattice attempt at a larger budget to the fixed build. The only
+larger trace is the 250,000-signature one that _correction in results/exploit_budget.json
+identifies as the 4.2.1 pre-fix build, and the only lattice run on it was key-ordered and
+succeeded (pairs/matrixssl-minerva/evidence/mechanism_recovery.md). No timing-ordered lattice
+attempt on any 4-3-0 trace is recorded, so 'recovery pending' means not attempted."""
+
+[[retired]]
+phrase = "recovery attempt was run at a budget larger than"
+retired_in = "sec/fixes.tex (what is still not recomputable), round 6 of the fifth review"
+why = """Same misattribution as the table cell: the budget it excused belonged to a key-ordered
+run on the pre-fix trace, not to a recovery attempt on the fixed build."""
 
 [[retired]]
 phrase = "belongs to a trace the repository does not carry"
 retired_in = "sec/app-threats.tex, round 5 of the fifth review"
 why = """The reason INST-1 was live used to be that the committed MatrixSSL key was orphaned.
-The key now labels the committed 4-3-0 trace; the live failure is the earlier pairing with the
-uncommitted 250,000-signature pre-fix trace, and the appendix says so instead."""
+The key now labels the committed 4-3-0 trace. The live failure was not a key/trace mismatch
+at all: the earlier revision read its figures from an uncommitted 250,000-signature trace that
+the committed key did label but that was the 4.2.1 pre-fix build (auc_full 0.6335 in
+_superseded_matrixssl_arm of results/exploit_budget.json, not one half); the one-half reading
+came only from a later diagnostic cross-pairing of the committed 4-3-0 key with a 4.2.1 trace,
+and the appendix now keeps the two apart."""
+
+[[retired]]
+phrase = "estimator read one half rather than an error"
+retired_in = "sec/app-threats.tex, round 6 of the fifth review"
+why = """The appendix fused two events: the uncommitted 250,000-signature trace that the earlier
+revision spent was correctly labelled by the committed key and read 0.6335, and the one-half
+reading (0.5047) came from a later cross-pairing of that key with a 4.2.1 trace. Saying the
+estimator read one half on the spent trace misattributes INST-1's failure class to an
+incident it could not have caught."""
 
 [[retired]]
 phrase = "the pre-fix build reads"

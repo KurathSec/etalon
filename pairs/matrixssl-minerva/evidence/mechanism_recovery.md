@@ -13,7 +13,13 @@ then ran the unchanged vendored Minerva lattice attack:
 which equals the signing key. What that shows is information content: the leak carries
 enough information to recover the key once the short nonces are known. It is not a timing
 recovery, because the selection an attacker must derive from timing was supplied from the
-key, and no recovery from raw timing has succeeded on this pair.
+key, and no recovery from raw timing has succeeded on this pair. Nor has one been
+attempted on the fixed build: that key-ordered run on the pre-fix trace is the only lattice
+run in the record, so "recovery pending" means no timing-ordered lattice attempt on any
+4-3-0 trace has been made, not that one was made and failed (an earlier revision of the
+paper's fix table described a lattice attempt at a larger budget, which conflated this run
+with the fixed build; `recovered` on both MatrixSSL arms of results/exploit_budget.json now
+reads "not attempted").
 
 CORRECTED: an earlier revision of this file called the selection barrier host-conditional
 and predicted a quieter core would recover. That excuse does not survive measurement. On

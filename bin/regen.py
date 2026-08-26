@@ -1132,7 +1132,16 @@ def as_tex(report: dict) -> str:
             if len(ts) == 4:
                 out.append(tex_macro(f"curveOne{macro}", f"{ts[0]:.0f}"))
                 out.append(tex_macro(f"curveEight{macro}", f"{ts[-1]:.0f}"))
-        out.append(tex_macro("nFixCases", 3))
+    # The count of deployed remediations the paper grades was typed as a literal 3,
+    # which is the one thing this file exists to prevent. It is the number of candidates
+    # in the committed triage that were actually built and measured.
+    fvp = REPO / "results" / "fix_verification.json"
+    if fvp.exists():
+        cands = json.loads(fvp.read_text())["survey_triage"]["candidates"]
+        n_fix = sum(1 for c in cands.values() if c.get("measured"))
+        out.append(tex_macro("nFixCases", str(n_fix)))
+        out.append(tex_macro("nFixCasesWord",
+                             WORDS[n_fix] if n_fix < len(WORDS) else str(n_fix)))
     # Recovery robustness: the vendored lattice attack's success over random signature
     # subsets, and its wall time, so the recovery card carries a measured success rate.
     rr = REPO / "results" / "recovery_robustness.json"

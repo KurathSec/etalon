@@ -336,21 +336,24 @@
      }
     },
     "dump_sha256": {
-     "mx4-2-1_bit255v256.bin.gz": "159bf145eafb1dc16207281800576cdbf14cdcae5d87a2c3371b71dbc7b4a9da",
-     "mx4-2-1_same.bin.gz": "a8cd02f0e0a7e06b91ad7cb3dbdb99fb595eb6cf8f065d3e6c7204cfc323967a",
-     "mx4-2-1_samedigit.bin.gz": "8a7451ddd61d9b8d15fc159a0bd35ee46d6a8a2ad89802dd09ea2820dbbf92e5",
-     "mx4-6-0_bit255v256.bin.gz": "813d035b12f325c15665d8a0e0c37cbc7f9caee398265e727079e95750ea629f",
-     "mx4-6-0_same.bin.gz": "542c8d0700ae65f21ee424befd8633db99e30fb8f190e04b791bf7356a02213d",
-     "mx4-6-0_samedigit.bin.gz": "c3e377b90001ae576913a500548ef41a461f34bfd6bf09ca4bb172e27f16ffd9",
-     "mx430_bit255v256.bin.gz": "ea1a04dfbd6c66a07ed68e4d038b0261e776dfc4f1277d1cc485359768593cf8",
-     "mx430_diffdigit.bin.gz": "b120efa41114362975154483afd0a0949dc6214b24a5b74108d6219c083fca41",
-     "mx430_same.bin.gz": "35d58a96473e8e07a0738e9cbfdaf0061e27baa0651d6a7de7a80e2074d373f8",
-     "mx430_samedigit.bin.gz": "2a67dc06d8a063af8025836be581b60077ba6887a649c2d218d1a8d131f511c2"
+     "mx4-2-1_bit255v256.bin.gz": "9e78c7c3363ee1b2c7f112335af136721138f89d3e3d14a3473e28b163fb600e",
+     "mx4-2-1_diffdigit.bin.gz": "c5789a2592e65367ed6346533f5ec4d609656924d8483bc2d56e12c77a545567",
+     "mx4-2-1_same.bin.gz": "bf7f5f8b0e7d33d2055ec48a73302c1cd8cbb56b46e2e542b8cfca7eabd59056",
+     "mx4-2-1_samedigit.bin.gz": "e07cb76c110c00c97856dff98263573c06a3bb6905bc87951a560c73b1727ef2",
+     "mx4-6-0_bit255v256.bin.gz": "d31560043e86b9ac9719692a27e3d6f1036f9731816e935a4683f2cc5986cc24",
+     "mx4-6-0_diffdigit.bin.gz": "a623a11c5c6a2369124c486ea5259633547c51dc0cfd0fc72483cf6270456d16",
+     "mx4-6-0_same.bin.gz": "366db90a8718e32d83a33802fcbeb4d3a14c55c5c7098c328ac4ab3cd2d09ec4",
+     "mx4-6-0_samedigit.bin.gz": "c616bfcf92684400603b08909ee84119a227429b80ac0bc3a4b19f9a1fbd6642",
+     "mx430_bit255v256.bin.gz": "5ff6172e48b26fb7824d9547a3cfe510f32814e9b9f5fcba12d547ae04e72c5f",
+     "mx430_diffdigit.bin.gz": "95905ea3710c68f51d727f8af232c07681ac0e1a2fe3fa62ade04dfb33b1fd36",
+     "mx430_same.bin.gz": "9ac3220922fe128a092e4b540dcf4efa1b3670677dc362f72ecb2e9e5f1b36ef",
+     "mx430_samedigit.bin.gz": "da9846e0ba75485d592c3d2d955c6c26fb6cc1ccf6b6ebc23959e02f764aac5e"
     },
     "dump_digest_note": "One digest per committed dump, so a control can check that the statistics above still describe the samples on disk. Without it these ten dumps would sit outside STAT-1, which globs the corpus dumps only, and their numbers reach the paper.",
     "acquisitions_per_arm": 1,
     "acquisition_count_disclosure": "ONE acquisition per design. The bootstrap CI beside each figure bounds sampling error WITHIN that run's conditions; it does not bound between-run variation, and this paper demonstrates elsewhere (the amplification sweep) that a single timing run on this unpinned host can wander widely. What makes a reversal unlikely here is not the CI but that four independent routes agree: the same-length control straddles zero at the same budget, the retired-instruction counts are deterministic and order the four designs the same way, the residual reproduces on an unrelated microarchitecture, and 4.6.0 measures the same as 4.3.0 on byte-identical code. Re-acquiring to k>=5 is the right insurance and is not done here: the build tree these dumps came from is no longer available, so it would mean rebuilding all three releases from the pinned archives.",
-    "generator": "bin/fix_report.py --write, over results/raw/matrixssl/*.bin.gz"
+    "generator": "bin/fix_report.py --write, over results/raw/matrixssl/*.bin.gz",
+    "dump_sha256_note": "Digests of the dumps every design in this block was computed from. Replaced 2026-08-26 when the corpus re-acquired this case on a corrected harness: the earlier dumps were taken with a zeroed curve `a` coefficient where the library passes NULL, so they timed a different curve. STAT-1 refuses a dump whose bytes do not match its digest, which is what caught the replacement."
    }
   }
  },

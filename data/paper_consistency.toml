@@ -143,3 +143,21 @@ phrase = "an instruction-class verdict is a proposition about the binary alone"
 retired_in = "sec/app-defs.tex -> sec/index.tex, restructure"
 allow_in = ["sec/index.tex"]
 why = "The verdict semantics are the thesis in symbols and were sitting on page 28."
+
+# ---------------------------------------------------------------- round 14
+[[retired]]
+phrase = "measures that divider constant time on this host independently of any statistical test"
+retired_in = "sec/threats.tex, round 14"
+why = """Asserted in three places that the direct microbenchmark settles the KyberSlash
+division on this host without recourse to statistics, which reads as a demonstration that no
+operand dependence exists. The chained sweep finds no operand-dependent step; a per-call
+design that includes the call's surroundings resolves an effect we have not localised. The
+clean dudect verdict is consistent with the arrangement dudect uses and is not a claim about
+every arrangement."""
+
+[[retired]]
+phrase = "each pair's departures are recorded"
+retired_in = "sec/threats.tex, round 14"
+why = """A universal over a table with rows for six pairs. tab:divergence is scoped to the
+recall-eligible pairs, so the claim must name that scope; the tier-C reproductions carry their
+divergences in their manifests instead."""

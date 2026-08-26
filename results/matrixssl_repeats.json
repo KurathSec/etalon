@@ -1,0 +1,379 @@
+{
+ "finding": "the MatrixSSL residual across repeated acquisitions",
+ "why": "Every interval previously reported on this case came from one acquisition, so none bounded between-acquisition spread. These repeat the same design on the same retained build.",
+ "generator": "bin/matrixssl_report.py",
+ "designs": {
+  "4-2-1.bit255": {
+   "repeats": 3,
+   "mean_effect_ticks": 1574.6204309647437,
+   "min_effect_ticks": 1495.392750005587,
+   "max_effect_ticks": 1650.875076160417,
+   "between_acquisition_range_ticks": 155.48232615482993,
+   "reps_with_interval_excluding_zero": 3,
+   "per_rep": [
+    {
+     "rep": 1,
+     "effect_ticks": 1650.875076160417,
+     "ci_low": 1496.8975860900305,
+     "ci_high": 1804.4426788395388,
+     "measurements": 56968
+    },
+    {
+     "rep": 2,
+     "effect_ticks": 1495.392750005587,
+     "ci_low": 1352.304022413821,
+     "ci_high": 1637.8003426444802,
+     "measurements": 56968
+    },
+    {
+     "rep": 3,
+     "effect_ticks": 1577.5934667282272,
+     "ci_low": 1441.1740309599932,
+     "ci_high": 1721.90900607511,
+     "measurements": 56968
+    }
+   ]
+  },
+  "4-2-1.diffdigit": {
+   "repeats": 3,
+   "mean_effect_ticks": 119190.86396084605,
+   "min_effect_ticks": 118802.44939372689,
+   "max_effect_ticks": 119564.52658875752,
+   "between_acquisition_range_ticks": 762.0771950306371,
+   "reps_with_interval_excluding_zero": 3,
+   "per_rep": [
+    {
+     "rep": 1,
+     "effect_ticks": 119564.52658875752,
+     "ci_low": 118381.54639632878,
+     "ci_high": 120593.57796406644,
+     "measurements": 56970
+    },
+    {
+     "rep": 2,
+     "effect_ticks": 119205.61590005376,
+     "ci_low": 118044.30402787912,
+     "ci_high": 120307.38208669667,
+     "measurements": 56968
+    },
+    {
+     "rep": 3,
+     "effect_ticks": 118802.44939372689,
+     "ci_low": 117654.03742538903,
+     "ci_high": 119877.34580384432,
+     "measurements": 56969
+    }
+   ]
+  },
+  "4-2-1.same": {
+   "repeats": 3,
+   "mean_effect_ticks": 110.59388251125347,
+   "min_effect_ticks": 104.60548640077468,
+   "max_effect_ticks": 118.04759191151243,
+   "between_acquisition_range_ticks": 13.442105510737747,
+   "reps_with_interval_excluding_zero": 0,
+   "per_rep": [
+    {
+     "rep": 1,
+     "effect_ticks": 104.60548640077468,
+     "ci_low": -40.822294113811225,
+     "ci_high": 256.5401893441536,
+     "measurements": 56968
+    },
+    {
+     "rep": 2,
+     "effect_ticks": 109.1285692214733,
+     "ci_low": -48.32232656020206,
+     "ci_high": 258.7554753198928,
+     "measurements": 56968
+    },
+    {
+     "rep": 3,
+     "effect_ticks": 118.04759191151243,
+     "ci_low": -31.346598526861634,
+     "ci_high": 264.73764272116205,
+     "measurements": 56968
+    }
+   ]
+  },
+  "4-2-1.samedigit": {
+   "repeats": 3,
+   "mean_effect_ticks": 117028.17349141226,
+   "min_effect_ticks": 116630.9722800419,
+   "max_effect_ticks": 117286.39683593332,
+   "between_acquisition_range_ticks": 655.4245558914263,
+   "reps_with_interval_excluding_zero": 3,
+   "per_rep": [
+    {
+     "rep": 1,
+     "effect_ticks": 117167.15135826159,
+     "ci_low": 116056.69876041924,
+     "ci_high": 118225.546148139,
+     "measurements": 56968
+    },
+    {
+     "rep": 2,
+     "effect_ticks": 117286.39683593332,
+     "ci_low": 116135.07694998408,
+     "ci_high": 118319.77184413688,
+     "measurements": 56968
+    },
+    {
+     "rep": 3,
+     "effect_ticks": 116630.9722800419,
+     "ci_low": 115528.91719281234,
+     "ci_high": 117694.19069702309,
+     "measurements": 56969
+    }
+   ]
+  },
+  "4-3-0.bit255": {
+   "repeats": 3,
+   "mean_effect_ticks": 1092.538615264697,
+   "min_effect_ticks": 1030.3157868259586,
+   "max_effect_ticks": 1145.8877085184213,
+   "between_acquisition_range_ticks": 115.57192169246264,
+   "reps_with_interval_excluding_zero": 3,
+   "per_rep": [
+    {
+     "rep": 1,
+     "effect_ticks": 1145.8877085184213,
+     "ci_low": 1013.7434546103701,
+     "ci_high": 1268.3569443032784,
+     "measurements": 56968
+    },
+    {
+     "rep": 2,
+     "effect_ticks": 1101.412350449711,
+     "ci_low": 993.335080526938,
+     "ci_high": 1206.139601927163,
+     "measurements": 56968
+    },
+    {
+     "rep": 3,
+     "effect_ticks": 1030.3157868259586,
+     "ci_low": 930.0732027086545,
+     "ci_high": 1132.2234006193348,
+     "measurements": 56969
+    }
+   ]
+  },
+  "4-3-0.diffdigit": {
+   "repeats": 3,
+   "mean_effect_ticks": 246483.71379084318,
+   "min_effect_ticks": 242941.10256724805,
+   "max_effect_ticks": 250111.02233180637,
+   "between_acquisition_range_ticks": 7169.919764558319,
+   "reps_with_interval_excluding_zero": 3,
+   "per_rep": [
+    {
+     "rep": 1,
+     "effect_ticks": 246399.01647347515,
+     "ci_low": 243986.91014634026,
+     "ci_high": 248533.8322864989,
+     "measurements": 56970
+    },
+    {
+     "rep": 2,
+     "effect_ticks": 242941.10256724805,
+     "ci_low": 240537.91602244644,
+     "ci_high": 245234.0033639558,
+     "measurements": 56968
+    },
+    {
+     "rep": 3,
+     "effect_ticks": 250111.02233180637,
+     "ci_low": 247890.64998117613,
+     "ci_high": 252297.68388775105,
+     "measurements": 56968
+    }
+   ]
+  },
+  "4-3-0.same": {
+   "repeats": 3,
+   "mean_effect_ticks": -68.26430055072221,
+   "min_effect_ticks": -106.43751906137913,
+   "max_effect_ticks": 2.5703385109081864,
+   "between_acquisition_range_ticks": 109.00785757228732,
+   "reps_with_interval_excluding_zero": 0,
+   "per_rep": [
+    {
+     "rep": 1,
+     "effect_ticks": -106.43751906137913,
+     "ci_low": -226.71634461208015,
+     "ci_high": 21.69239987377655,
+     "measurements": 56968
+    },
+    {
+     "rep": 2,
+     "effect_ticks": 2.5703385109081864,
+     "ci_low": -144.44507033573464,
+     "ci_high": 148.22756107255117,
+     "measurements": 56969
+    },
+    {
+     "rep": 3,
+     "effect_ticks": -100.92572110169567,
+     "ci_low": -220.3339954600786,
+     "ci_high": 20.09825569850509,
+     "measurements": 56968
+    }
+   ]
+  },
+  "4-3-0.samedigit": {
+   "repeats": 3,
+   "mean_effect_ticks": 71607.09703269794,
+   "min_effect_ticks": 70307.85099618183,
+   "max_effect_ticks": 72519.90388080222,
+   "between_acquisition_range_ticks": 2212.0528846203815,
+   "reps_with_interval_excluding_zero": 3,
+   "per_rep": [
+    {
+     "rep": 1,
+     "effect_ticks": 71993.5362211098,
+     "ci_low": 71324.4934397371,
+     "ci_high": 72645.44306369082,
+     "measurements": 56968
+    },
+    {
+     "rep": 2,
+     "effect_ticks": 70307.85099618183,
+     "ci_low": 69600.13998492928,
+     "ci_high": 70982.00133573616,
+     "measurements": 56968
+    },
+    {
+     "rep": 3,
+     "effect_ticks": 72519.90388080222,
+     "ci_low": 71855.12596096529,
+     "ci_high": 73161.29068863539,
+     "measurements": 56968
+    }
+   ]
+  },
+  "4-6-0.bit255": {
+   "repeats": 3,
+   "mean_effect_ticks": 1122.5603417471673,
+   "min_effect_ticks": 1036.1410112564918,
+   "max_effect_ticks": 1291.1330697908998,
+   "between_acquisition_range_ticks": 254.992058534408,
+   "reps_with_interval_excluding_zero": 3,
+   "per_rep": [
+    {
+     "rep": 1,
+     "effect_ticks": 1040.40694419411,
+     "ci_low": 933.6190252189757,
+     "ci_high": 1146.6727677780784,
+     "measurements": 56968
+    },
+    {
+     "rep": 2,
+     "effect_ticks": 1291.1330697908998,
+     "ci_low": 1173.9963041065726,
+     "ci_high": 1399.763572914264,
+     "measurements": 56969
+    },
+    {
+     "rep": 3,
+     "effect_ticks": 1036.1410112564918,
+     "ci_low": 930.0145559051307,
+     "ci_high": 1138.9290738230338,
+     "measurements": 56970
+    }
+   ]
+  },
+  "4-6-0.diffdigit": {
+   "repeats": 3,
+   "mean_effect_ticks": 248166.38380589927,
+   "min_effect_ticks": 243281.473283679,
+   "max_effect_ticks": 254785.12628222024,
+   "between_acquisition_range_ticks": 11503.652998541249,
+   "reps_with_interval_excluding_zero": 3,
+   "per_rep": [
+    {
+     "rep": 1,
+     "effect_ticks": 243281.473283679,
+     "ci_low": 240895.09490119846,
+     "ci_high": 245494.67248579144,
+     "measurements": 56969
+    },
+    {
+     "rep": 2,
+     "effect_ticks": 254785.12628222024,
+     "ci_low": 252505.34184332626,
+     "ci_high": 256916.45493850808,
+     "measurements": 56969
+    },
+    {
+     "rep": 3,
+     "effect_ticks": 246432.55185179855,
+     "ci_low": 244091.03227781778,
+     "ci_high": 248733.73455332156,
+     "measurements": 56968
+    }
+   ]
+  },
+  "4-6-0.same": {
+   "repeats": 3,
+   "mean_effect_ticks": -13.62471220215472,
+   "min_effect_ticks": -88.77936789486557,
+   "max_effect_ticks": 69.07790452893823,
+   "between_acquisition_range_ticks": 157.8572724238038,
+   "reps_with_interval_excluding_zero": 0,
+   "per_rep": [
+    {
+     "rep": 1,
+     "effect_ticks": 69.07790452893823,
+     "ci_low": -61.501132317568405,
+     "ci_high": 207.77851525861175,
+     "measurements": 56968
+    },
+    {
+     "rep": 2,
+     "effect_ticks": -88.77936789486557,
+     "ci_low": -205.36405648059446,
+     "ci_high": 32.949064036545906,
+     "measurements": 56968
+    },
+    {
+     "rep": 3,
+     "effect_ticks": -21.172673240536824,
+     "ci_low": -126.33887030667975,
+     "ci_high": 77.97934076208617,
+     "measurements": 56968
+    }
+   ]
+  },
+  "4-6-0.samedigit": {
+   "repeats": 3,
+   "mean_effect_ticks": 70421.32482567623,
+   "min_effect_ticks": 69942.47317757853,
+   "max_effect_ticks": 71164.49485211726,
+   "between_acquisition_range_ticks": 1222.0216745387297,
+   "reps_with_interval_excluding_zero": 3,
+   "per_rep": [
+    {
+     "rep": 1,
+     "effect_ticks": 71164.49485211726,
+     "ci_low": 70484.11443903334,
+     "ci_high": 71828.84240969329,
+     "measurements": 56968
+    },
+    {
+     "rep": 2,
+     "effect_ticks": 70157.00644733291,
+     "ci_low": 69435.04520072995,
+     "ci_high": 70822.50689932989,
+     "measurements": 56968
+    },
+    {
+     "rep": 3,
+     "effect_ticks": 69942.47317757853,
+     "ci_low": 69235.41990337818,
+     "ci_high": 70614.00864365324,
+     "measurements": 56968
+    }
+   ]
+  }
+ }
+}

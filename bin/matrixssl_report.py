@@ -39,8 +39,16 @@ def load(path):
     return cl[keep], t[keep]
 
 
+# The same crop the headline estimator uses. Two estimators that disagree would let
+# the between-acquisition spread be reported against a number no other part of the
+# paper prints, which is how a summary comes to contradict what it summarises.
+CROP_PCT = 95.0
+
+
 def stats(cl, t, boot=2000, seed=0):
-    """Class difference in ticks with a bootstrap 95% interval, slower class first."""
+    """Class difference in ticks with a bootstrap 95% interval, on the same crop."""
+    keep = t <= np.percentile(t, CROP_PCT)
+    cl, t = cl[keep], t[keep]
     a, b = t[cl == 0], t[cl == 1]
     d = float(b.mean() - a.mean())
     rng = np.random.default_rng(seed)

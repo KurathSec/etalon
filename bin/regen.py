@@ -872,7 +872,7 @@ def as_tex(report: dict) -> str:
     # the retired count for one call and the tick cost of a signature have to be mutually
     # possible. Emitting instructions-per-tick for both regions lets the paper make that
     # test on the page instead of asserting an anomaly it does not quantify.
-    _icp = REPO / "pairs" / "matrixssl-minerva" / "evidence" / "instruction_counts.json"
+    _icp = REPO / "results" / "matrixssl_icount.json"
     _ebm = REPO / "results" / "exploit_budget_matrixssl.json"
     if _icp.exists() and _ebm.exists() and fv.exists():
         _pc = json.loads(_icp.read_text()).get("per_call", {})
@@ -881,7 +881,7 @@ def as_tex(report: dict) -> str:
                  .get("measurements_full_report", {}).get("designs", {}))
         _call = _full.get("mx430_bit255v256", {}).get("call_ticks")
         if _pc.get("256") and _lad.get("lz_0") and _call:
-            _instr = _pc["256"]["instructions"]
+            _instr = _pc["256"]["instructions_per_call"]
             _sig = float(_lad["lz_0"]["median_ticks"])
             out.append(tex_macro("icPerTickIsolated", f"{_instr / _call:.1f}"))
             out.append(tex_macro("icPerTickSignature", f"{_instr / _sig:.0f}"))
@@ -909,6 +909,53 @@ def as_tex(report: dict) -> str:
             out.append(tex_macro("effPatched" + suffix, f"{r['effect_ticks']:,.3f}"))
             out.append(tex_macro("ciHalfPatched" + suffix,
                                  f"{r['ci_half_width_ticks']:,.3f}"))
+    # The committed signing trace and the key that labels it. The paper used to mark
+    # this group as not recomputable because neither survived the acquisition; both are
+    # in the repository now, so the count comes from the file rather than from memory.
+    tr = REPO / "pairs" / "matrixssl-minerva" / "evidence" / "trace-4-3-0.csv.z"
+    kf = REPO / "pairs" / "matrixssl-minerva" / "evidence" / "signing-key-4-3-0.hex"
+    if tr.exists() and kf.exists():
+        import zlib as _zlib
+        _n = _zlib.decompress(tr.read_bytes()).count(b"\n") - 1   # minus the header line
+        out.append(tex_macro("mxTraceN", f"{_n:,}"))
+
+    # The containment resolution. These replace the three mutually impossible figures
+    # the paper used to print: measured together in one process they are consistent,
+    # and the one that was wrong was this corpus's own harness.
+    cont = REPO / "results" / "matrixssl_containment.json"
+    if cont.exists():
+        cj = json.loads(cont.read_text())
+        m = cj["median_ticks"]
+        out.append(tex_macro("mxGenkeyTicks", f"{m['genkey']:,}"))
+        out.append(tex_macro("mxMulnullTicks", f"{m['mulnull']:,}"))
+        out.append(tex_macro("mxSignTicks", f"{m['sign']:,}"))
+        out.append(tex_macro("mxOldRegionTicks", f"{m['mulmod']:,}"))
+        out.append(tex_macro("mxHarnessFactor",
+                             f"{cj['harness_overstatement_factor']:.2f}"))
+        out.append(tex_macro("mxGenkeyGap",
+                             f"{cj['mulnull_vs_genkey_relative_gap'] * 100:.2f}\\%"))
+        out.append(tex_macro("mxContainmentReps", str(cj["repeats"])))
+
+    # The repeats. Every interval previously reported on this case came from one
+    # acquisition; these are the between-acquisition figures that could not exist then.
+    rep = REPO / "results" / "matrixssl_repeats.json"
+    if rep.exists():
+        rj = json.loads(rep.read_text())["designs"]
+        key = "4-3-0.bit255"
+        if key in rj:
+            d = rj[key]
+            out.append(tex_macro("mxReps", str(d["repeats"])))
+            out.append(tex_macro("mxRepMeanEffect", f"{d['mean_effect_ticks']:,.0f}"))
+            out.append(tex_macro("mxRepLo", f"{d['min_effect_ticks']:,.0f}"))
+            out.append(tex_macro("mxRepHi", f"{d['max_effect_ticks']:,.0f}"))
+            out.append(tex_macro("mxRepExcl",
+                                 str(d["reps_with_interval_excluding_zero"])))
+        ctl = "4-3-0.same"
+        if ctl in rj:
+            out.append(tex_macro("mxRepCtlExcl",
+                                 str(rj[ctl]["reps_with_interval_excluding_zero"])))
+            out.append(tex_macro("mxRepCtlReps", str(rj[ctl]["repeats"])))
+
     # The field the scored analysers were drawn from. The row set is a computation over a
     # pinned third-party inventory, so these are counts and not claims; nFieldIndexed also
     # retires the hand-typed 55 that data/facts.toml carried from a web page.
@@ -1025,19 +1072,22 @@ def as_tex(report: dict) -> str:
     # The deterministic cross-check: retired instructions per nonce class. Reported as
     # the per-call delta against the 256-bit class, which is what separates an
     # algorithmic residual from a microarchitectural one.
-    icp = REPO / "pairs" / "matrixssl-minerva" / "evidence" / "instruction_counts.json"
+    icp = REPO / "results" / "matrixssl_icount.json"
     if icp.exists():
         pc = json.loads(icp.read_text())["per_call"]
         for macro, key in (("icDeltaOneZero", "255"), ("icDeltaManyZeros", "193"),
                            ("icDeltaDigitShort", "192")):
             if key in pc:
-                out.append(tex_macro(macro, f"{abs(pc[key]['delta_vs_256']):,}"))
+                out.append(tex_macro(macro, f"{abs(pc[key]['delta_vs_256']):,.0f}"))
         if "192" in pc:
             out.append(tex_macro("icPercentDigitShort",
                                  f"{abs(pc['192']['percent_vs_256']):.0f}\\%"))
         if "256" in pc:
-            out.append(tex_macro("icBase", f"{pc['256']['instructions']:,}"))
-        _dir = json.loads(icp.read_text()).get("direction", {})
+            out.append(tex_macro("icBase",
+                                 f"{pc['256']['instructions_per_call']:,.0f}"))
+        ic = json.loads(icp.read_text())
+        out.append(tex_macro("icPerTick", f"{ic['instructions_per_tick']:.2f}"))
+        _dir = ic.get("direction", {})
         if _dir.get("first_leading_zero"):
             out.append(tex_macro("icFirstZero", f"{_dir['first_leading_zero']:,}"))
             out.append(tex_macro("icManyZeros",

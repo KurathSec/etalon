@@ -852,7 +852,9 @@ def as_tex(report: dict) -> str:
         # clearly than |t| does: |t| saturates once an effect is large, while the class
         # difference keeps scaling with the work the design actually changes.
         # mxEffectPrefix is one committed dump (the first acquisition of the pre-fix
-        # arm); its three-acquisition mean is mxRepPrefixMeanEffect, emitted below.
+        # arm, results/raw/matrixssl/); the other two acquisitions of every design are
+        # committed too, under results/raw/matrixssl/repeats/<ver>.<design>.r<n>.bin.gz,
+        # and the three-acquisition mean is mxRepPrefixMeanEffect, emitted below.
         for macro, dump in (("mxEffectPrefix", "mx4-2-1_bit255v256"),
                             ("mxEffectSameDigit", "mx430_samedigit"),
                             ("mxEffectDiffDigit", "mx430_diffdigit")):

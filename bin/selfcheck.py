@@ -949,7 +949,9 @@ def check_gen2() -> Result:
     """
     checks = (("repeatability", ["bin/repeatability.py", "--check"]),
               ("analyser_table", ["bin/analyser_table.py", "--check"]),
-              ("host_facts", ["bin/host_facts.py", "--check"]))
+              ("host_facts", ["bin/host_facts.py", "--check"]),
+              ("matrixssl_report", ["bin/matrixssl_report.py",
+                                    "results/raw/matrixssl/repeats", "--check"]))
     bad = []
     for name, cmd in checks:
         r = subprocess.run([sys.executable, *cmd], cwd=REPO,

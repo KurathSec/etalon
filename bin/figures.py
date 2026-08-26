@@ -259,9 +259,11 @@ def fig_detection_curve():
 def fig_matrixssl_ladder():
     """The MatrixSSL fix, as four designs across three releases.
 
-    Plots the class difference in ticks, NOT the test statistic. On the same-digit
-    designs |t| sits above 200 on all three releases, indistinguishable, while the effect
-    falls by a third: the statistic has saturated and only the quantity with units still
+    Plots the class difference in ticks, NOT the test statistic. On the 193-v-256
+    same-digit design (sixty-three leading zeros) |t| sits above 200 on all three releases,
+    indistinguishable, while the effect falls by a third (the 255-v-256 design shares the
+    digit count but reads |t| between 17 and 23, so the saturation claim is about the
+    one design, not the pair): the statistic has saturated and only the quantity with units still
     moves. Plotting |t| here would hide the difference between releases entirely and would
     contradict this paper's own reporting rule.
 

@@ -1,7 +1,7 @@
 {
  "finding": "the MatrixSSL residual across repeated acquisitions",
  "why": "Every interval previously reported on this case came from one acquisition, so none bounded between-acquisition spread. These repeat the same design on the same retained build.",
- "generator": "bin/matrixssl_report.py",
+ "generator": "bin/matrixssl_report.py results/raw/matrixssl/repeats --json results/matrixssl_repeats.json",
  "designs": {
   "4-2-1.bit255": {
    "repeats": 3,

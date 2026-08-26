@@ -190,7 +190,10 @@ retired_in = "sec/app-threats.tex, round 5 of the fifth review"
 why = """The reason INST-1 was live used to be that the committed MatrixSSL key was orphaned.
 The key now labels the committed 4-3-0 trace. The live failure was not a key/trace mismatch
 at all: the earlier revision read its figures from an uncommitted 250,000-signature trace that
-the committed key did label but that was the 4.2.1 pre-fix build (auc_full 0.6335 in
+its own signing key did label (that key, 0837b047...a07, was recovered later by the key-ordered
+lattice run in pairs/matrixssl-minerva/evidence/mechanism_recovery.md and never committed; the
+only committed key, signing-key-4-3-0.hex, labels the committed 25,000-signature 4-3-0 trace)
+but that was the 4.2.1 pre-fix build (auc_full 0.6335 in
 _superseded_matrixssl_arm of results/exploit_budget.json, not one half); the one-half reading
 came only from a later diagnostic cross-pairing of the committed 4-3-0 key with a 4.2.1 trace,
 and the appendix now keeps the two apart."""
@@ -199,10 +202,19 @@ and the appendix now keeps the two apart."""
 phrase = "estimator read one half rather than an error"
 retired_in = "sec/app-threats.tex, round 6 of the fifth review"
 why = """The appendix fused two events: the uncommitted 250,000-signature trace that the earlier
-revision spent was correctly labelled by the committed key and read 0.6335, and the one-half
+revision spent was correctly labelled by its own uncommitted signing key and read 0.6335, and the one-half
 reading (0.5047) came from a later cross-pairing of that key with a 4.2.1 trace. Saying the
 estimator read one half on the spent trace misattributes INST-1's failure class to an
 incident it could not have caught."""
+
+[[retired]]
+phrase = "the committed key did label"
+retired_in = "sec/app-threats.tex, round 7 of the fifth review"
+why = """The uncommitted 250,000-signature pre-fix trace was labelled by its own signing key
+(0837b047...a07, recovered by the key-ordered lattice run, never committed), not by the
+committed signing-key-4-3-0.hex (292f2a08...74f9), which was generated in the run that
+produced the committed 25,000-signature 4-3-0 trace. The two keys differ; the committed key
+touched the pre-fix trace only in the later diagnostic cross-pairing that read one half."""
 
 [[retired]]
 phrase = "the pre-fix build reads"

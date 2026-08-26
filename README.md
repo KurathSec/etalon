@@ -354,12 +354,13 @@ is reported rather than dropped.
 lattice run was fed nonces labelled with the key it was meant to recover. MatrixSSL is now
 leak-presence certified, recovery pending. The "fast host" excuse was also wrong, and
 measurement refuted it: on the same host, AUC between timing and nonce shortness is 0.63
-for MatrixSSL against 0.80 for libgcrypt, with 44.4% at a matched 6,000-signature budget and
-26.7% at 250,000 against 3.3% contamination in the fastest 90 signatures (CORRECTED
-2026-08-26: those MatrixSSL figures came from an uncommitted
-250,000-signature trace that turned out to be the 4.2.1 pre-fix build; on the committed
-25,000-signature 4-3-0 trace the AUC is 0.63 and the contamination 28.9%,
-`results/exploit_budget_matrixssl.json`). It is information content, not host noise
+for MatrixSSL against 0.80 for libgcrypt, with the fastest 90 signatures 28.9% contaminated
+against 3.3%, both from committed traces and keys
+(`results/exploit_budget_matrixssl.json`; RETIRED 2026-08-27: this sentence used to quote
+44.4% at a matched 6,000-signature budget and 26.7% at 250,000, from a 250,000-signature
+trace that was the mislabelled 4.2.1 pre-fix build, so the matched-budget row and the
+budget sweep are withdrawn, as `budget_reading_RETIRED_note` in
+`results/exploit_budget.json` records). It is information content, not host noise
 (`bin/exploit_budget.py`).
 
 Also this round: every pair with a local recovery declares the channel that recovery
@@ -907,8 +908,13 @@ demand 27.
 **What the rebuild retired.** Repeats replace the single acquisition every interval on this
 case rested on, so between-acquisition spread is measured rather than conceded. The three
 builds, the timing harness, the instruction-count driver and the signing driver are all
-committed, along with 25,000 signatures and the key that labels them. Of the three groups of
-numbers the paper marked as not recomputable, one and a half remain.
+committed, along with 25,000 signatures, the key that labels them, and all thirty-six repeat
+dumps (`results/raw/matrixssl/repeats/`, three per design and release, from which
+`bin/matrixssl_report.py --check` reproduces `results/matrixssl_repeats.json`). No printed number
+the paper once marked as not recomputable remains so. What still rests on uncommitted
+observations is three claims, not quantities: the wolfSSL case, the key-ordered lattice run
+on the pre-fix trace, and the aarch64 run that predates the harness correction; the paper
+names them under "What is still not recomputable".
 
 Two generators refuse to write a result that is not there: the containment one fails if the
 library's call and the corrected one differ by more than two per cent, and the instruction one

@@ -1,11 +1,13 @@
 #!/bin/sh
 # Regenerate the MatrixSSL signing trace AND retain its key.
 #
-# The paper marks three groups of numbers as not recomputable from committed samples,
-# and the largest is this one: the end-to-end analysis rested on a signing trace and a
-# private key that were never retained. Nothing about disclosure prevented committing
-# them, since both came from a keypair we generated; they were simply lost with the
-# temporary tree the acquisition built into.
+# An earlier revision of the paper marked three groups of numbers as not recomputable
+# from committed samples, and the largest was this one: the end-to-end analysis rested
+# on a signing trace and a private key that were never retained. Nothing about
+# disclosure prevented committing them, since both came from a keypair we generated;
+# they were simply lost with the temporary tree the acquisition built into. This script
+# is why that is no longer so: the trace and key it writes are committed under
+# pairs/matrixssl-minerva/evidence/, and no printed quantity is non-recomputable now.
 #
 # Size is a real constraint. The trace the paper cites is a quarter of a million
 # signatures, which compresses to roughly twenty megabytes, against a repository whose

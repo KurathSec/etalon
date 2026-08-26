@@ -19,6 +19,8 @@ import sys
 
 import numpy as np
 
+REPO = pathlib.Path(__file__).resolve().parent.parent
+
 NAME = re.compile(r"^(?P<ver>[0-9-]+)\.(?P<design>[a-z0-9]+)\.r(?P<rep>\d+)\.bin(?:\.gz)?$")
 
 
@@ -64,6 +66,10 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("dumps")
     ap.add_argument("--json", metavar="PATH")
+    ap.add_argument("--check", action="store_true",
+                    help="re-derive every design from the dumps and compare with the "
+                         "committed results/matrixssl_repeats.json; exit 1 on any "
+                         "difference. The bootstrap is seeded, so this is exact.")
     a = ap.parse_args()
 
     rows = {}
@@ -98,13 +104,46 @@ def main() -> int:
         print(f"  {ver:8s} {design:10s} {len(reps):4d} {np.mean(e):14.1f} "
               f"{f'[{min(e):.1f}, {max(e):.1f}]':>22s} {f'{excl}/{len(reps)}':>20s}")
 
+    doc = {"finding": "the MatrixSSL residual across repeated acquisitions",
+           "why": ("Every interval previously reported on this case came from one "
+                   "acquisition, so none bounded between-acquisition spread. These "
+                   "repeat the same design on the same retained build."),
+           "generator": ("bin/matrixssl_report.py results/raw/matrixssl/repeats "
+                         "--json results/matrixssl_repeats.json"),
+           "designs": out}
+
+    if a.check:
+        # The dumps are committed (results/raw/matrixssl/repeats, three per design)
+        # and the bootstrap is seeded, so the record must reproduce exactly. Every
+        # numeric field of every design and every repetition is compared; GEN-2 runs
+        # this so the printed means and ranges cannot drift from the samples.
+        committed = json.loads((REPO / "results" / "matrixssl_repeats.json").read_text())
+        bad = []
+        for k, v in committed["designs"].items():
+            w = doc["designs"].get(k)
+            if w is None:
+                bad.append(f"{k}: no dumps")
+                continue
+            for f in ("repeats", "mean_effect_ticks", "min_effect_ticks",
+                      "max_effect_ticks", "between_acquisition_range_ticks",
+                      "reps_with_interval_excluding_zero"):
+                if abs(float(v[f]) - float(w[f])) > 1e-6:
+                    bad.append(f"{k}.{f}: {v[f]} != {w[f]}")
+            for r1, r2 in zip(v["per_rep"], w["per_rep"]):
+                for f in ("effect_ticks", "ci_low", "ci_high", "measurements"):
+                    if abs(float(r1[f]) - float(r2[f])) > 1e-6:
+                        bad.append(f"{k}.r{r1['rep']}.{f}: {r1[f]} != {r2[f]}")
+        extra = set(doc["designs"]) - set(committed["designs"])
+        if extra:
+            bad.append("dumps for designs the record does not carry: " + ", ".join(sorted(extra)))
+        if bad:
+            print("matrixssl_report: " + "; ".join(bad[:6]), file=sys.stderr)
+            return 1
+        print(f"matrixssl_report: check clean ({len(committed['designs'])} designs, "
+              f"{sum(len(v['per_rep']) for v in committed['designs'].values())} acquisitions)")
+        return 0
+
     if a.json:
-        doc = {"finding": "the MatrixSSL residual across repeated acquisitions",
-               "why": ("Every interval previously reported on this case came from one "
-                       "acquisition, so none bounded between-acquisition spread. These "
-                       "repeat the same design on the same retained build."),
-               "generator": "bin/matrixssl_report.py",
-               "designs": out}
         pathlib.Path(a.json).write_text(json.dumps(doc, indent=1) + "\n")
         print(f"\n  wrote {a.json}")
     return 0

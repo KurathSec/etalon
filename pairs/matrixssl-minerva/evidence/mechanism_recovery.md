@@ -23,15 +23,21 @@ reads "not attempted").
 
 CORRECTED: an earlier revision of this file called the selection barrier host-conditional
 and predicted a quieter core would recover. That excuse does not survive measurement. On
-this same host, the AUC between signing time and nonce shortness was 0.63 for MatrixSSL
-against 0.80 for libgcrypt, and the fastest 90 signatures were 44.4% contaminated by
-full-length nonces at a matched 6,000-signature budget and 26.7% at 250,000, against 3.3%
-for libgcrypt, so libgcrypt recovers and MatrixSSL does not on identical hardware
-(bin/exploit_budget.py). Those MatrixSSL figures came from the uncommitted 4.2.1 trace; on
-the committed 25,000-signature 4-3-0 trace the AUC is 0.63 and the contamination of the
-fastest 90 is 28.9% (results/exploit_budget_matrixssl.json). The limit is how much
-information the leak carries, not how noisy the host is. The pair is labelled leak-presence
-certified, recovery pending.
+this same host, on the committed 25,000-signature 4-3-0 trace and key, the AUC between
+signing time and nonce shortness is 0.6256 for MatrixSSL against 0.8018 for libgcrypt at
+6,000 signatures, and the fastest 90 signatures are 28.9% contaminated by full-length
+nonces against 3.3% for libgcrypt, so libgcrypt recovers and MatrixSSL does not on
+identical hardware (bin/exploit_budget.py, results/exploit_budget_matrixssl.json). The
+limit is how much information the leak carries, not how noisy the host is. The pair is
+labelled leak-presence certified, recovery pending.
+
+RETIRED 2026-08-27: the paragraph above used to give the AUC as 0.63 at 250,000
+signatures and the contamination as 44.4% at a matched 6,000-signature budget improving
+to 26.7% at 250,000. Both endpoints came from the 250,000-signature trace that
+results/exploit_budget.json's `_correction` identifies as the mislabelled 4.2.1 pre-fix
+build, so the matched-budget comparison and the budget sweep are withdrawn rather than
+merely uncommitted (see `budget_reading_RETIRED_note` in that record); the committed-trace
+figures above replace them.
 
 CORRECTED: an earlier revision rested the incomplete-fix finding on the loop bound at
 `crypto/pubkey/ecc_math.c:206` (`digidx = get_digit_count(k) - 1`). That cannot produce

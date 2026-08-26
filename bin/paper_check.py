@@ -36,7 +36,33 @@ import tomllib
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
+# TCHES caps a submission at 20 pages including appendices, excluding the
+# bibliography (CHES 2026 call for papers). The floor is ours: under it, the
+# paper is leaving defensibility in an eprint for no reason.
+PAGE_CAP = 20
+PAGE_FLOOR = 17
 NAMECHECK = REPO / "bin" / "namecheck.py"
+
+
+_INLINE = re.compile(r"\\(?:emph|texttt|textbf|textit|mathrm|text)\{([^{}]*)\}")
+
+
+def flat(s: str) -> str:
+    """Normalise LaTeX prose so two spellings of one claim compare equal.
+
+    Whitespace-, markup- and case-insensitive, because all three have defeated a
+    consistency check in this project. A literal substring test misses a claim split
+    across a line break. A whitespace-only test misses one whose words are wrapped in
+    \\emph{} or \\texttt{}. And a case-sensitive test misses one that merely starts a
+    sentence. Every rule that compares prose normalises through here, on both sides.
+    """
+    prev = None
+    while prev != s:                       # nested \emph{\texttt{..}} needs a fixpoint
+        prev = s
+        s = _INLINE.sub(r"\1", s)
+    s = re.sub(r"\\[a-zA-Z]+\s*", " ", s)  # any surviving control sequence
+    s = re.sub(r"[{}$~]", " ", s)
+    return " ".join(s.split()).lower()
 
 
 def _identity_names() -> list[str]:
@@ -145,17 +171,6 @@ def _consistency(texts: dict[str, str], paper: Path) -> list[str]:
     # a case-sensitive test misses one that merely starts a sentence: the appendix copy
     # that survived here opened "An \emph{instruction-class} verdict" against a rule
     # written "an instruction-class verdict". Normalise both sides the same way.
-    _INLINE = re.compile(r"\\(?:emph|texttt|textbf|textit|mathrm|text)\{([^{}]*)\}")
-
-    def flat(s: str) -> str:
-        prev = None
-        while prev != s:                       # nested \emph{\texttt{..}} needs a fixpoint
-            prev = s
-            s = _INLINE.sub(r"\1", s)
-        s = re.sub(r"\\[a-zA-Z]+\s*", " ", s)  # any surviving control sequence
-        s = re.sub(r"[{}$~]", " ", s)
-        return " ".join(s.split()).lower()
-
     for entry in spec.get("retired", []):
         phrase = flat(entry["phrase"])
         # The passage that performs the withdrawal has to be able to quote the claim it
@@ -169,6 +184,78 @@ def _consistency(texts: dict[str, str], paper: Path) -> list[str]:
             if phrase in flat(text):
                 bad.append(f"{name}: retired claim {phrase!r} is still present "
                            f"(withdrawn in {entry.get('retired_in', 'an earlier round')})")
+
+    # A claim the paper must not make in a given place. Unlike [[retired]], which is
+    # global with a narrow exemption, this one is scoped positively: the phrase is
+    # refused only in the files named by `in_files`. The first use is the anti-survey
+    # gate over the section carrying the analyser matrix, where the paper classifies a
+    # field it explicitly did not survey and must not be read as claiming otherwise.
+    for entry in spec.get("forbidden", []):
+        phrase = flat(entry["phrase"])
+        scope = set(entry.get("in_files", []))
+        for name, text in texts.items():
+            if scope and name not in scope:
+                continue
+            if phrase in flat(text):
+                bad.append(f"{name}: forbidden phrase {phrase!r} "
+                           f"({entry.get('why', 'no reason recorded')})")
+
+    # A claim that must be made exactly once. This is what makes distributing the
+    # limitations safe. The single-designated-place rule in docs/review-standard.md
+    # exists because rounds 6 to 8 generated their own work through caveat
+    # proliferation; moving each limit next to the claim it bounds keeps the venue's
+    # arrangement without reopening that failure, but only if a machine counts.
+    for entry in spec.get("once", []):
+        phrase = flat(entry["phrase"])
+        where = sorted(n for n, text in texts.items() if phrase in flat(text))
+        if len(where) != 1:
+            bad.append(
+                f"claim {phrase!r} must appear in exactly one file, found in "
+                f"{len(where)}: {', '.join(where) if where else 'none'}. "
+                f"{entry.get('why', '')}")
+
+    # Duplicated prose. Five of the largest deletions this restructure makes are the
+    # same passage written twice, and not one of them is a retired claim, so no rule
+    # above can see them. A duplicate is not a contradiction, which is why it survives
+    # every other gate, but it is how a claim comes to be corrected in one place and
+    # left standing in another. main.tex is exempt by default because an abstract's
+    # job is to restate the body.
+    dup_cfg = spec.get("duplicate")
+    if dup_cfg:
+        window = int(dup_cfg.get("window", 12))
+        exempt_files = set(dup_cfg.get("exempt_files", ["main.tex"]))
+        allowed_windows = {flat(a) for a in dup_cfg.get("allow", [])}
+        words = {n: flat(text).split() for n, text in texts.items()
+                 if n not in exempt_files and not n.startswith("gen/")
+                 and n != "numbers.tex"}
+        seen: dict[str, set] = {}
+        for name, w in words.items():
+            for i in range(len(w) - window + 1):
+                seen.setdefault(" ".join(w[i:i + window]), set()).add(name)
+        # Report one line per duplicated passage, not one per overlapping window: a
+        # 28-word duplicate contains seventeen 12-word windows and is one defect.
+        reported = set()
+        for name, w in words.items():
+            i = 0
+            while i <= len(w) - window:
+                key = " ".join(w[i:i + window])
+                peers = seen.get(key, set()) - {name}
+                if not peers or key in allowed_windows:
+                    i += 1
+                    continue
+                j = i
+                while (j <= len(w) - window
+                       and (seen.get(" ".join(w[j:j + window]), set()) - {name}) == peers
+                       and " ".join(w[j:j + window]) not in allowed_windows):
+                    j += 1
+                run = " ".join(w[i:j + window - 1])
+                sig = (frozenset(peers | {name}), run)
+                if sig not in reported:
+                    reported.add(sig)
+                    bad.append(
+                        f"duplicated in {', '.join(sorted(peers | {name}))}: "
+                        f"{len(run.split())} words, {run[:80]!r}")
+                i = max(j, i + 1)
 
     nums_p = paper / "numbers.tex"
     if nums_p.exists() and spec.get("ratio"):
@@ -196,6 +283,116 @@ def _consistency(texts: dict[str, str], paper: Path) -> list[str]:
                     f"ratio: {entry['num']}={n:g} over {entry['den']}={d:g} is {got:.3f}%, "
                     f"but {entry['pct']} prints {pc:g}% "
                     f"(tolerance {entry.get('tol', 0.05)}). {entry.get('why', '')}")
+    return bad
+
+
+
+_LABEL = re.compile(r"\\label\{((?:fig|tab|lst):[A-Za-z0-9:_-]+)\}")
+_REF = re.compile(r"\\(?:auto|C|c)?ref\{([^{}]*)\}")
+_INPUT = re.compile(r"^[^%\n]*\\input\{([^{}]+)\}", re.M)
+
+
+def _float_owners(paper: Path) -> tuple[dict[str, str], set[str]]:
+    """Map each source file to the sectioning file that owns it, and name the body ones.
+
+    A generated table lives in gen/ but belongs to whichever section \\inputs it, so its
+    labels must be attributed there or every generated float looks orphaned. Body files are
+    those main.tex inputs before \\appendix; the rest are appendix files.
+    """
+    main = (paper / "main.tex").read_text(errors="replace")
+    m = re.search(r"^\\appendix", main, re.M)   # not the one in the header comment
+    cut = m.start() if m else len(main)
+    body_inputs = [g.group(1) for g in _INPUT.finditer(main[:cut])]
+    owner, body = {}, set()
+    for rel in body_inputs:
+        name = rel if rel.endswith(".tex") else rel + ".tex"
+        body.add(name)
+    for src in sorted(paper.rglob("*.tex")):
+        name = str(src.relative_to(paper))
+        owner[name] = name
+    # A file inputted by a section is owned by that section, one level is enough here.
+    for src in sorted(paper.rglob("*.tex")):
+        name = str(src.relative_to(paper))
+        for m in _INPUT.finditer(src.read_text(errors="replace")):
+            rel = m.group(1)
+            child = rel if rel.endswith(".tex") else rel + ".tex"
+            if child in owner and child != name and name != "main.tex":
+                owner[child] = name
+    return owner, body
+
+
+def _floats(texts: dict[str, str], paper: Path) -> list[str]:
+    """Every float must be referenced, and a body float from the section that defines it.
+
+    Three of the four body floats in this paper were referenced only from appendices, which
+    is the shape that makes a float read as decoration: the prose beside the evidence never
+    walks the reader through it. A float nothing references at all is a page of paper nobody
+    asked for, and this paper carried two.
+    """
+    if not (paper / "main.tex").exists():
+        return []
+    owner, body = _float_owners(paper)
+    defined: dict[str, str] = {}
+    for name, text in texts.items():
+        if not name.endswith(".tex"):
+            continue
+        for m in _LABEL.finditer(text):
+            defined[m.group(1)] = owner.get(name, name)
+    refs: dict[str, set] = {}
+    for name, text in texts.items():
+        if not name.endswith(".tex"):
+            continue
+        home = owner.get(name, name)
+        for m in _REF.finditer(text):
+            for lab in m.group(1).split(","):
+                lab = lab.strip()
+                if lab:
+                    refs.setdefault(lab, set()).add(home)
+    bad = []
+    for lab, home in sorted(defined.items()):
+        where = refs.get(lab, set())
+        if not where:
+            bad.append(f"float {lab} (in {home}) is referenced nowhere")
+        elif home in body and home not in where:
+            bad.append(f"float {lab} sits in {home} and is referenced only from "
+                       f"{', '.join(sorted(where))}, never from the section that defines it")
+    return bad
+
+
+def _pages(paper: Path) -> list[str]:
+    """The venue's page cap, and the dangling references a split build makes possible.
+
+    TCHES caps a submission at twenty pages including every figure, table and appendix, so
+    the cap is a property of the deliverable and belongs in a control rather than in a
+    habit. The floor matters too: a submission well under the cap with its evidence in an
+    eprint nobody opens is worse than one that spends the space.
+    """
+    bad = []
+    log = paper / "main.log"
+    if log.exists():
+        n = len(re.findall(r"LaTeX Warning: Reference", log.read_text(errors="replace")))
+        if n:
+            bad.append(f"{n} dangling reference(s) in the build; a \\Cref to a label that "
+                       f"does not exist renders as ?? and no other gate sees it")
+    aux = paper / "main.aux"
+    if aux.exists():
+        m = re.search(r"\\newlabel\{endofcontent\}\{\{[^{}]*\}\{(\d+)\}",
+                      aux.read_text(errors="replace"))
+        if not m:
+            # A control that passes having examined nothing is the failure this corpus
+            # already has a name for. Without the label there is no page assertion, so
+            # the absence of the label is the failure, not a reason to skip.
+            bad.append("no \\label{endofcontent} before the bibliography, so the page "
+                       "cap is not measured and this check would pass vacuously")
+        else:
+            pages = int(m.group(1))
+            if pages > PAGE_CAP:
+                bad.append(f"content runs to page {pages}, over the {PAGE_CAP}-page cap "
+                           f"(figures, tables and appendices included, bibliography "
+                           f"excluded)")
+            elif pages < PAGE_FLOOR:
+                bad.append(f"content ends on page {pages}, under the {PAGE_FLOOR}-page "
+                           f"floor: {PAGE_CAP - pages} pages of cap are unspent")
     return bad
 
 
@@ -235,9 +432,24 @@ def main() -> int:
 
     cons = _consistency(src_texts, paper)
     print(f"  consistent {'PASS' if not cons else 'FAIL'}  "
-          f"{'no retired claim survives, every printed ratio reproduces' if not cons else '; '.join(cons[:3])}")
+          f"{'no retired or forbidden claim survives, every once-claim is made once, '
+             'no passage is written twice, every printed ratio reproduces'
+             if not cons else '; '.join(cons[:3])}")
     if cons:
-        fails.append("a retired claim survives or a printed ratio does not reproduce")
+        fails.append(f"{len(cons)} consistency violation(s)")
+
+    flt = _floats(src_texts, paper)
+    print(f"  floats     {'PASS' if not flt else 'FAIL'}  "
+          f"{'every float is referenced, and every body float from its own section'
+             if not flt else '; '.join(flt[:3])}")
+    if flt:
+        fails.append(f"{len(flt)} float(s) unanchored or unreferenced")
+
+    pg = _pages(paper)
+    print(f"  pages      {'PASS' if not pg else 'FAIL'}  "
+          f"{'within the page cap, no dangling references' if not pg else '; '.join(pg)}")
+    if pg:
+        fails.append("page budget or dangling reference")
 
     pdf = paper / "main.pdf"
     if pdf.exists() and shutil.which("pdftotext"):

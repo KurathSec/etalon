@@ -161,3 +161,17 @@ retired_in = "sec/threats.tex, round 14"
 why = """A universal over a table with rows for six pairs. tab:divergence is scoped to the
 recall-eligible pairs, so the claim must name that scope; the tier-C reproductions carry their
 divergences in their manifests instead."""
+
+# ---------------------------------------------------------------- duplicated prose
+# A duplicate is not a contradiction, which is why it passes every other rule here,
+# and it is precisely how a claim comes to be corrected in one place and left standing
+# in another. That is the failure class that broke rounds 6 to 8. The restructure to
+# the venue's page limit moves more text than any previous one, so this rule goes in
+# before the text does.
+#
+# main.tex is exempt because an abstract restates the body by design. Generated files
+# and numbers.tex are exempt because they are data, not prose.
+[duplicate]
+window = 12
+exempt_files = ["main.tex"]
+allow = []

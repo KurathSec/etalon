@@ -25,6 +25,7 @@ import pathlib
 
 import matplotlib
 matplotlib.use("Agg")
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt  # noqa: E402
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
@@ -255,6 +256,70 @@ def fig_detection_curve():
     plt.close(fig)
 
 
+def fig_matrixssl_ladder():
+    """The MatrixSSL fix, as four designs across three releases.
+
+    Plots the class difference in ticks with its bootstrap interval, NOT the test
+    statistic. On the same-digit designs |t| sits between 212 and 220 on all three
+    releases, indistinguishable, while the effect falls five-fold: the statistic has
+    saturated and only the quantity with units still moves. Plotting |t| here would
+    hide the fix entirely and would contradict this paper's own reporting rule.
+
+    No fold-change is drawn between releases. Each arm is one acquisition and nothing
+    here bounds between-acquisition spread, so a ratio across two separately acquired
+    builds is not admissible; the reader can see the fall without being handed a
+    number the corpus cannot support.
+    """
+    doc = json.loads((REPO / "results" / "fix_verification.json").read_text())
+    des = doc["libraries"]["matrixssl"]["measurements_full_report"]["designs"]
+    versions = [("mx4-2-1", "4.2.1\npre-fix"), ("mx430", "4.3.0\nfixed"),
+                ("mx4-6-0", "4.6.0\nlatest")]
+    rows = [("same", "same length\n256 v 256"), ("bit255v256", "one leading zero\n255 v 256"),
+            ("samedigit", "same digit count\n193 v 256"), ("diffdigit", "digit count differs\n192 v 256")]
+    fig, ax = plt.subplots(figsize=(5.4, 2.9))
+    width, colours, FLOOR = 0.26, [WARM, TEAL, MUTE], 0.7
+    for vi, (vkey, vlab) in enumerate(versions):
+        xs, ys, los, his, nz = [], [], [], [], []
+        for ri, (rkey, _) in enumerate(rows):
+            d = des.get(f"{vkey}_{rkey}")
+            if not d:
+                ax.text(ri + (vi - 1) * width, 1.4, "not\nrun", ha="center", va="bottom",
+                        fontsize=6, color=MUTE, linespacing=0.9)
+                continue
+            e = abs(d["effect_ticks"])
+            xs.append(ri + (vi - 1) * width)
+            ys.append(max(e, 1.0))
+            los.append(max(e - abs(d["ci_low"] - d["effect_ticks"]), FLOOR))
+            his.append(e + abs(d["ci_high"] - d["effect_ticks"]))
+            nz.append(bool(d["ci_excludes_zero"]))
+        # A bar whose interval straddles zero is drawn open. On a log axis of
+        # |effect| a null looks like a small positive effect, because the sign is
+        # gone and the lower bound cannot reach the origin; the same-length controls
+        # would read as a real 30-tick difference. Open bars say what they are.
+        for x, y, keep in zip(xs, ys, nz):
+            ax.bar([x], [y], width * 0.9,
+                   color=colours[vi] if keep else "none",
+                   edgecolor=colours[vi] if keep else MUTE,
+                   linewidth=0 if keep else 0.8, linestyle="solid" if keep else "dashed")
+        ax.errorbar(xs, ys, yerr=[[y - l for y, l in zip(ys, los)],
+                                  [h - y for y, h in zip(ys, his)]],
+                    fmt="none", ecolor=INK, elinewidth=0.7, capsize=2)
+    ax.set_yscale("log")
+    ax.set_ylabel("class difference (ticks)")
+    ax.set_xticks(range(len(rows)))
+    ax.set_xticklabels([lab for _, lab in rows], fontsize=7, linespacing=1.1)
+    ax.axhline(1.0, color=MUTE, lw=0.6, ls=":")
+    # Empty bar containers do not carry a colour into the legend, so build the proxies.
+    handles = [mpatches.Patch(facecolor=c, edgecolor="none", label=l.replace("\n", " "))
+               for c, (_, l) in zip(colours, versions)]
+    handles.append(mpatches.Patch(facecolor="none", edgecolor=MUTE, linewidth=0.8,
+                                  linestyle="dashed", label="interval includes zero"))
+    ax.legend(handles=handles, frameon=False, fontsize=7, ncol=2, loc="upper left")
+    ax.set_ylim(0.7, 4e6)
+    fig.savefig(FIG / "fig-matrixssl-ladder.pdf")
+    plt.close(fig)
+
+
 def main():
     FIG.mkdir(parents=True, exist_ok=True)
     fig_blindspot()
@@ -262,6 +327,7 @@ def main():
     fig_graviton()
     fig_x86_idiv()
     fig_detection_curve()
+    fig_matrixssl_ladder()
     print(f"figures: wrote {len(list(FIG.glob('*.pdf')))} to {FIG}")
 
 

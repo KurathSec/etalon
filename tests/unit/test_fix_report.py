@@ -104,8 +104,8 @@ def test_paper_consistency_rules_are_not_vacuous(tmp_path):
     assert rules.get("retired"), "no retired-claim rules to test"
     phrase = rules["retired"][0]["phrase"]
 
-    # Clean tree: the rules pass.
-    assert pc._consistency({}, paper) == []
+    # Clean tree: the rules pass over what is actually committed.
+    assert pc._consistency(_committed_texts(paper), paper) == []
 
     # Plant the retired claim, wrapped mid-phrase the way a .tex file would wrap it.
     words = phrase.split()
@@ -114,6 +114,19 @@ def test_paper_consistency_rules_are_not_vacuous(tmp_path):
     hits = pc._consistency(planted, paper)
     assert any("planted.tex" in h for h in hits), (
         "the retired-claim scan missed a claim split across a line break")
+
+def _committed_texts(paper):
+    """The paper's real sources, keyed as bin/paper_check.py keys them.
+
+    Both tests below asserted that "the committed tree should be clean" while passing an
+    empty dict, which asserts nothing: a rule that scans no files finds nothing whatever
+    it would have found. That is the failure class this file exists to test for, one
+    level out. The [[once]] rules exposed it, because a claim that must appear exactly
+    once appears zero times in an empty corpus.
+    """
+    return {str(f.relative_to(paper)): f.read_text(errors="replace")
+            for f in sorted(list(paper.rglob("*.tex")) + list(paper.rglob("*.bib")))}
+
 
 def test_paper_consistency_survives_markup_and_capitalisation():
     r"""A retired claim must not hide behind \emph{}, \texttt{} or a capital letter.
@@ -143,7 +156,8 @@ def test_paper_consistency_survives_markup_and_capitalisation():
     if target is None:
         pytest.skip("the markup-bearing rule is no longer present")
 
-    assert pc._consistency({}, paper) == [], "the committed tree should be clean"
+    assert pc._consistency(_committed_texts(paper), paper) == [], \
+        "the committed tree should be clean"
 
     words = target["phrase"].split()
     # capitalise the opening word, wrap two words in font commands, and wrap a line

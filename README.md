@@ -705,15 +705,24 @@ someone willing to hunt for the pieces; Appendix A now writes it out, and
 `\Cref{tab:applicability}` names all 21 excluded rows with a reason each, so the split is
 checkable row by row.
 
-**Ten arms had been acquired twice and the paper never said so.** The detection curve runs each
-pair at amplification factor 1, which is the default build at the committed budget, so those
-rows are a second independent acquisition of a corpus arm rather than a different experiment.
-`bin/repeatability.py` compares them: the verdict agrees on 10 of 10, and on the 5 patched arms
-carrying an effect estimate the move between acquisitions stayed below what the coarser
-acquisition could resolve in 5 of 5, the largest move being 25.442 ticks against a largest
-half-width of 57.111. Two acquisitions is n=2, so it estimates no spread and no interval was
-widened by it. What it retires is the reading that a single-acquisition verdict here turned on
-the particular run. The comparison is under control REPT-1, because a count of agreement drifts
+**Ten arms had been acquired twice and the paper never said so.** (CORRECTED 2026-08-26; the
+paragraph as first written is wrong and the correction is below it.) The detection curve runs
+each pair at amplification factor 1, and `bin/repeatability.py` compares those rows against
+the committed dumps: the verdict agrees on 10 of 10.
+
+The claim that those rows are "the default build at the committed budget", and therefore a
+re-run of the same binary, is **false**, and the grounded audit caught it hours after it
+shipped. The dudect adapter compiles a factor-one row with `-DAMP=1`, overriding each pair's
+compiled-in constant: 40 for the ECDSA pairs, 200 for the rejection sampler, 1200 for the
+message pair. Only four of the ten arms are the same binary. The committed message pair reads
+-74,545 ticks against -33 on the rebuild, which should have been the tell and was not.
+The effect comparison is now restricted to the four same-binary arms, where the move is at
+most 1.005 ticks against a 3.485-tick half-width, and the two arms whose intervals had
+disagreed turn out to be exactly the two whose amplification constant is shared by both arms:
+the disagreement was between different binaries, not between a noisy acquisition and a quiet
+one. What the ten-arm agreement supports is that the verdict turns on neither the gain nor the
+run. What nothing here supports is a bound on between-acquisition spread, which needs repeats
+of one binary and exists in this corpus only for the fix-verification case. The comparison is under control REPT-1, because a count of agreement drifts
 in the reassuring direction as easily as the other one.
 
 ## Rebuilt to the venue's house form

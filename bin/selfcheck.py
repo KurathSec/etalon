@@ -716,27 +716,41 @@ def check_doc1() -> Result:
 
     The paper tree is gitignored, so this control is NOT APPLICABLE where the paper is
     absent, and says so rather than passing over it.
+
+    Both targets are checked. The submission and the eprint share one body, so building
+    only one of them lets the other rot, and a stale eprint passing silently is this
+    control's own failure mode turned on the build it was written to guard.
     """
     tches = REPO / "paper" / "tches"
-    pdf = tches / "main.pdf"
     if not tches.exists():
         return Result("DOC-1", NA, 0, "no paper tree in this checkout")
-    if not pdf.exists():
-        return Result("DOC-1", FAIL, 0, "paper sources present but main.pdf was never built")
+    targets = [tches / "main.pdf", tches / "main-eprint.pdf"]
+    present = [t for t in targets if t.exists()]
+    if not present:
+        return Result("DOC-1", FAIL, 0, "paper sources present but no PDF was ever built")
     srcs = (list(tches.glob("*.tex")) + list((tches / "sec").glob("*.tex"))
+            + list((tches / "shared").glob("*.tex"))
             + list((tches / "gen").glob("*.tex")))
     srcs = [f for f in srcs if f.exists()]
     if not srcs:
         return Result("DOC-1", NA, 0, "no paper sources to compare against")
-    pdf_m = pdf.stat().st_mtime
-    stale = sorted(f.name for f in srcs if f.stat().st_mtime > pdf_m)
-    if stale:
+    missing = [t.name for t in targets if not t.exists()]
+    if missing:
         return Result("DOC-1", FAIL, len(srcs),
-                      f"main.pdf is older than {len(stale)} of its sources, so every "
-                      f"check that reads it is reading a previous build: "
-                      + ", ".join(stale[:5]))
+                      f"{', '.join(missing)} was never built, so nothing checks it")
+    bad = []
+    for pdf in targets:
+        pdf_m = pdf.stat().st_mtime
+        stale = sorted(f.name for f in srcs if f.stat().st_mtime > pdf_m)
+        if stale:
+            bad.append(f"{pdf.name} is older than {len(stale)} of its sources "
+                       f"({', '.join(stale[:3])})")
+    if bad:
+        return Result("DOC-1", FAIL, len(srcs),
+                      "a check reading these is reading a previous build: "
+                      + "; ".join(bad))
     return Result("DOC-1", PASS, len(srcs),
-                  f"main.pdf is newer than all {len(srcs)} sources it is built from")
+                  f"both PDFs are newer than all {len(srcs)} sources they are built from")
 
 
 def check_sentinels() -> Result:

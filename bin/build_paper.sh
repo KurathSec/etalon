@@ -41,21 +41,37 @@ cd "$TCHES"
 # reads as a pass. The paper went several rounds of edits in that state once, because the
 # build error was sent to /dev/null and nothing compared the PDF's age to its sources.
 run_latex() {
-  if ! pdflatex -interaction=nonstopmode -halt-on-error main.tex >/tmp/paperbuild.log 2>&1; then
-    echo "build_paper: pdflatex FAILED, main.pdf is unchanged and now stale" >&2
+  if ! pdflatex -interaction=nonstopmode -halt-on-error "$1.tex" >/tmp/paperbuild.log 2>&1; then
+    echo "build_paper: pdflatex FAILED on $1, $1.pdf is unchanged and now stale" >&2
     grep -E "^(!|l\.[0-9])" /tmp/paperbuild.log | head -20 >&2
     exit 1
   fi
 }
-run_latex
-bibtex main >/dev/null 2>&1 || true
-run_latex
-run_latex
 
-# The PDF must be newer than every source it is built from, or it is not this paper.
-newest_src="$(ls -t main.tex numbers.tex sec/*.tex gen/*.tex 2>/dev/null | head -1)"
-if [ "$newest_src" -nt main.pdf ]; then
-  echo "build_paper: main.pdf is older than $newest_src after a successful build" >&2
-  exit 1
-fi
-echo "built paper/tches/main.pdf"
+# Two targets from one source tree: main is the TCHES submission, body only, because
+# the venue counts appendices against a twenty-page cap; main-eprint is the same body
+# with the appendices restored. Both are built every time. Building only one lets the
+# other rot, and a stale eprint is exactly the failure DOC-1 was written to catch.
+build_one() {
+  run_latex "$1"
+  bibtex "$1" >/dev/null 2>&1 || true
+  run_latex "$1"
+  run_latex "$1"
+  # A dangling cross-reference renders as ?? and no other gate sees it. The split makes
+  # it easy to write: a body sentence pointing at a label that exists only in the eprint.
+  if grep -q "LaTeX Warning: Reference" "$1.log"; then
+    echo "build_paper: $1 has dangling reference(s):" >&2
+    grep -o "Reference \`[^']*'" "$1.log" | sort -u | head -10 >&2
+    exit 1
+  fi
+  # The PDF must be newer than every source it is built from, or it is not this paper.
+  newest_src="$(ls -t "$1.tex" numbers.tex shared/*.tex sec/*.tex gen/*.tex 2>/dev/null | head -1)"
+  if [ "$newest_src" -nt "$1.pdf" ]; then
+    echo "build_paper: $1.pdf is older than $newest_src after a successful build" >&2
+    exit 1
+  fi
+  echo "built paper/tches/$1.pdf"
+}
+
+build_one main
+build_one main-eprint

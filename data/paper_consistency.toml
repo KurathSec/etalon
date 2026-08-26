@@ -173,5 +173,6 @@ divergences in their manifests instead."""
 # and numbers.tex are exempt because they are data, not prose.
 [duplicate]
 window = 12
-exempt_files = ["main.tex"]
+# shared/front.tex carries the title and abstract, which restate the body by design.
+exempt_files = ["main.tex", "main-eprint.tex", "shared/front.tex"]
 allow = []

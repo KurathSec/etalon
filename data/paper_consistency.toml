@@ -176,3 +176,32 @@ window = 12
 # shared/front.tex carries the title and abstract, which restate the body by design.
 exempt_files = ["main.tex", "main-eprint.tex", "shared/front.tex"]
 allow = []
+
+# ---------------------------------------------------------------- stated once
+# The venue's arrangement puts each limit beside the claim it bounds rather than in
+# one trailing section. docs/review-standard.md created the single-place rule because
+# rounds 6 to 8 generated their own work through caveat proliferation, so distributing
+# them is only safe if a machine counts. Each phrase below is a limit or a scope
+# statement that must be made exactly once, wherever it is made.
+
+[[once]]
+phrase = "a co-located attacker exploiting a shared cache, and a fault channel, are out of scope"
+why = "the remit paragraph owns the channel boundary; section 2 stated it a second time"
+
+[[once]]
+phrase = "with no analysers, no containers and no hardware"
+why = """The cold-clone claim is the artifact pitch and belongs to the Artifact run-in.
+The method section describes the same split as a mechanism and had restated the tail
+verbatim, eight words, which is under the duplicate rule's window."""
+
+[[once]]
+phrase = "has no maintainer to coordinate with"
+why = "the disclosure statement owns the MatrixSSL coordination fact"
+
+[[once]]
+phrase = "establishes that a blind spot exists in a class, not how often it occurs"
+why = "the n=1 bound is stated in the remit and must not be re-hedged at each use"
+
+[[once]]
+phrase = "so the core frequency is not pinned and core isolation is partial"
+why = "the acquisition host's bound is stated once, where the statistics are decided"

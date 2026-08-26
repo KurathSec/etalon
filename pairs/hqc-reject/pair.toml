@@ -37,6 +37,10 @@ branch because the accept test branches on the secret threshold each draw.
 """
 
 [provenance]
+provenance_kind = "synthetic-reproduction"
+provenance_kind_note = """
+Both arms are written here to reproduce the rejection-sampler draw-count mechanism.
+"""
 upstream_repo   = "reproduction of the HQC/BIKE rejection-sampling leak class"
 disclosed       = "2022-06-01"
 doi             = ["10.46586/tches.v2022.i3.223-263"]
@@ -98,7 +102,9 @@ note = "Portable clock. The recovery was attempted and reached partial (4 of 8 b
 from_deployment = """
 The deployed leak was in HQC/BIKE's own rejection sampler; this reproduces the
 mechanism (a secret-dependent draw count) with a self-contained sampler. The
-per-draw work is amplified so the signal is measurable on a fast x86 core. The
+per-draw work is amplified so the signal is measurable on a fast x86 core; the
+amplification loop is identical in both arms, so it widens the draw-count difference
+the rejection sampler already creates rather than introducing one. The
 mechanism and its detectability are faithful; the recovery of the deployed
 attack is the published one, not committed here.
 """

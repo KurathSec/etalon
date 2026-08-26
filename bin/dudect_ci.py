@@ -14,6 +14,7 @@ magnitude, never a pass/fail.
 from __future__ import annotations
 
 import argparse
+import gzip
 import json
 import sys
 from pathlib import Path
@@ -24,8 +25,52 @@ REC = np.dtype([("cl", "u1"), ("t", "<i8")], align=False)  # 9-byte records
 
 
 def load(path: Path):
-    a = np.fromfile(path, dtype=REC)
-    return a["cl"], a["t"].astype(np.float64)
+    """(class, exec-time) records, from either the live .bin or the committed .gz.
+
+    The gzip branch is not a convenience. Dumps are committed compressed and only
+    compressed, while the scoring adapter hands this function the uncompressed file the
+    container just wrote, so the two callers see different forms of the same data. An
+    earlier version read the path with np.fromfile and never decompressed, which on a
+    committed dump parsed the gzip container itself as 9-byte records: 151,040 bytes
+    became 16,782 "measurements" with tick values around 1e17, and it returned them
+    without complaint. Nothing in the live path noticed, because the live path passes an
+    uncompressed file. Anyone re-running this tool on the artifact as committed got
+    silent nonsense.
+
+    That is the failure mode this repository has a control for (INST-1): an instrument
+    that fails while still returning a number. So the load is guarded below rather than
+    trusted, and the guard is cheap enough to run on every call.
+    """
+    raw = gzip.open(path, "rb").read() if path.suffix == ".gz" else path.read_bytes()
+    a = np.frombuffer(raw, dtype=REC)
+    return _checked(a, path)
+
+
+def _checked(a: np.ndarray, path: Path):
+    """Refuse a parse that cannot be what dudect_run.h writes.
+
+    Two properties hold for every real dump and for essentially no misparse. The class
+    label is one bit, so any value outside {0, 1} means the record boundary is wrong;
+    and an execution time is a difference of two counter reads on one core, so it is
+    non-negative and far below the 63-bit range a misaligned parse produces. Either
+    failure raises, because returning a number here is worse than stopping: the caller
+    has no way to tell a wrong effect size from a right one.
+    """
+    cl, t = a["cl"], a["t"].astype(np.float64)
+    if cl.size == 0:
+        raise ValueError(f"{path}: no records parsed")
+    bad = np.unique(cl[(cl != 0) & (cl != 1)])
+    if bad.size:
+        raise ValueError(
+            f"{path}: {bad.size} class label(s) outside {{0,1}} (e.g. {bad[:4].tolist()}); "
+            f"the record boundary is wrong, so this is a misparse, not data. "
+            f"A .gz dump read without decompression fails exactly this way.")
+    if (t < 0).any() or t.max() > 2**40:
+        raise ValueError(
+            f"{path}: execution times out of range (min {t.min():.0f}, max {t.max():.0f}); "
+            f"a counter difference on one core is non-negative and far below 2^40, so "
+            f"this is a misparse, not data.")
+    return cl, t
 
 
 def analyse(cl: np.ndarray, t: np.ndarray, crop_pct: float = 95.0,

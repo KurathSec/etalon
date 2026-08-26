@@ -1,0 +1,95 @@
+{
+  "finding": "power for every patched arm: the class difference in ticks with its bootstrap 95% CI, so a clean verdict is not printed without saying what size of effect the measurement could have resolved.",
+  "reading": "The CI half-width is the resolution floor at this budget. An effect smaller than it would not have been distinguished from zero here, which is a bound on the measurement and not a property of the program.",
+  "generator": "bin/patched_power.py, over the committed patched-arm dumps",
+  "arms": {
+    "_sentinel-negative": {
+      "measurements": 59967,
+      "effect_ticks": 9.202390508115059,
+      "ci_low": -6.309914999997818,
+      "ci_high": 25.33221500000162,
+      "ci_half_width_ticks": 15.82106499999972,
+      "ci_excludes_zero": false
+    },
+    "_sentinel-positive": {
+      "measurements": 59967,
+      "effect_ticks": -4.094739216583548,
+      "ci_low": -20.145137499993687,
+      "ci_high": 11.633900000003615,
+      "ci_half_width_ticks": 15.88951874999865,
+      "ci_excludes_zero": false
+    },
+    "certified-fiat-add": {
+      "measurements": 59967,
+      "effect_ticks": 0.06446879369548242,
+      "ci_low": -1.3106374999999908,
+      "ci_high": 1.3969724999999944,
+      "ci_half_width_ticks": 1.3538049999999926,
+      "ci_excludes_zero": false
+    },
+    "certified-fiat-bytes": {
+      "measurements": 59967,
+      "effect_ticks": -1.008688704992835,
+      "ci_low": -2.8791849999999948,
+      "ci_high": 0.9367025000000012,
+      "ci_half_width_ticks": 1.907943749999998,
+      "ci_excludes_zero": false
+    },
+    "certified-fiat-square": {
+      "measurements": 59967,
+      "effect_ticks": -0.46709263202325246,
+      "ci_low": -1.7340199999999988,
+      "ci_high": 0.7964100000000052,
+      "ci_half_width_ticks": 1.265215000000002,
+      "ci_excludes_zero": false
+    },
+    "certified-fiat": {
+      "measurements": 59967,
+      "effect_ticks": 1.2381456987780552,
+      "ci_low": -0.12144250000001192,
+      "ci_high": 2.5857774999999985,
+      "ci_half_width_ticks": 1.3536100000000053,
+      "ci_excludes_zero": false
+    },
+    "ecdsa-address": {
+      "measurements": 59967,
+      "effect_ticks": 1.1309903581222898,
+      "ci_low": -2.258762500001012,
+      "ci_high": 4.710297499998432,
+      "ci_half_width_ticks": 3.484529999999722,
+      "ci_excludes_zero": false
+    },
+    "ecdsa-nonce": {
+      "measurements": 59967,
+      "effect_ticks": -0.4562248369693407,
+      "ci_low": -2.900920000000042,
+      "ci_high": 1.8768575000013683,
+      "ci_half_width_ticks": 2.388888750000705,
+      "ci_excludes_zero": false
+    },
+    "hmac-timing": {
+      "measurements": 59967,
+      "effect_ticks": 14.155589743968449,
+      "ci_low": -44.13009000000129,
+      "ci_high": 70.0920524999997,
+      "ci_half_width_ticks": 57.11107125000049,
+      "ci_excludes_zero": false
+    },
+    "hqc-reject": {
+      "measurements": 59967,
+      "effect_ticks": 25.539774394710548,
+      "ci_low": -24.13272499998711,
+      "ci_high": 75.80454500000778,
+      "ci_half_width_ticks": 49.96863499999745,
+      "ci_excludes_zero": false
+    },
+    "kyberslash": {
+      "measurements": 59967,
+      "effect_ticks": 0.003373494755436468,
+      "ci_low": -0.01839999999999975,
+      "ci_high": 0.02630249999999917,
+      "ci_half_width_ticks": 0.022351249999999462,
+      "ci_excludes_zero": false
+    }
+  }
+}

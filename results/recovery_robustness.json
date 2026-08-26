@@ -4,18 +4,67 @@
   "note": "success of the vendored lattice attack over random signature subsets of the committed observations, seed varied; a probabilistic attack, so the rate is a real measurement, not trivially one.",
   "results": [
     {
+      "num_signatures": 400,
+      "seeds": 8,
+      "recovered": 0,
+      "success_rate": "0/8",
+      "median_wall_s": 67.67
+    },
+    {
+      "num_signatures": 800,
+      "seeds": 8,
+      "recovered": 0,
+      "success_rate": "0/8",
+      "median_wall_s": 65.36
+    },
+    {
+      "num_signatures": 1200,
+      "seeds": 8,
+      "recovered": 0,
+      "success_rate": "0/8",
+      "median_wall_s": 51.76
+    },
+    {
+      "num_signatures": 1600,
+      "seeds": 8,
+      "recovered": 5,
+      "success_rate": "5/8",
+      "median_wall_s": 41.45
+    },
+    {
+      "num_signatures": 2000,
+      "seeds": 8,
+      "recovered": 8,
+      "success_rate": "8/8",
+      "median_wall_s": 6.49
+    },
+    {
+      "num_signatures": 2400,
+      "seeds": 8,
+      "recovered": 8,
+      "success_rate": "8/8",
+      "median_wall_s": 4.04
+    },
+    {
+      "num_signatures": 2800,
+      "seeds": 8,
+      "recovered": 8,
+      "success_rate": "8/8",
+      "median_wall_s": 2.32
+    },
+    {
       "num_signatures": 3200,
       "seeds": 8,
       "recovered": 8,
       "success_rate": "8/8",
-      "median_wall_s": 2.07
+      "median_wall_s": 2.03
     },
     {
       "num_signatures": 4000,
       "seeds": 8,
       "recovered": 8,
       "success_rate": "8/8",
-      "median_wall_s": 1.86
+      "median_wall_s": 1.81
     },
     {
       "num_signatures": 5000,
@@ -24,5 +73,14 @@
       "success_rate": "8/8",
       "median_wall_s": 0.77
     }
-  ]
+  ],
+  "n_star": {
+    "definition": "N*(p) is the smallest tested signature count at which the vendored lattice attack recovers a verifying key in at least a fraction p of independent random subsets. It replaces a single success/failure report with a budget, which is what an attacker actually faces.",
+    "host": "the x86 acquisition host; N* is host-conditional and is not portable",
+    "seeds_per_point": 8,
+    "p_0.5": 1600,
+    "p_1.0": 2000,
+    "failure_boundary": "complete failure at and below 1200 signatures (0 of 8 at 400, 800 and 1200), a sharp transition at 1600 (5 of 8), and a ceiling from 2000 upward (8 of 8 at every larger size tested).",
+    "correction": "An earlier revision quoted 3200 as this pair's signature count. That was the smallest size we had TESTED, not the smallest that works, and quoting it made our reproduction look several times less efficient than the original than it is. Extending the sweep downward is what found the boundary."
+  }
 }

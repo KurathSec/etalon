@@ -47,7 +47,12 @@ level     = "binary"
 # class; detecting that is exactly what the KyberSlash paper had to patch valgrind
 # to do. Encoding that boundary here is what makes the applicability honest.
 observes  = ["address-data", "address-code"]
-detects_mechanisms = ["secret-branch"]
+# Both mechanisms, not just the branch: memcheck reports an UninitCondition for a
+# branch on poisoned data and an UninitValue for a memory access indexed by it, and
+# the adapter distinguishes the two kinds. An earlier revision declared this tool
+# branch-only, which contradicted its own capability_source and the adapter, and
+# would have wrongly excluded it from an address-only pair.
+detects_mechanisms = ["secret-branch", "address-data"]
 secret_model = "annotation"
 architectures = ["x86_64"]
 requires_harness = "poison"

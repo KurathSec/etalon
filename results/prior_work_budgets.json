@@ -1,0 +1,50 @@
+{
+  "finding": "What the original authors report as the signature count their recovery needs, printed beside what ours needs, so a reader can see where we are less efficient than the work we reproduce.",
+  "why": "A reproduction that quietly needs more signatures than the original may have preserved the mechanism and lost the attack. Printing both makes that visible rather than leaving it to be discovered.",
+  "sources": [
+    {
+      "work": "Jancar, Sedlacek, Svenda, Sys. Minerva: The curse of ECDSA nonces. TCHES 2020(4):281-308.",
+      "doi": "10.46586/tches.v2020.i4.281-308",
+      "doi_as_printed_on_landing_page": "10.13154/tches.v2020.i4.281-308",
+      "retrieved_from": "https://tches.iacr.org/index.php/TCHES/article/view/8684",
+      "reported_counts_verbatim": {
+        "simulated leakage data": 500,
+        "real cryptographic library data": 1200,
+        "smartcard data": 2100,
+        "TPM-FAIL dataset": 900,
+        "TPM-FAIL, prior state of the art the paper improves on": 40000
+      },
+      "quote": "we propose two new methods to recover the full private key requiring just 500 signatures for simulated leakage data, 1200 for real cryptographic library data, and 2100 for smartcard data ... For the TPM-FAIL dataset, we decreased the number of required signatures from approximately 40 000 to mere 900.",
+      "caveat": "These are the counts stated in the paper's abstract, which does not break them down per library. A per-target comparison would need the full text; we do not have per-library figures and do not invent them."
+    }
+  ],
+  "ours": {
+    "ecdsa-nonce (our reproduction, amplified 40x)": {
+      "n_star_p1.0": 2000,
+      "n_star_p0.5": 1600,
+      "basis": "N*(p) from the committed robustness sweep, 8 independent random subsets per size, not the smallest size we happened to test first",
+      "note": "see results/recovery_robustness.json for the full curve and its boundary"
+    },
+    "libgcrypt-minerva (real 1.8.4 build)": {
+      "n_star_p1.0": 6000,
+      "n_star_p0.5": 3000,
+      "curve": {
+        "400": "0/8",
+        "800": "0/8",
+        "1200": "0/8",
+        "1600": "0/8",
+        "2000": "2/8",
+        "3000": "5/8",
+        "4000": "3/8",
+        "6000": "8/8"
+      },
+      "basis": "8 independent random subsets per size; see results/recovery_robustness_libgcrypt-minerva.json",
+      "note": "The transition is broad rather than sharp: 0 of 8 through 1,600, then 2, 5 and 3 of 8 at 2,000, 3,000 and 4,000, reaching 8 of 8 only at 6,000. The dip at 4,000 is inside binomial noise at 8 seeds and is reported rather than smoothed, because a monotone curve drawn through it would be a decision about the data rather than the data."
+    },
+    "minerva (upstream observation dataset, re-recovered here)": {
+      "signatures": 6000,
+      "basis": "the committed CI instance"
+    }
+  },
+  "reading": "The comparison that matters is real library against real library. Minerva reports 1,200 signatures for real cryptographic library data. Our libgcrypt 1.8.4 pair, which is also a real library, needs 6,000 for recovery in every subset and about 3,000 for half, so we are roughly five times less efficient than the published attack on the same kind of target. Our amplified reproduction needs only 2,000, which is what amplification is for and is precisely why it is the wrong number to compare against theirs. An earlier revision of this file did compare those two, and the effect was to flatter us. The gap against the published attack is expected in direction if not in size: we run their attack unchanged, selecting subsets at random, while their two methods are tuned selection and lattice strategies we did not reimplement. We report the unflattering comparison because it is the like-for-like one."
+}

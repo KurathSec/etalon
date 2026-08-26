@@ -37,6 +37,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import subprocess
 import sys
 import tomllib
@@ -69,16 +70,26 @@ def probe(image: str, outdir: Path, binary: str, symbol: str,
                 "-v", f"{outdir}:/out:ro,Z", image, "sh", "-c",
                 f"objdump -d --disassemble='{symbol}' /out/{binary}"])
     body = [l for l in text.splitlines() if "\t" in l]
-    mnemonics = []
+    mnemonics, targets = [], []
     for line in body:
         parts = line.split("\t")
         if len(parts) >= 3:
-            mnemonics.append(parts[2].split()[0] if parts[2].split() else "")
+            op = parts[2].split()
+            mnemonics.append(op[0] if op else "")
+            # A leak class may name a routine rather than an opcode: on targets
+            # without a divide instruction the compiler emits a call to a
+            # software helper (__udivsi3, __aeabi_uidiv), and matching only the
+            # mnemonic would count that build as leak-free while the division is
+            # plainly there. objdump renders the callee as <name> in the operand,
+            # so the symbol is read from there and matched against the same class.
+            m = re.search(r"<([^>+]+)(?:\+0x[0-9a-f]+)?>", parts[2])
+            targets.append(m.group(1) if m else "")
     # An undeclared instruction class yields NA, never 0. A pair with no
     # declared class has not been measured as having no leak instructions; it
     # has not been measured at all, and printing 0 there is the defect this
     # programme keeps rediscovering, a default presented as a measurement.
-    hits = sum(1 for m in mnemonics if m in classes) if classes else None
+    hits = (sum(1 for m, t in zip(mnemonics, targets) if m in classes or t in classes)
+            if classes else None)
     sec = run(["podman", "run", "--rm", "--network=none",
                "-v", f"{outdir}:/out:ro,Z", image, "sh", "-c",
                f"objcopy -O binary --only-section=.text /out/{binary} /tmp/t "
@@ -104,6 +115,11 @@ def main() -> int:
         print("build: no pairs", file=sys.stderr)
         return 2
 
+    # `lock` holds only what THIS run rebuilt, which is what --check must compare
+    # against the committed file. On write it is merged into the committed lock
+    # rather than replacing it: with --pair, replacing would silently delete every
+    # other pair's recorded digests and leak counts, and the controls that read the
+    # lock would then report those pairs as absent rather than as lost.
     lock, failures = {}, []
     for pair in pairs:
         man = tomllib.loads((pair / "pair.toml").read_text())
@@ -165,13 +181,39 @@ def main() -> int:
                 print("  " + d, file=sys.stderr)
             return 1
         n = sum(len(a) for c in lock.values() for a in c.values())
+        # Record the outcome so the paper can cite it as a generated number rather than
+        # quoting a terminal. BIN-1 is declared and not enforced on every run because a
+        # full rebuild is minutes of container work, so without a written record the
+        # paper's only options are to assert reproducibility or to stay silent about it.
+        rec = REPO / "results" / "bin1_check.json"
+        rec.write_text(json.dumps({
+            "control": "BIN-1",
+            "finding": "every locked build cell rebuilds to the .text digest recorded for "
+                       "it, so the pinned cells behind F2 are reproducible rather than "
+                       "asserted from the lock.",
+            "binaries_checked": n,
+            "pairs": sorted(lock),
+            "discrepancies": 0,
+            "generator": "bin/build.py --check",
+            "note": "Run on demand, not in the enforced control loop: a full rebuild of "
+                    "every cell inside the pinned images is minutes of work. The count is "
+                    "arms x cells over the pairs listed.",
+        }, indent=2) + "\n")
         print(f"\nBIN-1 PASS: {n} binaries rebuilt to their recorded .text digest")
+        print(f"  recorded in {rec.relative_to(REPO)}")
         return 0
 
+    # Merge, never replace: a --pair run records that pair and leaves every other
+    # pair's entry exactly as committed.
+    merged = json.loads(lock_path.read_text()) if lock_path.exists() else {}
+    kept = sorted(set(merged) - set(lock))
+    merged.update(lock)
     lock_path.write_text(
-        json.dumps(lock, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        json.dumps(merged, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(f"\nbuild: recorded {sum(len(c) for c in lock.values())} cell(s) "
-          f"across {len(lock)} pair(s)")
+          f"across {len(lock)} pair(s)"
+          + (f"; kept {len(kept)} pair(s) already locked ({', '.join(kept)})"
+             if kept else ""))
     for f in failures:
         print("  FAILED " + f, file=sys.stderr)
     return 1 if failures else 0

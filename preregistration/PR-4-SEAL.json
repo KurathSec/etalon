@@ -1,0 +1,11 @@
+{
+  "_meaning": "These digests fix the content of PR-4 at seal time. A later reader checks here whether the permutation verdict rule was written before the re-analysis it governs, and whether the recorded deviations from PR-2 and PR-3 were disclosed rather than discovered. The sealing commit is the timestamp of record. PR-1, PR-2, PR-3 and their sealed results are unaffected.",
+  "_sealed_at": "2026-08-25",
+  "_gates": "Sealed before the corpus-wide re-decision under the permutation rule is reported as final. The deviations recorded here are past events, disclosed, not new observations: PR-3's band was applied before being retired, its prediction C7 was falsified by a harness fix, and PR-2's registered five-pair detection curve remains unrun. Predictions C8, C9 and C10 govern observations that are fixed here regardless of outcome.",
+  "PR-4-permutation-verdict.md": {
+    "bytes": 7401,
+    "sha256": "254d732a3b22b8460c83abd51378ffb7f6286d1bb862adbbea6ea611e70bd3bd"
+  },
+  "_amended": "2026-08-25: the PR-2 detection-curve deviation is discharged and the entry rewritten to record the result, including one falsified registered expectation. The digest below covers the amended text; the pre-amendment digest is kept beside it so the change is visible rather than silent.",
+  "_digest_before_amendment": "febc55634b38c0df0c17c5b5eb9b6d8992779fe050431285b8506597f7ec7040"
+}

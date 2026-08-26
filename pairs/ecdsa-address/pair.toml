@@ -30,6 +30,7 @@ secret_role  = "nonce"
 origin       = "source-level"
 granularity  = "bit"
 exploit_path = "lattice-hnp"
+certification_channel = "latency"
 mechanism_classes = ["address-data", "secret-branch", "timing-observation"]
 rationale = """
 observable is address-data: the distinguishing mechanism is a secret-indexed
@@ -41,6 +42,10 @@ defining channel is the address.
 """
 
 [provenance]
+provenance_kind = "synthetic-reproduction"
+provenance_kind_note = """
+Both arms are written here over OpenSSL EC primitives to reproduce the secret-indexed-access mechanism; the vulnerable arm amplifies a bit-length cost that carries the recovery.
+"""
 upstream_repo   = "reproduction of the OpenSSL 1.0.1u nonce-leak class"
 disclosed       = "2020-08-01"
 doi             = ["10.5555/3489212.3489301"]

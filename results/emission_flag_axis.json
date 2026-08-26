@@ -1,0 +1,181 @@
+{
+  "finding": "The emission map extended along the flag axis, within the pinned compiler images. It finds a cell the original eight did not: BOTH compilers emit the hardware division at -Oz, their most size-aggressive setting, including clang, which does not emit it at -Os.",
+  "why": "The paper explains the original split by a size-versus-speed cost model: a compiler rewrites the constant divisor into a reciprocal multiply unless it is optimising for size, where the single short divide wins. That explanation predicts an emitting cell at -Oz on both compilers, and this is a test of the prediction rather than an illustration of it.",
+  "method": "Compile each arm in each pinned image with the flag setting shown, count division instructions over the whole object. Lighter than the locked build pipeline, which pins digests and records .text hashes, so these cells are reported as an extension of the map and are NOT merged into locks/binaries.lock.json or into the locked emission figure.",
+  "cells": [
+    {
+      "compiler": "gcc-12.2.0",
+      "flags": "-O1",
+      "arm": "vulnerable",
+      "division_instructions": 0,
+      "build_failed": false
+    },
+    {
+      "compiler": "gcc-12.2.0",
+      "flags": "-O1",
+      "arm": "patched",
+      "division_instructions": 0,
+      "build_failed": false
+    },
+    {
+      "compiler": "gcc-12.2.0",
+      "flags": "-Oz",
+      "arm": "vulnerable",
+      "division_instructions": 1,
+      "build_failed": false
+    },
+    {
+      "compiler": "gcc-12.2.0",
+      "flags": "-Oz",
+      "arm": "patched",
+      "division_instructions": 0,
+      "build_failed": false
+    },
+    {
+      "compiler": "gcc-12.2.0",
+      "flags": "-Ofast",
+      "arm": "vulnerable",
+      "division_instructions": 0,
+      "build_failed": false
+    },
+    {
+      "compiler": "gcc-12.2.0",
+      "flags": "-Ofast",
+      "arm": "patched",
+      "division_instructions": 0,
+      "build_failed": false
+    },
+    {
+      "compiler": "gcc-12.2.0",
+      "flags": "-O2 -flto",
+      "arm": "vulnerable",
+      "division_instructions": 0,
+      "build_failed": false
+    },
+    {
+      "compiler": "gcc-12.2.0",
+      "flags": "-O2 -flto",
+      "arm": "patched",
+      "division_instructions": 0,
+      "build_failed": false
+    },
+    {
+      "compiler": "gcc-12.2.0",
+      "flags": "-O3 -march=native",
+      "arm": "vulnerable",
+      "division_instructions": 0,
+      "build_failed": false
+    },
+    {
+      "compiler": "gcc-12.2.0",
+      "flags": "-O3 -march=native",
+      "arm": "patched",
+      "division_instructions": 0,
+      "build_failed": false
+    },
+    {
+      "compiler": "gcc-12.2.0",
+      "flags": "-O2 -fno-tree-vectorize",
+      "arm": "vulnerable",
+      "division_instructions": 0,
+      "build_failed": false
+    },
+    {
+      "compiler": "gcc-12.2.0",
+      "flags": "-O2 -fno-tree-vectorize",
+      "arm": "patched",
+      "division_instructions": 0,
+      "build_failed": false
+    },
+    {
+      "compiler": "clang-14.0.6",
+      "flags": "-O1",
+      "arm": "vulnerable",
+      "division_instructions": 0,
+      "build_failed": false
+    },
+    {
+      "compiler": "clang-14.0.6",
+      "flags": "-O1",
+      "arm": "patched",
+      "division_instructions": 0,
+      "build_failed": false
+    },
+    {
+      "compiler": "clang-14.0.6",
+      "flags": "-Oz",
+      "arm": "vulnerable",
+      "division_instructions": 1,
+      "build_failed": false
+    },
+    {
+      "compiler": "clang-14.0.6",
+      "flags": "-Oz",
+      "arm": "patched",
+      "division_instructions": 0,
+      "build_failed": false
+    },
+    {
+      "compiler": "clang-14.0.6",
+      "flags": "-Ofast",
+      "arm": "vulnerable",
+      "division_instructions": 0,
+      "build_failed": false
+    },
+    {
+      "compiler": "clang-14.0.6",
+      "flags": "-Ofast",
+      "arm": "patched",
+      "division_instructions": 0,
+      "build_failed": false
+    },
+    {
+      "compiler": "clang-14.0.6",
+      "flags": "-O2 -flto",
+      "arm": "vulnerable",
+      "division_instructions": 0,
+      "build_failed": false
+    },
+    {
+      "compiler": "clang-14.0.6",
+      "flags": "-O2 -flto",
+      "arm": "patched",
+      "division_instructions": 0,
+      "build_failed": false
+    },
+    {
+      "compiler": "clang-14.0.6",
+      "flags": "-O3 -march=native",
+      "arm": "vulnerable",
+      "division_instructions": 0,
+      "build_failed": false
+    },
+    {
+      "compiler": "clang-14.0.6",
+      "flags": "-O3 -march=native",
+      "arm": "patched",
+      "division_instructions": 0,
+      "build_failed": false
+    },
+    {
+      "compiler": "clang-14.0.6",
+      "flags": "-O2 -fno-tree-vectorize",
+      "arm": "vulnerable",
+      "division_instructions": 0,
+      "build_failed": false
+    },
+    {
+      "compiler": "clang-14.0.6",
+      "flags": "-O2 -fno-tree-vectorize",
+      "arm": "patched",
+      "division_instructions": 0,
+      "build_failed": false
+    }
+  ],
+  "emitting_cells": [
+    "gcc-12.2.0 -Oz (vulnerable)",
+    "clang-14.0.6 -Oz (vulnerable)"
+  ],
+  "verified_directly": "clang -Os lowers to imul plus shr (reciprocal multiply); clang -Oz emits `div %ecx`. gcc emits `idiv %ecx` at both -Os and -Oz. Read from the disassembly, not inferred from a count.",
+  "not_done": "This extends the FLAG axis only. Extending the compiler-version axis, adding MSVC, and mapping real distribution package flags onto the emitting cells would each need toolchain images this artifact does not pin, and none of that is attempted here. What can be said from the measurement is that the emitting set grows as the flag axis is explored, so eight cells was a lower bound on how many shipped configurations carry the division, not an estimate of it."
+}

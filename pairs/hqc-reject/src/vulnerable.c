@@ -1,4 +1,10 @@
 #include "reject.h"
+/* Amplification, overridable at build time with -DAMP=n for the registered
+ * detection curve. The default is the committed value, so an unparameterised
+ * build of this file is exactly what it was. */
+#ifndef AMP
+#define AMP 200
+#endif
 /* VULNERABLE ARM: HQC/BIKE-style secret-dependent rejection sampling.
  *
  * Draws pseudo-random bytes and accepts the first with value < the secret
@@ -13,7 +19,7 @@ int sample_pos(const uint8_t *secret, size_t pos, uint32_t *rng){
   for(;;){
     draws++;
     uint8_t b = (uint8_t)(xorshift(rng) & 0xff);
-    volatile uint32_t work=0; for(int j=0;j<200;j++) work+=xorshift(rng); (void)work;
+    volatile uint32_t work=0; for(int j=0;j<AMP;j++) work+=xorshift(rng); (void)work;
     if (b < thr) return draws;             /* SECRET-DEPENDENT loop count */
   }
 }

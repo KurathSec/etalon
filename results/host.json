@@ -1,15 +1,19 @@
 {
-  "_comment": "The x86 acquisition host, captured from this machine (/proc/cpuinfo, /sys) so every host fact the paper states is a regenerated macro rather than a typed claim. Turbo is enabled because disabling it needs root we do not have; that is recorded, not hidden. Regenerable by re-reading /proc/cpuinfo and /sys/devices/system/cpu on the same host.",
+  "_comment": "The x86 acquisition host, captured from this machine by bin/host_facts.py so every host fact in the paper is regenerable rather than typed.",
   "cpu_model": "Intel Core Ultra 9 285H",
-  "microarch": "Arrow Lake",
   "microarch_basis": "CPUID family 6, model 197, stepping 2",
   "cpu_family": 6,
   "cpu_model_num": 197,
   "cpu_stepping": 2,
   "microcode": "0x11b",
-  "smt": "off",
+  "hybrid": true,
+  "pinned_cpu": 2,
+  "pinned_core_type": "performance",
+  "doitm": "not read: /dev/cpu/N/msr requires elevated privileges, not taken here",
+  "smt": "notsupported",
   "turbo": "enabled",
   "governor": "performance",
   "kernel": "7.1.8-200.fc44.x86_64",
-  "machine": "x86_64"
+  "machine": "x86_64",
+  "microarch": "Arrow Lake"
 }

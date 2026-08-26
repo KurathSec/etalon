@@ -38,6 +38,10 @@ poisoned nonce; a differential control-flow tool sees the divergent paths.
 """
 
 [provenance]
+provenance_kind = "synthetic-reproduction"
+provenance_kind_note = """
+Both arms are written here to reproduce the ladder's secret-dependent branch.
+"""
 upstream_repo   = "reproduction of the LadderLeak control-flow leak class"
 disclosed       = "2020-05-01"
 doi             = ["10.1145/3372297.3417268"]

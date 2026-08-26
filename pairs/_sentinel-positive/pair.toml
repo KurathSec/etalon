@@ -26,6 +26,7 @@ secret_role  = "key-material"
 origin       = "source-level"
 granularity  = "byte"
 exploit_path = "direct-recovery"
+certification_channel = "latency"
 mechanism_classes = ["secret-branch"]
 rationale = """
 origin is source-level and not hardware-implicit: the early exit is written in

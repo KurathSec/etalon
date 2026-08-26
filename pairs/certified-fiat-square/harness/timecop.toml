@@ -1,0 +1,4 @@
+driver = "timecop_driver.c"
+
+header = "tag.h"
+opt = "O2"

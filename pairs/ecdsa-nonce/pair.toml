@@ -29,6 +29,7 @@ secret_role  = "nonce"
 origin       = "source-level"
 granularity  = "bit"
 exploit_path = "lattice-hnp"
+certification_channel = "latency"
 mechanism_classes = ["secret-branch", "timing-observation"]
 rationale = """
 Same class as Minerva (latency / nonce / source-level / bit / lattice-hnp), and
@@ -40,17 +41,24 @@ observation-only Minerva and TPM-FAIL pairs.
 """
 
 [provenance]
+provenance_kind = "synthetic-reproduction"
+provenance_kind_note = """
+Both arms are written here over OpenSSL EC primitives to reproduce the Minerva MECHANISM; neither arm is upstream code, and the vulnerable arm amplifies the per-bit work.
+"""
 upstream_repo   = "reproduction of the Minerva mechanism"
 disclosed       = "2019-10-01"
 doi             = ["10.46586/tches.v2020.i4.281-308"]
-advisory        = ["CVE-2019-13627"]
+advisory        = []
 licence         = "MIT"
 redistributable = true
 note = """
-A reproduction of a real deployed leak (CVE-2019-13627, the libgcrypt Minerva
-assignment), not a verbatim copy of libgcrypt. The mechanism is faithful, the
-build is ours, and the divergence from the deployed original is recorded below.
-The DOI is the Minerva paper.
+A reproduction of the Minerva MECHANISM over OpenSSL EC primitives, not of any one
+library's bug. The advisory field is empty on purpose. An earlier revision listed
+CVE-2019-13627, but that is the libgcrypt assignment and this pair is neither
+libgcrypt nor a libgcrypt build; the same reasoning was already applied to the
+sibling `ecdsa-address` pair and is now applied here. The DOI is the Minerva paper,
+which is the correct citation for the mechanism. The pair that actually reproduces
+CVE-2019-13627 is `libgcrypt-minerva`, which carries it.
 """
 
 [[build]]

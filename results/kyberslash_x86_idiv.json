@@ -1,6 +1,6 @@
 {
   "finding": "kyberslash-x86-leak-presence",
-  "measured_utc": "2026-08-24",
+  "measured_utc": "",
   "host": {
     "_comment": "The x86 acquisition host, captured from this machine (/proc/cpuinfo, /sys) so every host fact the paper states is a regenerated macro rather than a typed claim. Turbo is enabled because disabling it needs root we do not have; that is recorded, not hidden. Regenerable by re-reading /proc/cpuinfo and /sys/devices/system/cpu on the same host.",
     "cpu_model": "Intel Core Ultra 9 285H",
@@ -26,29 +26,53 @@
       }
     },
     "idiv_latency_operand_dependent": {
-      "note": "serial dependency chain. On this Arrow Lake out-of-order divider the per-div TSC latency is essentially flat across the operand range, within a fraction of a tick; the higher first sample at dividend 1 is a warm-up artifact. This is flatter than the Graviton Neoverse-V1 udiv, which rises across the same range.",
+      "note": "serial dependency chain. On this Arrow Lake out-of-order divider the per-div TSC latency is flat across the operand range: all five dividends lie within 0.034 ticks (9.29106 at dividend 1, the smallest, to 9.32504). An earlier revision of this note called the dividend-1 sample 'higher, a warm-up artifact'; it is in fact the lowest of the five, and the spread is in any case below the run's noise floor. This is flatter than the Graviton Neoverse-V1 udiv, which rises across the same range.",
       "ticks_per_udiv": {
-        "dividend_1": 9.30725,
-        "dividend_3000": 9.33241,
-        "dividend_8000": 9.29238,
-        "dividend_1e6": 9.32239,
-        "dividend_4e9": 9.30938
-      }
+        "dividend_1": 9.29106,
+        "dividend_3000": 9.32504,
+        "dividend_8000": 9.31209,
+        "dividend_1e6": 9.31714,
+        "dividend_4e9": 9.31223
+      },
+      "spread_ticks": 0.034
     },
     "kyberslash_operand_range_step": {
       "note": "the step at dividend=divisor=3329, quotient 0 -> 1, over the KyberSlash range [1664,8320]. Over this range the quotient never exceeds 2 bits, so the operand-dependent latency the wide sweep shows barely moves.",
-      "coeff_below_833_ticks": 9.31167,
-      "coeff_at_or_above_833_ticks": 9.28336,
-      "step_ticks": -0.0008,
-      "noise_floor_ticks": 0.02403,
+      "coeff_below_833_ticks": 9.28503,
+      "coeff_at_or_above_833_ticks": 9.30926,
+      "step_ticks": 0.00126,
+      "noise_floor_ticks": 0.01146,
       "signal_to_noise": 0
     },
     "end_to_end_coeff_to_bit_Os": {
-      "note": "two-class fixed-vs-random over the real coeff_to_bit with the division forced to a hardware idiv, min-of-11 batches of M each. Low class = coeff in [0,833), high class = coeff in [1664,3329). The x86 rung of the host-magnitude ladder; the single-bit recovery step (above) stays sub-noise.",
-      "low_coeffs_ticks_per_call": 6.47433,
-      "high_coeffs_ticks_per_call": 6.581,
-      "secret_dependent_delta_ticks": 0.10667,
-      "delta_percent_of_call": 1.6476
+      "note": "two-class low-vs-high magnitude over the real coeff_to_bit with the division forced to a hardware idiv, min-of-11 batches of M each. Low class = coeff in [0,833), high class = coeff in [1664,3329). Operands are generated outside the timed region, from the same seed, and both classes are timed by the same loop over a precomputed array, so the two classes execute identical instructions and differ only in the values fed to the divider. An earlier revision generated each class inside the timed loop with a different constant modulus and a different seed, which conflated the divider's operand dependence with the cost of the operand generation; the delta below is the corrected measurement. This is the x86 rung of the host-magnitude ladder; the single-bit recovery step (above) stays sub-noise.",
+      "low_coeffs_ticks_per_call": 4.33713,
+      "high_coeffs_ticks_per_call": 4.33554,
+      "secret_dependent_delta_ticks": -0.00159,
+      "delta_percent_of_call": -0.0367
+    },
+    "per_call_magnitude_sensitivity": {
+      "note": "low-vs-high magnitude as a per-call two-class test, operands precomputed, order within each pair randomised (timing the two classes in a fixed order makes the second systematically cheaper and shows up as a ~1-tick offset carrying the sign of the ordering, not of the operand). tau = |t|/sqrt(n) is comparable to the scored dudect verdicts and to the calibrated null band. The per-call step is resolvable while the pipelined end-to-end difference above is not: out-of-order execution absorbs it in a realistic loop, which is why the scored fixed-vs-random verdict reads clean.",
+      "design": "low [0,833) vs high [1664,3329), paired, order randomised",
+      "by_n": {
+        "n_50000_t": 5.4582,
+        "n_50000_tau": 0.02441,
+        "n_50000_mean_ticks": 0.6522,
+        "n_200000_t": 23.998,
+        "n_200000_tau": 0.053661,
+        "n_200000_mean_ticks": 0.73254,
+        "n_800000_t": 20.1717,
+        "n_800000_tau": 0.022553,
+        "n_800000_mean_ticks": 0.75069,
+        "n_2000000_t": 38.9809,
+        "n_2000000_tau": 0.027564,
+        "n_2000000_mean_ticks": 0.77522,
+        "n_4000000_t": 26.0695,
+        "n_4000000_tau": 0.013035,
+        "n_4000000_mean_ticks": 0.734174
+      },
+      "mean_ticks_at_max_n": 0.734174,
+      "tau_at_max_n": 0.013035
     },
     "tsc_ghz": 3.6863
   }

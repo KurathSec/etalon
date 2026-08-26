@@ -1,0 +1,63 @@
+{
+  "finding": "recovery-robustness",
+  "pair": "libgcrypt-minerva",
+  "note": "success of the vendored lattice attack over random signature subsets of the committed observations, seed varied; a probabilistic attack, so the rate is a real measurement, not trivially one.",
+  "results": [
+    {
+      "num_signatures": 400,
+      "seeds": 8,
+      "recovered": 0,
+      "success_rate": "0/8",
+      "median_wall_s": 65.69
+    },
+    {
+      "num_signatures": 800,
+      "seeds": 8,
+      "recovered": 0,
+      "success_rate": "0/8",
+      "median_wall_s": 90.7
+    },
+    {
+      "num_signatures": 1200,
+      "seeds": 8,
+      "recovered": 0,
+      "success_rate": "0/8",
+      "median_wall_s": 64.7
+    },
+    {
+      "num_signatures": 1600,
+      "seeds": 8,
+      "recovered": 0,
+      "success_rate": "0/8",
+      "median_wall_s": 69.92
+    },
+    {
+      "num_signatures": 2000,
+      "seeds": 8,
+      "recovered": 2,
+      "success_rate": "2/8",
+      "median_wall_s": 74.46
+    },
+    {
+      "num_signatures": 3000,
+      "seeds": 8,
+      "recovered": 5,
+      "success_rate": "5/8",
+      "median_wall_s": 28.01
+    },
+    {
+      "num_signatures": 4000,
+      "seeds": 8,
+      "recovered": 3,
+      "success_rate": "3/8",
+      "median_wall_s": 73.52
+    },
+    {
+      "num_signatures": 6000,
+      "seeds": 8,
+      "recovered": 8,
+      "success_rate": "8/8",
+      "median_wall_s": 5.28
+    }
+  ]
+}

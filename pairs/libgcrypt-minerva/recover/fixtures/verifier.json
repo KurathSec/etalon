@@ -1,0 +1,11 @@
+{
+  "scheme": "ecdsa-pubkey-match",
+  "curve": "secp256r1",
+  "hash": "sha256",
+  "public_key": "04ad4903d7fd0563a0a9a80386c51fa948b5304664ce8d80af8f40bf0c6ee4257e528c17791f8b1b878b9e9f39b26a219786587a19caab8a582d2a19c28ed98b90",
+  "signed_data": "60bf07c488aad18fda339df07e4fbc47b4f00be71711936f18d04d352ad01890",
+  "note": "The vulnerable arm is libgcrypt 1.8.4; its signatures are in traces/vulnerable.csv.z, and the recovered scalar d verifies iff d*G equals this public key (the key genkey'd by acquire/sign_harness.c for the vulnerable run, embedded in that trace's first line). That is upstream's own success test and needs only public material. The private key is not stored here; the patched arm (1.8.5, traces/patched.csv.z) must not recover.",
+  "consistency_check": {
+    "private_key_sha256": "b535fa6a239718f580e6d5824b31c8661599124395edc438fb14f3348f0ad688"
+  }
+}

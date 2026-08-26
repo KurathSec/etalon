@@ -23,6 +23,7 @@ secret_role  = "nonce"
 origin       = "api-level"
 granularity  = "bit"
 exploit_path = "lattice-hnp"
+certification_channel = "latency"
 mechanism_classes = ["timing-observation"]
 rationale = """
 origin is api-level, and this is the whole reason the pair is in the corpus
@@ -38,6 +39,10 @@ distinct census cell and not undeclared replication.
 """
 
 [provenance]
+provenance_kind = "observation-dataset"
+provenance_kind_note = """
+Upstream's recorded signatures from a hardware TPM; the patched arm is modelled. Not a matched pair in the two-build sense.
+"""
 upstream_repo   = "crocs-muni/minerva"
 upstream_commit = "8182d0006c434257ecb3689b2b4506b02e70303a"
 disclosed       = "2019-11-12"

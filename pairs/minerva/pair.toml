@@ -26,6 +26,7 @@ secret_role  = "nonce"
 origin       = "source-level"
 granularity  = "bit"
 exploit_path = "lattice-hnp"
+certification_channel = "latency"
 mechanism_classes = ["timing-observation"]
 rationale = """
 This is the deliberate contrast to the KyberSlash class. observable is latency,
@@ -41,6 +42,10 @@ the recorded lattice background.
 """
 
 [provenance]
+provenance_kind = "observation-dataset"
+provenance_kind_note = """
+Upstream's recorded signatures; the patched arm is a modelled constant-time timing column, not a build. Not a matched pair in the two-build sense.
+"""
 upstream_repo   = "crocs-muni/minerva"
 upstream_commit = "8182d0006c434257ecb3689b2b4506b02e70303a"
 disclosed       = "2019-10-01"

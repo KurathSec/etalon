@@ -1,0 +1,18 @@
+{
+  "finding": "Why the patched Valgrind and the symbolic engine carry no row on the ECDSA pairs. It is not applicability and it is not a timeout: both tools declare the secret-branch mechanism those pairs exhibit, so both are applicable. It is that neither pinned image can BUILD an OpenSSL-linked arm, and the corpus builds inside the tool's own image on purpose, so that the binary a tool analyses is pinned along with the tool.",
+  "measured": {
+    "varlat image": {
+      "openssl_runtime_present": true,
+      "openssl_headers_present": false,
+      "detail": "carries libcrypto.so.3 but no development headers, so it can RUN an OpenSSL-linked binary and cannot COMPILE one. Attempting it fails at `fatal error: openssl/ec.h: No such file or directory`, which is what this entry records rather than a tool verdict."
+    },
+    "binsec image": {
+      "compiler_present": false,
+      "openssl_headers_present": false,
+      "detail": "the upstream image ships the analyser and no toolchain at all; it analyses binaries built elsewhere. The pairs binsec does score are self-contained C with no external library to link."
+    }
+  },
+  "the_tension_worth_stating": "Adding OpenSSL to the varlat image would close this gap and would change the image digest, which by this corpus's own rule voids every varlat row already scored. Building the arm on the host instead would break the property that the analysed binary is pinned with its analyser. So extending a pinned tool's reach costs either the measurements it has already made or the pinning that made them trustworthy. We took neither and report the gap.",
+  "what_would_close_it": "One image rebuild per tool, with the pinned digests rotated and every row for that tool re-acquired under the new digest, disclosed as a re-acquisition rather than folded into the existing table.",
+  "not_a_finding_about_the_tools": "Neither result says anything about what varlat or binsec can detect. A reader should not read these blank cells as evidence of a blind spot; the blank cells in the matrix marked 'no harn.' mean exactly this and nothing more."
+}

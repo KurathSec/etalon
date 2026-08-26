@@ -6,7 +6,7 @@ re-derive if it is drawn by hand, so every figure here is produced from the
 committed results by this script, into paper/tches/fig/ (gitignored, like the
 generated macros). Each figure carries one finding.
 
-  fig-blindspot  dudect's t-statistic per pair: the nonce leaks tower, the
+  fig-blindspot  dudect's max |t| per pair against its permutation null: the
                  division sits at the noise floor. The blind spot, quantified.
   fig-emission   the KyberSlash division emitted per (compiler, optimisation)
                  cell: two of eight, and the compilers disagree. The label is
@@ -20,6 +20,7 @@ Usage: bin/figures.py
 from __future__ import annotations
 
 import json
+import re
 import pathlib
 
 import matplotlib
@@ -56,39 +57,41 @@ def read_jsonl(path):
 
 
 def fig_blindspot():
-    rows = [r for r in read_jsonl(REPO / "results" / "verdicts.jsonl")
-            if r.get("tool") == "dudect" and r.get("applicable")]
     label = {"_sentinel-positive": "sentinel", "ecdsa-nonce": "nonce,\nlatency",
              "ecdsa-address": "nonce,\naddress", "hqc-reject": "rejection",
              "kyberslash": "division"}
-    order = ["ecdsa-nonce", "ecdsa-address", "sentinel_marker",
-             "hqc-reject", "kyberslash"]
-    rows = {r["pair"]: r for r in rows}
     seq = ["ecdsa-nonce", "ecdsa-address", "_sentinel-positive",
            "hqc-reject", "kyberslash"]
-    # Plot tau (dudect's budget-invariant effect size), the PR-3 decision variable,
-    # against the null band calibrated on the negative sentinel, not the retired
-    # [10,500] band on the raw t.
-    thr = json.loads((REPO / "results" / "dudect_calibration.json").read_text())["null_threshold_tau"]
-    vt = [rows[p]["vulnerable_max_tau"] for p in seq]
-    pt = [rows[p]["patched_max_tau"] for p in seq]
+    # Plot the statistic the verdict actually rests on: dudect's max |t| against the
+    # permutation null computed from each run's own committed samples. Every dump here
+    # is taken at the same budget, so |t| is directly comparable across pairs and the
+    # null band is one horizontal region; tau and its calibrated band are retired
+    # (a fixed tau band is not budget-invariant under the null, see sec/method).
+    perm = json.loads((REPO / "results" / "dudect_permutation.json").read_text())
+    by = {(r["pair"], r["arm"]): r for r in perm["rows"]}
+    vt = [by[(p, "vulnerable")]["observed_max_abs_t"] for p in seq]
+    pt = [by[(p, "patched")]["observed_max_abs_t"] for p in seq]
+    # The null band: the widest 95th percentile of any run's own permutation null, so a
+    # bar clearing it clears every run's null, not just its own.
+    thr = max(r["null_max_abs_t_p95"] for r in perm["rows"])
     names = [label[p] for p in seq]
     x = range(len(seq))
 
     fig, ax = plt.subplots(figsize=(5.4, 2.9))
-    ax.axhspan(1e-3, thr, color=LIGHT, zorder=0)
+    ax.axhspan(1e-1, thr, color=LIGHT, zorder=0)
     ax.axhline(thr, color=MUTE, lw=0.9, ls="--", zorder=1)
     w = 0.38
     ax.bar([i - w / 2 for i in x], vt, w, color=TEAL, label="vulnerable arm", zorder=3)
     ax.bar([i + w / 2 for i in x], pt, w, color=MUTE, label="patched arm", zorder=3)
     ax.set_yscale("log")
-    ax.set_ylim(2e-3, 300)
+    ax.set_ylim(2e-1, 2000)
     ax.set_xticks(list(x))
     ax.set_xticklabels(names)
-    ax.set_ylabel(r"dudect $\tau = |t|/\sqrt{n}$  (log)")
-    ax.text(len(seq) - 1, thr * 2.4, "leak", color=INK, fontsize=7.5, ha="center")
-    ax.text(len(seq) - 1, thr * 0.35, "null band", color=WARM, fontsize=7.5, ha="center")
-    ax.annotate("missed:\nboth in null band", xy=(4, vt[-1]), xytext=(3.3, thr * 12),
+    ax.set_ylabel(r"dudect max $|t|$  (log)")
+    ax.text(len(seq) - 1, thr * 2.6, "detected", color=INK, fontsize=7.5, ha="center")
+    ax.text(len(seq) - 1, thr * 0.32, "permutation null", color=WARM, fontsize=7.5,
+            ha="center")
+    ax.annotate("missed:\nboth inside the null", xy=(4, vt[-1]), xytext=(3.3, thr * 14),
                 fontsize=7.5, color=WARM, ha="center",
                 arrowprops=dict(arrowstyle="->", color=WARM, lw=0.8))
     ax.legend(frameon=False, fontsize=7.5, loc="upper right",
@@ -129,34 +132,50 @@ def fig_emission():
     plt.close(fig)
 
 
+# The dividend interval the deployed KyberSlash division actually sees. After the
+# conditional add the input t is in [0, KYBER_Q), so the dividend (t<<1) + KYBER_Q/2
+# runs over [KYBER_Q/2, 2*KYBER_Q + KYBER_Q/2] = [1664, 8320] (pairs/kyberslash/src).
+# The operand sweeps below run far wider, to characterise the divider; shading this
+# band keeps the reader from reading a decade of the curve as the attack's range.
+def kyber_q() -> int:
+    """The modulus, read from the pair's own header rather than typed here."""
+    hdr = (REPO / "pairs" / "kyberslash" / "src" / "kyber_slash.h").read_text()
+    return int(re.search(r"#define\s+KYBER_Q\s+(\d+)", hdr).group(1))
+
+
+KS_LO = kyber_q() // 2
+KS_HI = (kyber_q() - 1) * 2 + kyber_q() // 2
+
+
+def shade_kyber_range(ax, label=True):
+    ax.axvspan(KS_LO, KS_HI, color=LIGHT, zorder=0)
+    if label:
+        ax.annotate("KyberSlash\noperands", xy=((KS_LO * KS_HI) ** 0.5, 1),
+                    xycoords=("data", "axes fraction"), xytext=(0, -12),
+                    textcoords="offset points", fontsize=6.8, color=WARM,
+                    ha="center", va="top")
+
+
 def fig_graviton():
+    # Single clean panel: the per-udiv latency rising with dividend magnitude on the
+    # Neoverse-V1 (a serial-dependency chain at a fixed dividend, so both classes run
+    # identical code). This is the operand-magnitude dependence that carries F3. The
+    # earlier right panel plotted a low-vs-high end-to-end percentage whose measurement
+    # program generated the two classes with different constant reductions; that number
+    # is confounded and pending re-measurement, so it is not plotted.
     g = json.loads((REPO / "results" / "kyberslash_graviton.json").read_text())
     lat = g["results"]["udiv_latency_operand_dependent"]["ticks_per_udiv"]
-    e2e = g["results"]["end_to_end_coeff_to_bit_Os"]
     xs = [1, 3000, 8000, 1e6, 4e9]
     ys = [lat["dividend_1"], lat["dividend_3000"], lat["dividend_8000"],
           lat["dividend_1e6"], lat["dividend_4e9"]]
 
-    fig, (a, b) = plt.subplots(1, 2, figsize=(5.6, 2.5),
-                               gridspec_kw={"width_ratios": [1.35, 1]})
-    a.plot(xs, ys, "-o", color=TEAL, ms=4, lw=1.4)
+    fig, a = plt.subplots(figsize=(4.6, 2.4))
+    shade_kyber_range(a)
+    a.plot(xs, ys, "-o", color=TEAL, ms=4, lw=1.4, zorder=3)
     a.set_xscale("log")
     a.set_xlabel("dividend magnitude")
     a.set_ylabel("ticks / udiv")
-    a.set_title("latency rises with the operand", fontsize=8.5)
-
-    # Right: the end-to-end operand-magnitude leak, low- vs high-coefficient call
-    # time (the 5.8% separation), not a single-coefficient boundary step.
-    lo, hi = e2e["low_coeffs_ticks_per_call"], e2e["high_coeffs_ticks_per_call"]
-    pct = e2e["delta_percent_of_call"]
-    b.bar([0, 1], [lo, hi], width=0.6, color=[MUTE, WARM])
-    b.set_xticks([0, 1])
-    b.set_xticklabels(["low coeff\n(quot. 0)", "high coeff\n(quot. $\\geq$1)"], fontsize=8)
-    b.set_ylim(min(lo, hi) - 0.25, max(lo, hi) + 0.25)
-    b.set_ylabel("ticks / call")
-    b.set_title("operand-magnitude leak", fontsize=8.5)
-    b.annotate(f"{pct:.1f}\\%", xy=(1, hi), xytext=(0.35, hi + 0.08),
-               fontsize=8, color=WARM, ha="center")
+    a.set_title("Neoverse-V1 udiv latency rises with the operand", fontsize=8.5)
     fig.savefig(FIG / "fig-graviton.pdf")
     plt.close(fig)
 
@@ -171,7 +190,8 @@ def fig_x86_idiv():
 
     fig, (a, b) = plt.subplots(1, 2, figsize=(5.6, 2.5),
                                gridspec_kw={"width_ratios": [1.35, 1]})
-    a.plot(xs, ys, "-o", color=TEAL, ms=4, lw=1.4)
+    shade_kyber_range(a)
+    a.plot(xs, ys, "-o", color=TEAL, ms=4, lw=1.4, zorder=3)
     a.set_xscale("log")
     a.set_xlabel("dividend magnitude")
     a.set_ylabel("TSC ticks / div")
@@ -201,32 +221,36 @@ def fig_x86_idiv():
 
 
 def fig_detection_curve():
+    # What this figure has to show is not a level against a threshold but a SIGN that is
+    # stable within an amplification and flips between amplifications, because that is
+    # what tells a measurement-configuration artifact apart from an operand-dependent
+    # divider. So plot the per-division mean difference of every repetition, signed, with
+    # zero drawn: a real per-division step would sit on one side at every factor.
     d = json.loads((REPO / "results" / "kyberslash_detection_curve.json").read_text())
-    amps = [p["amp"] for p in d["curve"]]
-    ts = [p["abs_t"] for p in d["curve"]]
-    band = d.get("leak_band", 500)
-    # the nonce leak's amplification and t, for contrast
-    nonce_amp, nonce_t = 40, None
-    for line in (REPO / "results" / "verdicts.jsonl").read_text().splitlines():
-        r = json.loads(line)
-        if r.get("tool") == "dudect" and r.get("pair") == "ecdsa-nonce":
-            nonce_t = r.get("vulnerable_max_t")
+    curve = d["curve"]
+    amps = [c["amp"] for c in curve]
+    runs = d.get("runs", len(curve[0]["ticks_per_division_runs"]))
 
-    fig, ax = plt.subplots(figsize=(5.2, 2.6))
-    ax.plot(amps, ts, "-o", color=TEAL, ms=5, lw=1.5, label="KyberSlash division")
-    ax.axhline(band, color=WARM, ls="--", lw=1.2)
-    ax.text(amps[0], band * 1.2, f"dudect leak band ({band})", color=WARM, fontsize=7.5, va="bottom")
-    if nonce_t:
-        ax.plot([nonce_amp], [nonce_t], "s", color=INK, ms=7)
-        ax.annotate(f"nonce leak\n{nonce_t:.0f} at {nonce_amp}$\\times$", xy=(nonce_amp, nonce_t),
-                    xytext=(nonce_amp * 0.42, nonce_t * 0.5), fontsize=7.5, color=INK, ha="center")
-    ax.set_xscale("log", base=2)
-    ax.set_yscale("log")
-    ax.set_xlabel("amplification factor")
-    ax.set_ylabel("dudect $|t|$")
-    ax.set_title("amplification does not surface the division", fontsize=8.5)
-    ax.set_xticks(amps + [nonce_amp])
-    ax.set_xticklabels([str(a) for a in amps] + [str(nonce_amp)], fontsize=7.5)
+    fig, ax = plt.subplots(figsize=(5.2, 2.7))
+    ax.axhline(0, color=INK, lw=1.0)
+    for i, c in enumerate(curve):
+        vals = c["ticks_per_division_runs"]
+        xs = [i] * len(vals)
+        consistent = c["mean_sign_positive_runs"] in (0, len(vals))
+        ax.plot(xs, vals, "o", ms=5, color=(TEAL if consistent else MUTE),
+                alpha=0.85, zorder=3)
+        mean = sum(vals) / len(vals)
+        ax.plot([i - 0.22, i + 0.22], [mean, mean], "-",
+                color=(TEAL if consistent else MUTE), lw=2, zorder=4)
+    ax.set_xticks(range(len(amps)))
+    ax.set_xticklabels([str(a) for a in amps])
+    ax.set_xlabel("amplification factor (divisions chained per measurement)")
+    ax.set_ylabel("mean difference\n(ticks per division)")
+    ax.set_title(f"the sign flips between factors: not the divider ({runs} runs each)",
+                 fontsize=8.5)
+    ax.text(0.99, 0.03,
+            "filled = same sign in every run; grey = sign scattered",
+            transform=ax.transAxes, ha="right", va="bottom", fontsize=6.8, color=MUTE)
     fig.savefig(FIG / "fig-detection-curve.pdf")
     plt.close(fig)
 

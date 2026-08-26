@@ -16,6 +16,7 @@ python3 "$REPO/bin/regen.py" --tex "$TCHES/numbers.tex"
 python3 "$REPO/bin/figures.py"
 python3 "$REPO/bin/recovery_cards.py"
 python3 "$REPO/bin/capability_table.py"
+python3 "$REPO/bin/controls_table.py"
 
 for pkg in sectsty floatrow; do
   if [ ! -f "$TCHES/$pkg.sty" ] && ! kpsewhich "$pkg.sty" >/dev/null 2>&1; then
@@ -33,8 +34,28 @@ for pkg in sectsty floatrow; do
 done
 
 cd "$TCHES"
-pdflatex -interaction=nonstopmode -halt-on-error main.tex >/dev/null
+
+# Fail loudly. A silent LaTeX failure leaves the PREVIOUS main.pdf in place, and every
+# downstream check then reads that stale file: pdfinfo reports its page count, grep finds
+# no undefined references in its log, pdftotext finds no NA in its text. Each of those
+# reads as a pass. The paper went several rounds of edits in that state once, because the
+# build error was sent to /dev/null and nothing compared the PDF's age to its sources.
+run_latex() {
+  if ! pdflatex -interaction=nonstopmode -halt-on-error main.tex >/tmp/paperbuild.log 2>&1; then
+    echo "build_paper: pdflatex FAILED, main.pdf is unchanged and now stale" >&2
+    grep -E "^(!|l\.[0-9])" /tmp/paperbuild.log | head -20 >&2
+    exit 1
+  fi
+}
+run_latex
 bibtex main >/dev/null 2>&1 || true
-pdflatex -interaction=nonstopmode -halt-on-error main.tex >/dev/null
-pdflatex -interaction=nonstopmode -halt-on-error main.tex >/dev/null
+run_latex
+run_latex
+
+# The PDF must be newer than every source it is built from, or it is not this paper.
+newest_src="$(ls -t main.tex numbers.tex sec/*.tex gen/*.tex 2>/dev/null | head -1)"
+if [ "$newest_src" -nt main.pdf ]; then
+  echo "build_paper: main.pdf is older than $newest_src after a successful build" >&2
+  exit 1
+fi
 echo "built paper/tches/main.pdf"

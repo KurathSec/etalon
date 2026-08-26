@@ -1,50 +1,260 @@
 {
   "finding": "kyberslash-x86-detection-curve",
-  "measured_utc": "2026-08-24",
+  "measured_utc": "2026-08-25T07:47:30Z",
   "host": {
-    "_comment": "The x86 acquisition host, captured from this machine (/proc/cpuinfo, /sys) so every host fact the paper states is a regenerated macro rather than a typed claim. Turbo is enabled because disabling it needs root we do not have; that is recorded, not hidden. Regenerable by re-reading /proc/cpuinfo and /sys/devices/system/cpu on the same host.",
+    "_comment": "The x86 acquisition host, captured from this machine by bin/host_facts.py so every host fact in the paper is regenerable rather than typed.",
     "cpu_model": "Intel Core Ultra 9 285H",
-    "microarch": "Arrow Lake",
     "microarch_basis": "CPUID family 6, model 197, stepping 2",
     "cpu_family": 6,
     "cpu_model_num": 197,
     "cpu_stepping": 2,
     "microcode": "0x11b",
-    "smt": "off",
+    "hybrid": true,
+    "pinned_cpu": 2,
+    "pinned_core_type": "performance",
+    "doitm": "not read: /dev/cpu/N/msr requires elevated privileges, not taken here",
+    "smt": "notsupported",
     "turbo": "enabled",
     "governor": "performance",
     "kernel": "7.1.8-200.fc44.x86_64",
-    "machine": "x86_64"
+    "machine": "x86_64",
+    "microarch": "Arrow Lake"
   },
   "regenerable": "on this x86 host: taskset -c 2 python3 pairs/kyberslash/x86/detection_curve.py",
-  "note": "dudect's Welch |t| between below-boundary and above-boundary dividend classes, each measurement a latency chain of AMP idivs kept in its class, M=200000 per class. On a constant-time divider |t| stays below the leak band (500) at every amplification; the nonce pairs cross the leak band at amplification 40 (t=15420), the division does not at amplification 32, so the x86 null is not a hidden sub-noise step waiting for more gain.",
-  "leak_band": 500,
+  "design": "Paired: a below-boundary and an above-boundary dividend timed back to back, which of the two goes first decided by a coin flip per iteration so measurement order cannot masquerade as operand dependence. Each measurement is a latency chain of AMP divisions. The per-run decision is a SIGN-FLIP permutation null over the paired differences, the exact null this design licenses; no band calibrated on another harness is used. 200000 measurements per class per run, 5 repetitions of the whole curve.",
+  "why_repetitions": "Because one run of this is not reproducible. The same amplification gives a large statistic in one run and nothing in the next, so a single run reports the noise rather than the divider. Only quantities stable across repetitions are read as findings here.",
+  "measurements_per_class": 200000,
+  "runs": 5,
+  "permutations_per_point": 2000,
   "curve": [
     {
       "amp": 1,
-      "abs_t": 1.8354
+      "abs_t_runs": [
+        0.752,
+        0.685,
+        0.323,
+        3.344,
+        2.35
+      ],
+      "abs_t_min": 0.323,
+      "abs_t_max": 3.344,
+      "p_runs": [
+        0.69365,
+        0.69715,
+        0.78461,
+        0.0005,
+        0.0005
+      ],
+      "runs_significant_raw": 2,
+      "mean_ticks_runs": [
+        0.22593,
+        0.14864,
+        -0.09085,
+        0.57264,
+        0.49163
+      ],
+      "mean_sign_positive_runs": 4,
+      "sign_consistent": false,
+      "ticks_per_division_runs": [
+        0.22593,
+        0.14864,
+        -0.09085,
+        0.57264,
+        0.49163
+      ]
     },
     {
       "amp": 2,
-      "abs_t": 11.6475
+      "abs_t_runs": [
+        6.97,
+        2.205,
+        6.971,
+        0.048,
+        6.326
+      ],
+      "abs_t_min": 0.048,
+      "abs_t_max": 6.971,
+      "p_runs": [
+        0.0005,
+        0.01199,
+        0.0005,
+        1.0,
+        0.0005
+      ],
+      "runs_significant_raw": 4,
+      "mean_ticks_runs": [
+        -0.26119,
+        -0.12434,
+        -0.28943,
+        -0.01355,
+        -0.35206
+      ],
+      "mean_sign_positive_runs": 0,
+      "sign_consistent": true,
+      "ticks_per_division_runs": [
+        -0.130595,
+        -0.06217,
+        -0.144715,
+        -0.006775,
+        -0.17603
+      ]
     },
     {
       "amp": 4,
-      "abs_t": 11.0212
+      "abs_t_runs": [
+        4.833,
+        1.589,
+        3.684,
+        1.37,
+        4.765
+      ],
+      "abs_t_min": 1.37,
+      "abs_t_max": 4.833,
+      "p_runs": [
+        0.0005,
+        0.0005,
+        0.0005,
+        0.16592,
+        0.0005
+      ],
+      "runs_significant_raw": 4,
+      "mean_ticks_runs": [
+        0.36456,
+        1.49375,
+        0.21271,
+        0.07437,
+        0.4338
+      ],
+      "mean_sign_positive_runs": 5,
+      "sign_consistent": true,
+      "ticks_per_division_runs": [
+        0.09114,
+        0.373437,
+        0.053178,
+        0.018593,
+        0.10845
+      ]
     },
     {
       "amp": 8,
-      "abs_t": 5.9081
+      "abs_t_runs": [
+        7.964,
+        30.514,
+        25.66,
+        24.252,
+        30.099
+      ],
+      "abs_t_min": 7.964,
+      "abs_t_max": 30.514,
+      "p_runs": [
+        0.0005,
+        0.0005,
+        0.0005,
+        0.0005,
+        0.0005
+      ],
+      "runs_significant_raw": 5,
+      "mean_ticks_runs": [
+        1.18812,
+        2.09896,
+        1.48419,
+        1.65436,
+        1.86177
+      ],
+      "mean_sign_positive_runs": 5,
+      "sign_consistent": true,
+      "ticks_per_division_runs": [
+        0.148515,
+        0.26237,
+        0.185524,
+        0.206795,
+        0.232721
+      ]
     },
     {
       "amp": 16,
-      "abs_t": 1.6385
+      "abs_t_runs": [
+        2.635,
+        2.449,
+        1.633,
+        1.656,
+        5.268
+      ],
+      "abs_t_min": 1.633,
+      "abs_t_max": 5.268,
+      "p_runs": [
+        0.01049,
+        0.0005,
+        0.09545,
+        0.08746,
+        0.0005
+      ],
+      "runs_significant_raw": 3,
+      "mean_ticks_runs": [
+        -0.30156,
+        -0.79171,
+        -0.14489,
+        0.31025,
+        -0.52339
+      ],
+      "mean_sign_positive_runs": 1,
+      "sign_consistent": false,
+      "ticks_per_division_runs": [
+        -0.018847,
+        -0.049482,
+        -0.009056,
+        0.019391,
+        -0.032712
+      ]
     },
     {
       "amp": 32,
-      "abs_t": 4.5563
+      "abs_t_runs": [
+        4.795,
+        2.535,
+        9.583,
+        23.203,
+        6.48
+      ],
+      "abs_t_min": 2.535,
+      "abs_t_max": 23.203,
+      "p_runs": [
+        0.0005,
+        0.0005,
+        0.0005,
+        0.0005,
+        0.0005
+      ],
+      "runs_significant_raw": 5,
+      "mean_ticks_runs": [
+        0.86419,
+        0.84627,
+        2.11019,
+        2.55563,
+        0.66846
+      ],
+      "mean_sign_positive_runs": 5,
+      "sign_consistent": true,
+      "ticks_per_division_runs": [
+        0.027006,
+        0.026446,
+        0.065943,
+        0.079863,
+        0.020889
+      ]
     }
   ],
-  "max_abs_t": 11.6475,
-  "crosses_leak_band": false
+  "amps_with_consistent_sign": [
+    2,
+    4,
+    8,
+    32
+  ],
+  "amps_significant_in_every_run": [
+    8,
+    32
+  ],
+  "reading": "A per-division operand-dependent step would show a mean difference of one sign in every run and a per-division magnitude that does not shrink as the chain lengthens. Read the sign-consistency and the ticks_per_division columns, not any single |t|.",
+  "conclusion": "The measured difference is reproducible WITHIN an amplification and changes SIGN BETWEEN amplifications: negative in every one of the repetitions at amp=2, positive in every one at amp=4, 8 and 32, and scattered at amp=1 and 16. An operand-dependent divider latency cannot do that. Whichever dividend is slower on the divider is slower at every chain length, so a sign that depends on how many divisions are chained is a property of the measurement configuration, not of the division. Each amplification is a differently sized unrolled chain, so each has its own code layout, and that is the candidate explanation the sign pattern fits. What the curve does establish is the thing it was built to test: lengthening the chain does not drive the statistic up, so the x86 null is not a sub-noise per-division step waiting for gain. It refutes the 'amplify more' objection by non-scaling, not by non-significance.",
+  "what_this_does_not_show": "It does not show that nothing is measurable here. Several points are significant in every repetition. It shows that what is measurable does not behave like the divider, and that a single run of this experiment cannot tell the two apart, which is why the single-run version of this curve is retracted."
 }

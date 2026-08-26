@@ -1,0 +1,145 @@
+# Machine-checkable consistency rules for the paper, enforced by bin/paper_check.py.
+#
+# WHY THIS FILE EXISTS
+# Across blind-review rounds 6 to 8 the referees' blocking items were dominated by one
+# class: a claim corrected in the body while a stale copy survived in a table, a caption or
+# an appendix, and a percentage printed beside a numerator it does not divide. Every one of
+# those is individually well formed, so no LaTeX or number gate sees it, and each round of
+# fixes created the next round's findings. That is the same failure the corpus already has
+# a control for (INST-1) pointed at the manuscript instead of the instruments.
+#
+# Two rules, both declarative:
+#   [[retired]]  a claim that was withdrawn. It must not appear anywhere in the paper.
+#   [[ratio]]    a printed percentage must equal its printed numerator over its printed
+#                denominator, both read from numbers.tex, within tolerance.
+
+# ---------------------------------------------------------------- retired claims
+[[retired]]
+phrase = "absolute residual is about the same in both"
+retired_in = "sec/fixes.tex, round 8"
+allow_in = ["sec/fixes.tex"]   # the passage that performs the withdrawal quotes it
+why = """The absolute residual at the isolated site and end to end were quoted as agreeing,
+which presumes the two regions are comparable. The containment anomaly means they are not
+known to be, so the cross-check was withdrawn in the body and must not survive elsewhere."""
+
+[[retired]]
+phrase = "The two bases also disagree"
+retired_in = "sec/fixes.tex, round 8"
+why = "Comparing the shapes of the two bases presumes the same comparability the paper withdrew."
+
+[[retired]]
+phrase = "this one cell of"
+retired_in = "sec/fixes.tex, round 8"
+why = "wolfSSL has no row in tab:fixes; prose must not point at one."
+
+[[retired]]
+phrase = "of the call, \\mxResidualPerSig"
+retired_in = "sec/fixes.tex, round 8"
+why = "The site's tick figure was printed beside the end-to-end percentage, which divides a different numerator."
+
+# ---------------------------------------------------------------- printed ratios
+# num / den must equal pct. Macros are read from the generated numbers.tex, so this
+# catches a rounded denominator that stops the printed arithmetic reproducing.
+[[ratio]]
+num = "gravDeltaTicks"
+den = "gravCallTicks"
+pct = "gravDeltaPercent"
+tol = 0.15
+why = "0.391 over a denominator printed as 2.1 gives 18.6%, not the 19.1% printed beside it."
+
+[[ratio]]
+num = "mxSigDelta"
+den = "mxSigTicks"
+pct = "mxResidualPerSig"
+tol = 0.02
+why = "The end-to-end residual must divide the end-to-end signature cost, not the isolated call."
+
+[[retired]]
+phrase = "the leak is attenuated"
+retired_in = "main.tex, round 9"
+why = """The attenuation factor was a ratio of two single acquisitions on separately built
+arms on a host whose frequency is not pinned, so the within-run bootstrap intervals do not
+bound it. Directions and class differences are reported instead."""
+
+[[retired]]
+phrase = "the cross-check that the"
+retired_in = "sec/fixes.tex, round 9"
+allow_in = ["sec/fixes.tex"]
+why = "Superseded by the containment arithmetic, which rules out the whole-signature region rather than merely noting a discrepancy."
+
+[[retired]]
+phrase = "The arithmetic settles which one fails"
+retired_in = "sec/fixes.tex, round 13"
+why = """7.7 instructions per tick is at or near peak retire width, sustained on
+dependency-bound big-integer arithmetic, so the isolated region is not exonerated either.
+All three figures are mutually impossible and which is wrong is undetermined."""
+
+[[retired]]
+phrase = "within what a wide core can retire"
+retired_in = "sec/fixes.tex, round 13"
+why = "Same overclaim: it presented an implausible retire rate as a plausible one."
+
+[[retired]]
+phrase = "reaches deployment is established by"
+retired_in = "sec/fixes.tex, round 13"
+why = "The abstract and conclusion say supported-not-established; section 3 must not say established."
+
+# ---------------------------------------------------------------- relocations
+# Added 2026-08-26 BEFORE the structural reframe, deliberately. Every worst finding of the
+# thirteen blind-review rounds came from editing a claim and leaving a copy behind, and the
+# reframe moves roughly 40% of the body text between files. Each rule below names a claim
+# that CHANGES HOME: the phrase is legal in its destination (allow_in) and nowhere else, so
+# a copy left in the source file fails the check.
+#
+# These rules FAIL until the corresponding move is finished. That is intended: they are the
+# migration's own checklist, and paper_check goes green only when the last copy is gone.
+
+[[retired]]
+phrase = "The site is a choice, and every result is indexed by it"
+retired_in = "sec/threats.tex -> sec/fixes.tex, restructure"
+allow_in = ["sec/fixes.tex"]
+why = """The clearest instance of the paper's thesis was filed as a threat to validity. It
+becomes a result in the libgcrypt case and must not survive in the limitations section."""
+
+[[retired]]
+phrase = "The pilot used a fixed"
+retired_in = "sec/method.tex -> sec/app-stats.tex, restructure"
+allow_in = ["sec/app-stats.tex"]
+why = "The two-rule tau post-mortem is appendix material; only the corollary stays in the body."
+
+[[retired]]
+phrase = "binaries reproducing their recorded digest"
+retired_in = "sec/method.tex -> sec/f2-toolchain.tex, restructure"
+allow_in = ["sec/f2-toolchain.tex"]
+why = "BIN-1 is what makes the emission map airtight; it belongs with the claim it certifies."
+
+[[retired]]
+phrase = "The adversary is the one each reproduced attack assumes"
+retired_in = "sec/method.tex -> sec/index.tex, restructure"
+allow_in = ["sec/index.tex"]
+why = "The threat model instantiates the attack-model index and belongs with the index set."
+
+[[retired]]
+phrase = "Selecting the fastest"
+retired_in = "sec/fixes.tex -> sec/app-measure.tex, restructure"
+allow_in = ["sec/app-measure.tex"]
+why = """The selection-contamination analysis defends a negative the reframe no longer needs
+defended, and every number in it comes from a trace the artifact does not carry."""
+
+[[retired]]
+phrase = "tool-by-item rows"
+retired_in = "sec/method.tex -> sec/app-defs.tex, restructure"
+allow_in = ["sec/app-defs.tex"]
+why = "The applicability arithmetic goes where the grid already lives; the body keeps the rule."
+
+[[retired]]
+phrase = "remove} the secret-dependent operation"
+retired_in = "sec/fixes.tex -> sec/index.tex, restructure"
+allow_in = ["sec/index.tex"]
+why = "The five-outcome taxonomy is the range of the site-closure axis, so it belongs with the formulation."
+
+[[retired]]
+phrase = "an instruction-class verdict is a proposition about the binary alone"
+retired_in = "sec/app-defs.tex -> sec/index.tex, restructure"
+allow_in = ["sec/index.tex"]
+why = "The verdict semantics are the thesis in symbols and were sitting on page 28."

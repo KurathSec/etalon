@@ -31,26 +31,26 @@
     {
       "tool": "dudect",
       "class": "exploit_path=lattice-hnp/granularity=bit/observable=address-data/origin=source-level/secret_role=nonce",
-      "detected": 0,
+      "detected": 1,
       "n": 1,
-      "recall": "0/1",
+      "recall": "1/1",
       "outcomes": [
         [
           "ecdsa-address",
-          "non_discriminating"
+          "detected"
         ]
       ]
     },
     {
       "tool": "dudect",
       "class": "exploit_path=lattice-hnp/granularity=bit/observable=latency/origin=source-level/secret_role=nonce",
-      "detected": 0,
+      "detected": 1,
       "n": 1,
-      "recall": "0/1",
+      "recall": "1/1",
       "outcomes": [
         [
           "ecdsa-nonce",
-          "non_discriminating"
+          "detected"
         ]
       ]
     },
@@ -144,7 +144,6 @@
       "outcome": "non_discriminating"
     }
   ],
-  "crossover_finding": "C1 confirmed, now on four analysers. dudect detects both nonce timing leaks (latency and address-data, 1/1 each) but MISSES the KyberSlash division on this fast x86 divider and is inconclusive (budget_exhausted) on the rejection sampler. varlat and binsec both DETECT KyberSlash where dudect misses it, by different means: varlat instruments the idiv on secret data, binsec proves the secret-dependent dividend symbolically without measuring time. timecop is non-discriminating on the OpenSSL nonce pairs and on the ladder, flagging the constant-time patched arm too, and is blind by construction to the variable-latency division class, yet it detects the pure-C rejection-sampling branch that dudect could not decide. binsec, being symbolic, cannot enter the OpenSSL scalar multiplications or the observation-only pairs, so it contributes tier-C detections rather than recall rows. Four analysers, four distinct capability profiles, on real deployed leaks certified by key recovery. KyberSlash and the rejection sampler are tier C, so those detections are recorded outcomes, not recall-denominator entries; the crossovers are nonetheless real.",
   "note": "Recall over applicable tier-A/B corpus pairs, per named class with its n. varlat and binsec have no tier-A/B recall entry: their detections are on the tier-C KyberSlash and rejection-sampling pairs, and the tier-A/B pairs are either OpenSSL scalar multiplications (intractable for binsec's symbolic execution and not built as a varlat harness) or observation-only (Minerva, TPM-FAIL), recorded as inapplicable rather than as misses.",
   "exploit_recall_note": "recall_per_class is exploit recall: red on the vulnerable arm and clean on the patched arm.",
   "policy_recall_per_class": [
@@ -219,9 +218,9 @@
       "tool": "dudect",
       "pair": "ecdsa-address",
       "scored_against": "exploit",
-      "exploit_discriminates": false,
+      "exploit_discriminates": true,
       "policy_detects_vulnerable": true,
-      "flags_uncertified_patched_arm": true
+      "flags_uncertified_patched_arm": false
     },
     {
       "tool": "timecop",
@@ -235,9 +234,9 @@
       "tool": "dudect",
       "pair": "ecdsa-nonce",
       "scored_against": "exploit",
-      "exploit_discriminates": false,
+      "exploit_discriminates": true,
       "policy_detects_vulnerable": true,
-      "flags_uncertified_patched_arm": true
+      "flags_uncertified_patched_arm": false
     },
     {
       "tool": "timecop",
@@ -285,43 +284,89 @@
     {
       "tool": "binsec",
       "false_positives": 0,
-      "n": 2,
-      "precision": "2/2",
+      "n": 4,
+      "precision": "4/4",
       "certified_negatives": [
         "certified-fiat",
-        "certified-fiat-add"
+        "certified-fiat-add",
+        "certified-fiat-square",
+        "certified-fiat-bytes"
       ]
     },
     {
       "tool": "dudect",
       "false_positives": 0,
-      "n": 2,
-      "precision": "2/2",
+      "n": 4,
+      "precision": "4/4",
       "certified_negatives": [
         "certified-fiat",
-        "certified-fiat-add"
+        "certified-fiat-add",
+        "certified-fiat-square",
+        "certified-fiat-bytes"
       ]
     },
     {
       "tool": "timecop",
       "false_positives": 0,
-      "n": 2,
-      "precision": "2/2",
+      "n": 4,
+      "precision": "4/4",
       "certified_negatives": [
         "certified-fiat",
-        "certified-fiat-add"
+        "certified-fiat-add",
+        "certified-fiat-square",
+        "certified-fiat-bytes"
       ]
     },
     {
       "tool": "varlat",
       "false_positives": 0,
-      "n": 2,
-      "precision": "2/2",
+      "n": 4,
+      "precision": "4/4",
       "certified_negatives": [
         "certified-fiat",
-        "certified-fiat-add"
+        "certified-fiat-add",
+        "certified-fiat-square",
+        "certified-fiat-bytes"
       ]
     }
   ],
-  "policy_precision_note": "PR-3. A general false-positive rate over certified constant-time negatives (formally verified code), kept separate from the site-local patched-arm count and from every recall denominator. A tool that errors and cannot analyse a function is excluded."
+  "policy_precision_note": "PR-3. A general false-positive rate over certified constant-time negatives (formally verified code), kept separate from the site-local patched-arm count and from every recall denominator. A tool that errors and cannot analyse a function is excluded.",
+  "crossover_summary": {
+    "binsec": {
+      "detected": [
+        "hmac-timing(tier A)",
+        "hqc-reject(tier C)",
+        "kyberslash(tier C)"
+      ]
+    },
+    "dudect": {
+      "detected": [
+        "ecdsa-address(tier A)",
+        "ecdsa-nonce(tier A)",
+        "hmac-timing(tier A)",
+        "hqc-reject(tier C)"
+      ],
+      "missed": [
+        "kyberslash(tier C)"
+      ]
+    },
+    "timecop": {
+      "detected": [
+        "hmac-timing(tier A)",
+        "hqc-reject(tier C)"
+      ],
+      "non_discriminating": [
+        "ecdsa-address(tier A)",
+        "ecdsa-nonce(tier A)",
+        "ladderleak(tier C)"
+      ]
+    },
+    "varlat": {
+      "detected": [
+        "hmac-timing(tier A)",
+        "kyberslash(tier C)"
+      ]
+    }
+  },
+  "crossover_summary_note": "Derived from verdicts.jsonl on the run that wrote this file: for each tool, the applicable corpus pairs grouped by outcome, with each pair's tier. Tier C outcomes are recorded detections and enter no recall denominator."
 }

@@ -1,4 +1,10 @@
 #include "scalarmul.h"
+/* Amplification, overridable at build time with -DAMP=n for the registered
+ * detection curve. The default is the committed value, so an unparameterised
+ * build of this file is exactly what it was. */
+#ifndef AMP
+#define AMP 40
+#endif
 /* VULNERABLE ARM: secret-indexed table access (address leak) plus a
  * bit-length-dependent window count (timing leak).
  *
@@ -38,7 +44,7 @@ int scalar_mul(EC_GROUP *group, EC_POINT *R, const BIGNUM *k, BN_CTX *ctx) {
   {
     EC_POINT *tmp = EC_POINT_new(group);
     EC_POINT_copy(tmp, G);
-    for (int j = 0; j < 40 * bits; j++) EC_POINT_dbl(group, tmp, tmp, ctx);
+    for (int j = 0; j < AMP * bits; j++) EC_POINT_dbl(group, tmp, tmp, ctx);
     EC_POINT_free(tmp);
   }
 done:

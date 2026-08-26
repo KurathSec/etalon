@@ -1,4 +1,9 @@
+/* Amplification, overridable at build time with -DAMP=n so the registered
+ * detection curve can sweep it. The default is the committed value: an
+ * unparameterised build of this file is byte-for-byte what it was. */
+#ifndef AMP
 #define AMP 40
+#endif
 #include "scalarmul.h"
 /* VULNERABLE ARM. Reproduces the Minerva mechanism (CVE-2019-13627).
  *

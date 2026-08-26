@@ -29,6 +29,7 @@ secret_role  = "message"
 origin       = "source-level"
 granularity  = "byte"
 exploit_path = "direct-recovery"
+certification_channel = "latency"
 mechanism_classes = ["secret-branch"]
 rationale = """
 observable is latency and not address-data: the work per byte is identical in
@@ -43,6 +44,10 @@ distinct facet tuple the census names as the early-exit comparison cell.
 """
 
 [provenance]
+provenance_kind = "synthetic-reproduction"
+provenance_kind_note = """
+Both arms are written here to reproduce OpenVPN's early-exit tag comparison. The per-byte work loop is identical in both arms and is not an asymmetry: it widens the difference the early exit already creates so it clears rdtsc jitter, and it cannot manufacture one, since the patched arm runs the same work for every byte.
+"""
 upstream_repo   = "reproduction of the OpenVPN openvpn_decrypt HMAC comparison"
 disclosed       = "2013-05-07"
 advisory        = ["CVE-2013-2061"]

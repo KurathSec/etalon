@@ -39,7 +39,8 @@ def load_adapter(name: str):
     return m
 
 
-def applicable(tool: dict, pair_mechanisms: list, has_harness: bool) -> tuple[bool, str]:
+def applicable(tool: dict, pair_mechanisms: list, has_harness: bool,
+               has_source: bool = False) -> tuple[bool, str]:
     """Compute applicability from mechanism, not from the attacker's channel.
 
     A pair's `observable` is what an attacker measures; it is not what an
@@ -57,8 +58,59 @@ def applicable(tool: dict, pair_mechanisms: list, has_harness: bool) -> tuple[bo
     if not (mech & detects):
         return False, f"mechanism: tool detects {sorted(detects)}, pair exhibits {sorted(mech)}"
     if not has_harness:
-        return False, "no runnable harness for this pair (scored on recorded observations)"
+        # Distinguish "there is no program to run" from "there is a program but we
+        # built no harness for this tool". The first is a property of the pair, the
+        # second is an effort boundary of ours, and reporting the second as the first
+        # misattributes our own gap to the corpus.
+        if has_source:
+            return False, ("no harness built here for this tool, though the pair ships "
+                           "runnable source (an effort boundary, not a property of the pair)")
+        return False, "no runnable program for this pair (scored on recorded observations)"
     return True, ""
+
+
+FDR = 0.05
+
+
+def _apply_bh_to_dudect(rows: list[dict], q: float = FDR) -> None:
+    """Downgrade any dudect arm whose uncorrected p does not survive BH control.
+
+    Only downgrades. An arm the per-run rule already called clean is never promoted
+    by a multiplicity correction, and an arm it called a leak becomes clean only
+    because the family says that p is the expected borderline result rather than a
+    finding. Every downgrade is recorded in the row so it is visible, not silent.
+    """
+    fam = []
+    for r in rows:
+        if r.get("tool") != "dudect":
+            continue
+        for who in ("vulnerable", "patched"):
+            pv = r.get(f"{who}_permutation_p")
+            if pv is not None:
+                fam.append((pv, r, who))
+    if not fam:
+        return
+    fam.sort(key=lambda x: x[0])
+    m = len(fam)
+    k = 0
+    for i, (pv, _, _) in enumerate(fam, start=1):
+        if pv <= i * q / m:
+            k = i
+    for i, (pv, r, who) in enumerate(fam, start=1):
+        if i > k and r.get(f"{who}_status") == "leak_reported":
+            r[f"{who}_status"] = "clean"
+            r.setdefault("bh_downgraded", []).append(
+                f"{who} (uncorrected p={pv:.4f} does not survive BH at FDR {q} "
+                f"over {m} dudect arms)")
+
+
+def _facet_names() -> set[str]:
+    """The class facets, from the vocabulary that defines them."""
+    c = tomllib.loads((REPO / "data" / "classes.toml").read_text())
+    return set(c.get("facet", {}))
+
+
+FACET_NAMES = _facet_names()
 
 
 def main() -> int:
@@ -97,15 +149,19 @@ def main() -> int:
             man = tomllib.loads((pair / "pair.toml").read_text())
             role = man["pair"].get("role")
             tier = man["pair"].get("tier")
-            cls = {k: v for k, v in man["class"].items()
-                   if k not in ("rationale", "mechanism_classes")}
+            # Allowlist from the closed vocabulary, never "all keys except a few".
+            # The denylist form silently promotes any new [class] field to a facet,
+            # which is how the census join broke once already; recall grouping would
+            # break the same way, and just as quietly.
+            cls = {k: v for k, v in man["class"].items() if k in FACET_NAMES}
             mech = man["class"].get("mechanism_classes", [])
             # A pair is runnable by this tool if it ships source and a config for
             # this tool's harness family.
             harness_cfg = pair / "harness" / f"{tool_name}.toml"
-            has_harness = harness_cfg.exists() and any((pair / "src").glob("*.c"))
+            has_source = any((pair / "src").glob("*.c"))
+            has_harness = harness_cfg.exists() and has_source
 
-            ok, reason = applicable(tool, mech, has_harness)
+            ok, reason = applicable(tool, mech, has_harness, has_source)
             row = {"tool": tool_name, "pair": pair.name, "role": role,
                    "tier": tier, "class": cls}
             if not ok:
@@ -118,11 +174,18 @@ def main() -> int:
             patch = adapter.score(pair, "patched")
             hit = vuln["status"] == "leak_reported"
             fp = patch["status"] == "leak_reported"
-            if hit and not fp:
+            # A detection requires the patched arm to be RESOLVED clean, not merely
+            # "not red". An unresolved patched arm (budget exhausted, error) cannot
+            # underwrite a discrimination: the tool may simply not have run long
+            # enough to flag it, and counting that as a detection inflates recall.
+            unresolved = ("budget_exhausted", "error", "inconclusive")
+            if hit and patch["status"] in unresolved:
+                outcome = "inconclusive"
+            elif hit and not fp:
                 outcome = "detected"        # red on the bug, green on the fix
             elif hit and fp:
                 outcome = "non_discriminating"  # flags both arms
-            elif vuln["status"] in ("budget_exhausted", "error", "inconclusive"):
+            elif vuln["status"] in unresolved:
                 outcome = vuln["status"]
             else:
                 outcome = "missed"
@@ -131,9 +194,10 @@ def main() -> int:
                         "patched_status": patch["status"],
                         "vulnerable_max_t": vuln.get("max_t"),
                         "patched_max_t": patch.get("max_t")})
-            # dudect (PR-3) also reports the budget-invariant tau and the effect
-            # size in ticks with a bootstrap CI; carry them so the paper can quote a
-            # magnitude, not only a threshold crossing.
+            # dudect also reports tau (a REPORTED effect size under PR-4, deciding
+            # nothing), the effect in ticks with a bootstrap CI, and the permutation
+            # p-value its verdict rests on; carry them so the paper can quote a
+            # magnitude and a reader can re-decide without re-measuring.
             for who, res in (("vulnerable", vuln), ("patched", patch)):
                 if res.get("max_tau") is not None:
                     row[f"{who}_max_tau"] = res.get("max_tau")
@@ -141,7 +205,17 @@ def main() -> int:
                     row[f"{who}_ci"] = [res.get("ci_low"), res.get("ci_high")]
                     if res.get("raw"):
                         row[f"{who}_raw"] = res.get("raw")
+                if res.get("permutation_p") is not None:
+                    row[f"{who}_permutation_p"] = res.get("permutation_p")
             rows.append(row)
+
+    # Multiplicity across the family the corpus actually decides at once. Each
+    # adapter sees one run and can only report an uncorrected p; the corpus decides
+    # many arms together, so over eighteen arms a borderline uncorrected p is the
+    # expected count when nothing is there. Benjamini-Hochberg over every dudect arm
+    # is therefore applied HERE, where the family is visible, and it is what promotes
+    # an uncorrected call to a reported verdict. Registered in PR-4.
+    _apply_bh_to_dudect(rows)
 
     # With --pair, keep every other pair's committed rows (the sealed pilot
     # statistics) and replace only this pair's, so recall below is computed over the
@@ -150,7 +224,14 @@ def main() -> int:
         existing = [json.loads(l) for l
                     in (REPO / "results" / "verdicts.jsonl").read_text().splitlines()
                     if l.strip()]
-        if a.tool:
+        # Replace exactly the cells this run rescored. With both filters that is one
+        # (tool, pair) cell: dropping every row of the tool, as an earlier revision
+        # did, would delete that tool's other committed rows and silently shrink the
+        # matrix.
+        if a.tool and a.pair:
+            rows = [r for r in existing
+                    if not (r.get("tool") == a.tool and r.get("pair") == a.pair)] + rows
+        elif a.tool:
             rows = [r for r in existing if r.get("tool") != a.tool] + rows
         else:
             rows = [r for r in existing if r.get("pair") != a.pair] + rows
@@ -266,6 +347,24 @@ def main() -> int:
                                  "unadjudicated site-local false positive of the threats "
                                  "section, not a discrimination failure.")
     doc["tier_c_detections"] = tier_c
+    # The crossover summary is DERIVED, never curated. A hand-written version of this
+    # drifted out of agreement with the very fields beside it (it claimed detections on
+    # pairs the rows record as non-discriminating), which is the drift the number gate
+    # exists to prevent, so it is regenerated from the rows on every run.
+    doc.pop("crossover_finding", None)
+    by_tool = {}
+    for r in rows:
+        if not r.get("applicable") or r.get("role") != "corpus":
+            continue
+        by_tool.setdefault(r["tool"], {}).setdefault(r["outcome"], []).append(
+            f"{r['pair']}(tier {r['tier']})")
+    doc["crossover_summary"] = {
+        t: {o: sorted(ps) for o, ps in sorted(outs.items())}
+        for t, outs in sorted(by_tool.items())}
+    doc["crossover_summary_note"] = (
+        "Derived from verdicts.jsonl on the run that wrote this file: for each tool, "
+        "the applicable corpus pairs grouped by outcome, with each pair's tier. Tier C "
+        "outcomes are recorded detections and enter no recall denominator.")
     rpath.write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8")
 
     if a.json:

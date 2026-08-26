@@ -1,0 +1,61 @@
+{
+  "finding": "Binary confirmation that the secret-dependent operation is gone at the site on each patched arm, not merely believed to be. Requested as a check on the nonce pairs specifically, where the emission control that covers the division pairs does not reach.",
+  "method": "objdump --disassemble=<entry symbol> on the built harness of each arm, recording the exact function bytes and their digest, plus the set of functions the site calls or tail-jumps to.",
+  "arms": {
+    "ecdsa-nonce/vulnerable": {
+      "symbol": "scalar_mul",
+      "function_bytes": 293,
+      "sha256_function": "adb5680a42c194dc7c1da30a90aaaf905fe410e2526c76767baa056e5a1a7a48",
+      "calls": [
+        "BN_is_bit_set",
+        "BN_num_bits",
+        "EC_GROUP_get0_generator",
+        "EC_POINT_add",
+        "EC_POINT_copy",
+        "EC_POINT_dbl",
+        "EC_POINT_free",
+        "EC_POINT_new",
+        "EC_POINT_set_to_infinity",
+        "scalar_mul"
+      ]
+    },
+    "ecdsa-nonce/patched": {
+      "symbol": "scalar_mul",
+      "function_bytes": 13,
+      "sha256_function": "ad9a58afbed306d876412a9940f6b783529f0577227c3a36696d95d175e0a72e",
+      "calls": [
+        "EC_POINT_mul"
+      ]
+    },
+    "ecdsa-address/vulnerable": {
+      "symbol": "scalar_mul",
+      "function_bytes": 456,
+      "sha256_function": "0c4130bea0e6ecafa1117649e6b033adba948c052c2d2d26e097328eb3506d4f",
+      "calls": [
+        "BN_free",
+        "BN_is_bit_set",
+        "BN_new",
+        "BN_num_bits",
+        "BN_set_word",
+        "EC_GROUP_get0_generator",
+        "EC_POINT_add",
+        "EC_POINT_copy",
+        "EC_POINT_dbl",
+        "EC_POINT_free",
+        "EC_POINT_mul",
+        "EC_POINT_new",
+        "EC_POINT_set_to_infinity"
+      ]
+    },
+    "ecdsa-address/patched": {
+      "symbol": "scalar_mul",
+      "function_bytes": 13,
+      "sha256_function": "ad9a58afbed306d876412a9940f6b783529f0577227c3a36696d95d175e0a72e",
+      "calls": [
+        "EC_POINT_mul"
+      ]
+    }
+  },
+  "reading": "Each patched arm's scalar_mul is a four-instruction tail jump to OpenSSL's EC_POINT_mul: the hand-written multiplication is not merely fixed, it is absent from the binary, and with it every secret-dependent construct the vulnerable arm contains. The nonce pair's vulnerable arm calls BN_num_bits, the secret bit-length read the leak is built on, and the patched arm contains no such call. The address pair's vulnerable arm carries the windowed table loop instead. So a clean verdict on either patched arm is not a tool being fooled by a subtle fix; there is nothing left at the site to detect.",
+  "scope": "This confirms the SITE, not the whole build: the OpenSSL routine the patched arms delegate to is taken as constant time on its own authority, not certified here. A taint checker flagging that routine's internals is therefore an unadjudicated observation about deployed library code rather than a false positive."
+}

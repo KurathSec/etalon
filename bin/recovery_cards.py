@@ -45,6 +45,12 @@ def amp_factor(pair_dir: Path):
     # bound is the per-byte amplification factor over a single deployed compare.
     w = pair_dir / "src" / "work.c"
     if w.exists():
+        # The guarded #define first: every pair's amplification became a build-time
+        # parameter (-DAMP=n) so the registered detection curve could sweep it, and a
+        # reader of the loop bound now finds the macro name rather than the value.
+        m = re.search(r"#define\s+AMP\s+(\d+)", w.read_text())
+        if m:
+            return m.group(1)
         m = re.search(r"for\s*\(\s*int\s+i\s*=\s*0;\s*i\s*<\s*(\d+);", w.read_text())
         if m:
             return m.group(1)
@@ -67,6 +73,13 @@ def card(pair_dir: Path) -> dict | None:
         "pair": pair_dir.name,
         "tier": man["pair"].get("tier"),
         "cve": ", ".join(prov.get("advisory", []) or ["--"]),
+        # Provenance separates a pair built from upstream RELEASES from one whose
+        # arms we wrote. Every tool score in this paper rests on the latter, and a
+        # reader cannot check that unless the table says so.
+        "prov": {"release-pair": "release", "vendored-reproduction": "vendored",
+                 "synthetic-reproduction": "synthetic",
+                 "observation-dataset": "observed"}.get(
+                     prov.get("provenance_kind", ""), "--"),
         "doi": ", ".join(prov.get("doi", []) or ["--"]),
         "sigs": acq.get("sigs") or rec.get("full_instance") or "--",
         "library": ("fpylll" if "dimension" in params else
@@ -89,15 +102,19 @@ def render(cards: list[dict]) -> str:
          r" manifests and the vendored attack's parameters. The recovery verifies from"
          r" committed observations under the published key (controls ORC-1/2); the"
          r" amplification factor is the disclosed divergence from the deployed original,"
-         r" read from the pair's driver.}",
+         r" read from the pair's driver. Prov. is how the two arms were obtained:"
+         r" \emph{release} is two upstream release tarballs, \emph{vendored} is upstream"
+         r" code excised verbatim, \emph{synthetic} is arms written here to reproduce the"
+         r" mechanism, \emph{observed} is a recorded dataset whose patched arm is modelled.}",
          r"\label{tab:recovery}", r"\footnotesize", r"\setlength{\tabcolsep}{3pt}",
-         r"\begin{tabular}{@{}llllrrl@{}}", r"\toprule",
-         r"Pair & Tier & Advisory & Recovery & $n_{\mathrm{sig}}$ & Amp. & Oracle \\",
+         r"\begin{tabular}{@{}lllllrrl@{}}", r"\toprule",
+         r"Pair & Tier & Prov. & Advisory & Recovery & $n_{\mathrm{sig}}$ & Amp. & Oracle \\",
          r"\midrule"]
     for c in cards:
         recov = (f"lattice, dim\\,{c['lattice_dim']}, BKZ\\,{c['bkz']}"
                  if c["lattice_dim"] != "--" else "direct")
-        L.append(f"{tex_escape(c['pair'])} & {c['tier']} & {tex_escape(c['cve'])} & "
+        L.append(f"{tex_escape(c['pair'])} & {c['tier']} & {tex_escape(c['prov'])} & "
+                 f"{tex_escape(c['cve'])} & "
                  f"{recov} & {c['sigs']} & {tex_escape(c['amp'])}$\\times$ & "
                  f"{_abbr(c['expect_v'])}/{_abbr(c['expect_p'])} \\\\")
     L += [r"\bottomrule", r"\end{tabular}", r"\end{table}", ""]

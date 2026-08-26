@@ -45,6 +45,10 @@ whole corpus is built to make measurable.
 """
 
 [provenance]
+provenance_kind = "vendored-reproduction"
+provenance_kind_note = """
+The vulnerable arm is pq-crystals/kyber's coeff_to_bit excised verbatim at the pre-fix commit; the patched arm applies upstream's fix to that same source.
+"""
 upstream_repo   = "pq-crystals/kyber"
 upstream_commit = "a621b8dde405cc507cbcfc5f794570a4f98d69cc"
 vulnerable_commit = "a621b8dde405cc507cbcfc5f794570a4f98d69cc"
@@ -150,8 +154,12 @@ time of coeff_to_bit leaks one bit per coefficient, whether the coefficient
 exceeds about 833. End to end the real reduction takes 6.02 ticks per call for
 low coefficients and 6.37 for high, a roughly one cycle secret dependent
 difference, cleanly measurable. This is much quieter than the deployed Cortex-A7
-leak, which is tens of cycles because ArmV7 has no hardware divider and the
-compiler emits software __aeabi_idiv. Same source, same -Os build, tens of cycles
+leak, which is tens of cycles because the build emits the software helper
+__aeabi_idiv rather than a divide instruction. The reason is the build target, not
+the core: the Cortex-A7 does implement UDIV and SDIV, and a distribution image
+compiled for ARMv6, where the instruction is not architecturally available, lowers
+the division to that helper. So this is the toolchain-pinning finding acting at a
+third target rather than a property of the core alone. Same source, same -Os build, tens of cycles
 on one core and about one cycle on another: the toolchain pinning finding extends
 to microarchitecture. A key recovery was not run on Graviton, so the pair stays
 tier C.
@@ -159,6 +167,6 @@ tier C.
 
 [[divergence.structured]]
 axis       = "microarchitecture"
-deployed   = "Cortex-A7, ArmV7 software division __aeabi_idiv, tens of cycles"
+deployed   = "Cortex-A7 running an ARMv6-target build, software division __aeabi_idiv, tens of cycles; the core itself has UDIV/SDIV, so the helper comes from the build target"
 reproduced = "Neoverse V1 hardware udiv, a one cycle step at dividend = divisor"
 effect     = "the leak class is present on both, but its magnitude is a property of the microarchitecture, not only the source or the build"

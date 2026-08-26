@@ -1,0 +1,56 @@
+{
+  "finding": "Retired-instruction counts per nonce class settle what a timing difference alone cannot: the MatrixSSL residual is ALGORITHMIC, not microarchitectural. Classes with an identical digit count, and therefore an identical loop bound, execute different numbers of instructions.",
+  "why_it_settles_it": "Equal instruction counts with a timing gap would mean the two classes run the same work and differ only in memory or alignment behaviour, which is a property of the host. Different counts mean the code really does different work, which is a property of the code and is what the paper claims.",
+  "method": "valgrind --tool=callgrind over 200 calls of eccMulmod on the 4-3-0-open build, one nonce class per run, scalar fixed within a run so the count is deterministic. Harness count_mx.c; built and run inside the pinned varlat image so the library, the harness and the tool share one glibc.",
+  "gotcha": "A first attempt ran the host-built binary inside the image and every class reported an identical 40,630 instructions. That was the dynamic loader failing on a glibc version mismatch, four times, not a finding of equal work. Identical counts across classes are exactly what this experiment would report as 'microarchitectural', so the failure mode looks like a result: check that the harness actually ran.",
+  "counts_200_calls": {
+    "256": 8526638492,
+    "255": 8519162145,
+    "193": 8508548738,
+    "192": 6435722328
+  },
+  "per_call": {
+    "256": {
+      "digits": 4,
+      "leading_zeros": 0,
+      "instructions": 42633192,
+      "delta_vs_256": 0,
+      "percent_vs_256": 0.0
+    },
+    "255": {
+      "digits": 4,
+      "leading_zeros": 1,
+      "instructions": 42595811,
+      "delta_vs_256": -37382,
+      "percent_vs_256": -0.088
+    },
+    "193": {
+      "digits": 4,
+      "leading_zeros": 63,
+      "instructions": 42542744,
+      "delta_vs_256": -90449,
+      "percent_vs_256": -0.212
+    },
+    "192": {
+      "digits": 3,
+      "leading_zeros": 64,
+      "instructions": 32178612,
+      "delta_vs_256": -10454581,
+      "percent_vs_256": -24.522
+    }
+  },
+  "reading": "255 against 256, the design the paper's headline rests on, holds the digit count at 4 and still differs by about 37,000 instructions per call. The loop bound is identical there, so the difference is the leading-zero phase executing different work, which is the mechanism claimed. 193 against 256 holds the digit count at 4 with 63 leading zeros and the gap grows to about 90,000. 192 against 256 crosses a digit boundary and the gap jumps to 10.5 million, about 25%, which is the loop bound biting exactly where the arithmetic says it can. The three deltas order the same way as the statistical decomposition's |t| of 17.7, 1197 and 8371.",
+  "sublinearity_note": "63 leading zeros cost only about 2.4 times the instruction delta of 1, not 63 times. That is itself evidence for the general claim rather than against the mechanism: the dummy operations run on operands whose magnitude changes as the phase proceeds, and pstm's routines are variable time in the operand's used digit count, so per-iteration cost is not a constant. An operation-count balance cannot be a cost balance on such a substrate.",
+  "sign": "Fewer bits means fewer instructions and, in the timing data, a faster signature. The two measurements agree in sign as well as in ordering.",
+  "generator": "scratchpad harness count_mx.c under callgrind; counts transcribed here",
+  "direction": {
+    "measured": "Each leading zero makes the call CHEAPER, not dearer, and the cost is strongly sublinear in the count: the FIRST leading zero accounts for 37,382 of the 90,449 instructions that sixty-three save, so the remaining sixty-two add only about 855 each.",
+    "first_leading_zero": 37382,
+    "sixty_three_leading_zeros": 90449,
+    "per_additional_after_the_first": 855,
+    "correction": "An earlier revision quoted 1,436 instructions as the cost of one leading zero. That is 90,449/63, the sixty-three-zero average, presented as the one-zero figure, and it is out by a factor of 26 against the 37,381 measured directly two designs away. The error was introduced while correcting the sign of this same effect.",
+    "why_sublinear": "The sublinearity is itself evidence for the mechanism rather than an awkwardness. In the dummy path M[0] and M[1] are never updated, so the phase runs on the loop's initial operands; the first dummy iteration is what stops the accumulation, and further ones run on state that is already small. If the extra big-integer copies were the dominant term the cost would instead scale with the count of leading zeros, because each dummy iteration pays for three of them.",
+    "why_it_matters": "The dummy path pays for three big-integer copies the real path skips, which on its own predicts the opposite sign. It also feeds FIXED operands through arithmetic that is variable time in operand magnitude. The measurement says the second term dominates, and the sublinear shape says so twice over.",
+    "not_isolated": "We have not separated the two terms quantitatively. That needs an ablation build with the dummy doubling made in place, which is not among the committed dumps."
+  }
+}

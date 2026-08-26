@@ -1,6 +1,6 @@
 {
   "finding": "kyberslash-graviton-microarch",
-  "measured_utc": "2026-08-24",
+  "measured_utc": "2026-08-25",
   "host": {
     "cpu": "AWS Graviton3 (Neoverse-V1)",
     "cpuid_part": "0x41:0xd40",
@@ -22,41 +22,47 @@
     "udiv_latency_operand_dependent": {
       "note": "Serial dependency chain. Unlike the flat x86 divider, the Neoverse-V1 udiv latency RISES with dividend magnitude (more significant quotient bits cost more): this is the leak.",
       "ticks_per_udiv": {
-        "dividend_1": 2.42963,
-        "dividend_3000": 2.43065,
-        "dividend_8000": 2.83504,
-        "dividend_1e6": 3.24015,
-        "dividend_4e9": 4.45514
+        "dividend_1": 2.42946,
+        "dividend_3000": 2.42956,
+        "dividend_8000": 2.83475,
+        "dividend_1e6": 3.24001,
+        "dividend_4e9": 4.45536
       }
     },
     "operand_magnitude_leak": {
       "note": "The exploitable signal is operand-magnitude: low coefficients (dividend < 3329, quotient 0) run faster than high coefficients (quotient >= 1). This is NOT a single-coefficient boundary step.",
-      "low_coeff_ticks_per_udiv": 2.43065,
-      "high_coeff_ticks_per_udiv": 2.83504
+      "low_coeff_ticks_per_udiv": 2.42956,
+      "high_coeff_ticks_per_udiv": 2.83475
     },
     "single_bit_boundary_step": {
       "note": "Adjacent coefficients 832 (dividend 3328, quotient 0) and 833 (dividend 3330, quotient 1) are indistinguishable in udiv time: the single-bit recovery step is SUB-NOISE on this hardware divider, unlike the software division the published Cortex-A7 attack used.",
-      "step_ticks": -0.00018,
-      "noise_floor_ticks": 0.00153
+      "step_ticks": 5e-05,
+      "noise_floor_ticks": 0.00146
     },
     "end_to_end_coeff_to_bit_Os": {
       "note": "Two-class over the real coeff_to_bit, min-of-11 batches, 10 repeats. Low class = coeff in [0,832] (quotient 0), high = [1664,3328] (quotient >= 1). The operand-magnitude delta a full reduction call carries.",
-      "low_coeffs_ticks_per_call": 6.0228,
-      "high_coeffs_ticks_per_call": 6.3739,
-      "secret_dependent_delta_ticks": 0.35105000000000003,
+      "low_coeffs_ticks_per_call": 2.052,
+      "high_coeffs_ticks_per_call": 2.4438,
+      "secret_dependent_delta_ticks": 0.39134,
       "delta_ci_ticks": [
-        0.3506,
-        0.3517
+        0.3897,
+        0.3927
       ],
-      "delta_percent_of_call": 5.83
+      "delta_percent_of_call": 19.07
     },
     "dudect_on_aarch64": {
-      "note": "W6 control: dudect run on the aarch64 KyberSlash build (coeff_to_bit at -Os, the udiv-emitting cell), fixed-vs-random over the secret coefficient, using the cntvct_el0 virtual counter (PMCCNTR_EL0 is gated). It reads CLEAN at 2.9M measurements: the per-call operand-magnitude signal sits below the coarse virtual counter resolution, even though the min-of-millions batch estimator above resolves a 5.8% magnitude difference. So the statistical timing test reads the division clean on this Arm host too, not only on x86; the instruction-class tools flag the udiv regardless of host.",
-      "max_t": 1.98,
-      "max_tau": 0.00116,
-      "measurements": 2900000,
-      "verdict": "clean",
-      "reproduce": "patch dudect.h cpucycles to read cntvct_el0, drop the x86 headers, gcc -Os coeff driver + pairs/kyberslash/src/vulnerable.c, taskset -c 2"
+      "note": "CORRECTED 2026-08-25, and the correction changes the reason rather than the verdict. An earlier revision reported this control as clean because its budget-invariant tau 'converged downward with measurement count, the signature of a null effect'. That inference was invalid: E[tau^2] ~ d^2/4 + 1/n falls with n for EVERY effect size, so a downward tau proves nothing, and only the asymptote separates a null (slope -1/2 on log-log) from a fixed effect (slope 0). Worse, the statistic it was computed from is not meaningful on this counter.",
+      "counter_resolution_finding": "cntvct_el0 quantises the measurement far too coarsely for a per-call test of this function: a coeff_to_bit call is 7 or 8 ticks. Over 400000 committed measurements there are only 99 distinct tick values and 86% of them are exactly 7. dudect's crop ladder therefore contains crops holding a single repeated value, on which Welch's t is 0/0; the earlier |t| trajectory was dominated by that artifact, not by a timing difference.",
+      "verdict_permutation": {
+        "statistic": "max |Welch t| over dudect's first-order crop ladder, crops with zero within-class variance excluded",
+        "measurements": 400000,
+        "observed_max_abs_t": 1.583,
+        "p_value": 0.621,
+        "detected": false,
+        "tool": "bin/dudect_permute.py, 2000 label shuffles stratified within batch"
+      },
+      "verdict": "not detected: the per-call statistical test does not resolve the division on this host. This is a RESOLUTION limit, not evidence of absence. The serial-chain measurement resolves the operand-magnitude effect at 0.41 ticks per udiv, which is below one tick of this counter, so no per-call test on cntvct_el0 can see it at any budget. The cycle-accurate PMU is privileged on a virtualised instance, which is why the coarse counter is the one available.",
+      "reproduce": "patch dudect.h cpucycles to read cntvct_el0 and _mm_mfence to __sync_synchronize, drop the x86 headers, gcc -Os dudect_coeff_driver.c + pairs/kyberslash/src/vulnerable.c -lm, DUDECT_RAW_DUMP set, taskset -c 2; then bin/dudect_permute.py on the dump."
     },
     "recovery_assessment": {
       "note": "Attempted per the tier-A goal; not feasible cheaply on Graviton3. The one-bit-per-coefficient recovery needs the adjacent-coefficient (single-bit boundary) step, which is sub-noise here; the resolvable signal is operand magnitude (batch estimator only), and a per-call timing test reads clean on the virtual counter. The published recovery used the Cortex-A7 software-division routine (tens of cycles, sharply operand-dependent), a different and louder mechanism. KyberSlash therefore stays tier C, now with a measured reason rather than an assumed one."

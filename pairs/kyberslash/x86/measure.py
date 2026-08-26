@@ -16,9 +16,10 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent.parent
 OUT = REPO / "results" / "kyberslash_x86_idiv.json"
 
-def build(src, extra):
+def build(src, extra, libs=()):
     exe = HERE / (Path(src).stem)
-    subprocess.run(["gcc", *extra, str(HERE / src), "-o", str(exe)], check=True)
+    # Libraries go after the source, which the linker requires.
+    subprocess.run(["gcc", *extra, str(HERE / src), "-o", str(exe), *libs], check=True)
     return exe
 
 def run(exe):
@@ -57,6 +58,12 @@ def main():
     # the isolated divl chain. On this out-of-order divider the low-vs-high class
     # difference is small but nonzero: the x86 rung of the host-magnitude ladder.
     leak = run(build("ks_leak_x86.c", ["-O2"]))
+    # Per-call sensitivity for the SAME low-vs-high magnitude design, with the order
+    # within each pair randomised. This answers what the end-to-end number alone
+    # cannot: whether a per-call operand-magnitude step is resolvable at all on this
+    # host, and at what budget, so the clean scored verdict can be read as a located
+    # sensitivity floor rather than an unqualified null.
+    sens = run(build("magnitude_sensitivity.c", ["-O2"], libs=["-lm"]))
     # The end-to-end binary is the REAL coeff_to_bit at -Os, where the emission map
     # records gcc emitting a hardware division. Confirm the idiv is actually there.
     div_in_os = idiv_count_source("Os")
@@ -106,14 +113,38 @@ def main():
                 "signal_to_noise": snr,
             },
             "end_to_end_coeff_to_bit_Os": {
-                "note": "two-class fixed-vs-random over the real coeff_to_bit with the division "
-                        "forced to a hardware idiv, min-of-11 batches of M each. Low class = coeff "
-                        "in [0,833), high class = coeff in [1664,3329). The x86 rung of the "
-                        "host-magnitude ladder; the single-bit recovery step (above) stays sub-noise.",
+                "note": "two-class low-vs-high magnitude over the real coeff_to_bit with the "
+                        "division forced to a hardware idiv, min-of-11 batches of M each. Low "
+                        "class = coeff in [0,833), high class = coeff in [1664,3329). Operands "
+                        "are generated outside the timed region, from the same seed, and both "
+                        "classes are timed by the same loop over a precomputed array, so the two "
+                        "classes execute identical instructions and differ only in the values fed "
+                        "to the divider. An earlier revision generated each class inside the timed "
+                        "loop with a different constant modulus and a different seed, which "
+                        "conflated the divider's operand dependence with the cost of the operand "
+                        "generation; the delta below is the corrected measurement. This is the x86 "
+                        "rung of the host-magnitude ladder; the single-bit recovery step (above) "
+                        "stays sub-noise.",
                 "low_coeffs_ticks_per_call": leak.get("e2e_low"),
                 "high_coeffs_ticks_per_call": leak.get("e2e_high"),
                 "secret_dependent_delta_ticks": leak.get("e2e_delta"),
                 "delta_percent_of_call": leak.get("e2e_pct"),
+            },
+            "per_call_magnitude_sensitivity": {
+                "note": "low-vs-high magnitude as a per-call two-class test, operands "
+                        "precomputed, order within each pair randomised (timing the two "
+                        "classes in a fixed order makes the second systematically cheaper "
+                        "and shows up as a ~1-tick offset carrying the sign of the "
+                        "ordering, not of the operand). tau = |t|/sqrt(n) is comparable "
+                        "to the scored dudect verdicts and to the calibrated null band. "
+                        "The per-call step is resolvable while the pipelined end-to-end "
+                        "difference above is not: out-of-order execution absorbs it in a "
+                        "realistic loop, which is why the scored fixed-vs-random verdict "
+                        "reads clean.",
+                "design": "low [0,833) vs high [1664,3329), paired, order randomised",
+                "by_n": {k: v for k, v in sens.items() if k.startswith("n_")},
+                "mean_ticks_at_max_n": sens.get("n_4000000_mean_ticks"),
+                "tau_at_max_n": sens.get("n_4000000_tau"),
             },
             "tsc_ghz": ghz,
         },

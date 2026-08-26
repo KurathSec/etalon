@@ -66,7 +66,12 @@ def main():
                    "of the committed observations, seed varied; a probabilistic attack, so "
                    "the rate is a real measurement, not trivially one.",
            "results": results}
-    (REPO / "results" / "recovery_robustness.json").write_text(json.dumps(doc, indent=2) + "\n")
+    # One file per pair. A fixed output path meant sweeping a second pair silently
+    # overwrote the first pair's curve, which is how a committed result disappears.
+    name = ("recovery_robustness.json" if a.pair == "ecdsa-nonce"
+            else f"recovery_robustness_{a.pair}.json")
+    (REPO / "results" / name).write_text(json.dumps(doc, indent=2) + "\n")
+    print("wrote results/" + name)
     print(json.dumps(results, indent=2))
 
 

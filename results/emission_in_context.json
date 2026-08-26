@@ -1,0 +1,123 @@
+{
+  "finding": "Emission measured after inlining into the calling loop, not only on the isolated function. Asked for because a caller's range information can change how a compiler lowers a division, which would make the isolated emission map an artifact of the measurement rather than a fact about shipped builds.",
+  "method": "The same two arms compiled inside poly_tomsg_ctx, the reference's one-bit-per-coefficient packing loop, in each of the pinned cells. Division instructions are counted over the WHOLE object, not just the caller: at -O0 neither compiler inlines a static inline callee, so counting only the caller would have reported zero for a build where the division is plainly present in a sibling symbol. Source: pairs/kyberslash/src/inlined_context.c.",
+  "cells": [
+    {
+      "cell": "gcc-12.2.0-O0",
+      "arm": "vulnerable",
+      "division_instructions": 0,
+      "callee_still_a_separate_symbol": true,
+      "build_failed": false
+    },
+    {
+      "cell": "gcc-12.2.0-O0",
+      "arm": "patched",
+      "division_instructions": 0,
+      "callee_still_a_separate_symbol": true,
+      "build_failed": false
+    },
+    {
+      "cell": "gcc-12.2.0-O2",
+      "arm": "vulnerable",
+      "division_instructions": 0,
+      "callee_still_a_separate_symbol": false,
+      "build_failed": false
+    },
+    {
+      "cell": "gcc-12.2.0-O2",
+      "arm": "patched",
+      "division_instructions": 0,
+      "callee_still_a_separate_symbol": false,
+      "build_failed": false
+    },
+    {
+      "cell": "gcc-12.2.0-O3",
+      "arm": "vulnerable",
+      "division_instructions": 0,
+      "callee_still_a_separate_symbol": false,
+      "build_failed": false
+    },
+    {
+      "cell": "gcc-12.2.0-O3",
+      "arm": "patched",
+      "division_instructions": 0,
+      "callee_still_a_separate_symbol": false,
+      "build_failed": false
+    },
+    {
+      "cell": "gcc-12.2.0-Os",
+      "arm": "vulnerable",
+      "division_instructions": 1,
+      "callee_still_a_separate_symbol": false,
+      "build_failed": false
+    },
+    {
+      "cell": "gcc-12.2.0-Os",
+      "arm": "patched",
+      "division_instructions": 0,
+      "callee_still_a_separate_symbol": false,
+      "build_failed": false
+    },
+    {
+      "cell": "clang-14.0.6-O0",
+      "arm": "vulnerable",
+      "division_instructions": 1,
+      "callee_still_a_separate_symbol": true,
+      "build_failed": false
+    },
+    {
+      "cell": "clang-14.0.6-O0",
+      "arm": "patched",
+      "division_instructions": 0,
+      "callee_still_a_separate_symbol": true,
+      "build_failed": false
+    },
+    {
+      "cell": "clang-14.0.6-O2",
+      "arm": "vulnerable",
+      "division_instructions": 0,
+      "callee_still_a_separate_symbol": false,
+      "build_failed": false
+    },
+    {
+      "cell": "clang-14.0.6-O2",
+      "arm": "patched",
+      "division_instructions": 0,
+      "callee_still_a_separate_symbol": false,
+      "build_failed": false
+    },
+    {
+      "cell": "clang-14.0.6-O3",
+      "arm": "vulnerable",
+      "division_instructions": 0,
+      "callee_still_a_separate_symbol": false,
+      "build_failed": false
+    },
+    {
+      "cell": "clang-14.0.6-O3",
+      "arm": "patched",
+      "division_instructions": 0,
+      "callee_still_a_separate_symbol": false,
+      "build_failed": false
+    },
+    {
+      "cell": "clang-14.0.6-Os",
+      "arm": "vulnerable",
+      "division_instructions": 0,
+      "callee_still_a_separate_symbol": false,
+      "build_failed": false
+    },
+    {
+      "cell": "clang-14.0.6-Os",
+      "arm": "patched",
+      "division_instructions": 0,
+      "callee_still_a_separate_symbol": false,
+      "build_failed": false
+    }
+  ],
+  "isolated_comparison": {
+    "disagreements": []
+  },
+  "conclusion": "The emission map is unchanged by context. In all 16 cells, for both arms, the inlined build emits a division exactly where the isolated build does: the vulnerable arm under gcc at -Os and clang at -O0, and nowhere else. So F2's map is a property of the (compiler, optimisation) cell rather than of compiling the function in isolation, and the objection that context would change the lowering does not materialise in these cells.",
+  "detail_worth_keeping": "At -O0 both compilers leave the callee as its own symbol rather than inlining it, so 'inlined context' is the source arrangement, not always the emitted one. That is why the count is taken over the object and why the per-cell symbol presence is recorded here rather than assumed."
+}

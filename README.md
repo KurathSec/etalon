@@ -1,11 +1,20 @@
 # etalon
 
-A known-answer recall corpus for constant-time analysers.
+A recovery-certified check for whether deployed constant-time fixes hold.
 
-Every constant-time analyser a practitioner can install today prints a verdict.
-None of them reports recall against a set of deployed timing leaks whose
-exploitability was established independently of a tool. There is no denominator.
-This is the denominator.
+A constant-time fix is a timing claim: that after the patch, the running time no
+longer depends on the secret. That claim is rarely checked against the shipped code,
+and a tool that prints leak or clean on one build cannot tell a fix that holds from
+one that only looks like it. etalon is the instrument that can: deployed leaks
+reproduced as matched vulnerable and patched builds, each carrying a key recovery
+certified by arithmetic, with the patched build established constant-time at the leak
+site. Its headline use, pointed at three real Minerva remediations, finds one shipped
+fix (MatrixSSL's, on by default) that does not hold. It doubles as a known-answer
+recall corpus for the analysers themselves, the role most of the dated history below
+describes.
+
+_The sections below the status line are an append-only, dated record; the framing
+above supersedes the "denominator" framing they open with (see the 2026-08-25 entry)._
 
 ## What it is
 
@@ -17,6 +26,14 @@ model is involved.
 
 Against that, each installed analyser gets a measured recall per leak class,
 with its `n`.
+
+## Extending it
+
+`docs/adding-a-pair.md` is the specification: the pair manifest schema field by field,
+the tool adapter interface, which control catches which mistake, and a worked example
+that adds a pair from another paper by following that document and nothing else. It also
+names the two mistakes that cost this project the most, timing your own scaffolding and
+caricaturing the two classes, so the next person does not have to rediscover them.
 
 ## What it is not
 
@@ -221,3 +238,480 @@ reads clean on both x86 and Graviton; the instruction-class tools flag the `udiv
 regardless. The tier-A recovery was attempted and is not feasible cheaply here (sub-noise
 single-bit, dudect clean), so KyberSlash stays tier C with a measured reason. The paper
 prose, macros, and `fig-graviton` were corrected throughout.
+
+Recall-benchmark phase, 2026-08-24 (UTC). A real deployed-library pair was built rather
+than faked: `pairs/libgcrypt-minerva` compiles libgcrypt 1.8.4 and 1.8.5 from their pinned
+source tarballs (offline, checksummed in `acquire/`), signs a fixed digest on this host
+under random nonces with both builds, and the vendored Minerva lattice attack recovers the
+1.8.4 key (its guess reproduces that run's public key, verified here) and fails on 1.8.5.
+ORC-1/2 both pass. This is the tier-A upgrade of the observation-only `minerva` pair: both
+arms are measured real builds, not a modelled constant-time column, so CVE-2019-13627 is now
+reproduced rather than only cited, and it is the real-library provenance the review asked
+for. Tier A goes from three pairs to four, recall-eligible from five to six, corpus pairs
+from eight to nine.
+
+This corrects the note above ("from-source library builds this offline environment cannot
+run"): they can, and this one did. What it does NOT do is raise the analyser recall past
+`n=1`, and the reason is measured, not a shortfall. libgcrypt's Minerva fix is in its
+internal ECDSA signing, where the nonce is a secure-memory scalar whose multiplication is
+clamped to the field bit-length; the public `gcry_mpi_ec_mul` an installed analyser would
+drive never reaches that path and leaks the scalar bit-length in BOTH 1.8.4 and 1.8.5
+(measured, `acquire/record.json`). A per-arm analyser verdict on that primitive would report
+a property of the public API, unchanged across the patch, not of the deployed fix, so the
+pair is scored end to end by recovery (its analysers are inapplicable, exactly like the
+observation datasets) and the analysers are scored on the buildable `ecdsa-nonce`
+reproduction, which relocates the fix into the primitive on purpose. The real pair certifies
+that the reproduced mechanism recovers a real libgcrypt key; it does not manufacture a
+tool-scored replicate, so the per-class analyser recall stays `n=1` and is stated as such.
+
+Third review, and a reframe, 2026-08-25 (UTC). A third-party review (W1-W15) grounded
+against source separated genuine defects from staleness once more. The load-bearing defect
+was ours: the nonce pairs' "residual" that had been read as a tool blind spot was a harness
+artifact (the dudect driver timed its own BIGNUM conversion, and its classes were a
+10-bit-vs-256-bit caricature). Fixed, dudect discriminates both nonce pairs (exploit recall
+1/1, reversing the round-2 reading). The x86 F3 end-to-end number was confounded (two
+operand classes used different constant reductions inside the timed loop; the delta fell
+from 1.6% to ~0 when corrected), and the Graviton twin had the same confound. Re-measured
+2026-08-25 on a fresh c7g: corrected, x86 reads ~0 (flat idiv) and Graviton reads 19.1%
+(delta 0.391 ticks, tight CI), a sharper contrast than the confounded 5.8%; the aarch64
+dudect control reads clean with tau converging down to 0.0043 while native |t| crosses 10,
+a clean validation of the budget-invariant-tau rule. Kaufmann et al. (CANS 2016) added;
+timecop's capability corrected to
+include address leaks; a detection can no longer rest on an unresolved patched arm; the
+controls appendix is generated from selfcheck.py; host facts (P-core, DOITM) are now
+regenerable.
+
+The reframe, at the user's direction: the paper's spine moves from three findings about
+analysers (F1/F2/F3) to a single question the instrument is built to answer, whether a
+deployed constant-time fix actually holds. Pointed at three real Minerva remediations, it
+finds three outcomes. libgcrypt fixed the leak upstream of the primitive an analyser can be
+pointed at. wolfSSL's fix holds, over a deployed leak its own dummy-operation balancing had
+already reduced to 0.03%. MatrixSSL (CVE-2019-13629) added a constant-time scalar
+multiplication by default, "in response to the Minerva attack," that still sets its loop
+bound from the secret nonce's digit count: the fix is incomplete, its residual measurable
+(dudect tau 0.551 pre-fix to 0.123 fixed, same-length control clean) and present through the
+latest open release (4.6.0). The leak carries a recoverable key; end-to-end recovery from
+raw timing is host-conditional and not achieved on this fast benchmark core. MatrixSSL's
+sources are an archived mirror (upstream withdrawn post-Rambus) and are marked as such.
+F1/F2/F3 are demoted to supporting evidence for why a single tool verdict is not this check.
+Evidence in `results/fix_verification.json` and `pairs/{libgcrypt,matrixssl}-minerva/`; new
+headline section `sec/fixes.tex`.
+
+Fourth review, 2026-08-25 (UTC). Two entries above are superseded, and both were
+load-bearing claims of ours rather than reviewer misreadings. **Read this before quoting
+either.**
+
+*The MatrixSSL mechanism was wrong.* The residual was attributed to `eccMulmodCt` still
+taking its loop bound from `get_digit_count(k)`. That is arithmetically impossible for the
+measured design: a pstm digit is 64 bits, so a 255-bit and a 256-bit nonce occupy the same
+four digits and run the identical 256 iterations. A four-design decomposition, holding the
+digit count fixed while varying bit length, locates the leading-zero phase instead, whose
+dummy add and double are balanced by operation count but not by cost (the dummy double is
+out-of-place, forcing three big-integer copies on magnitude-variable arithmetic). `|t|`
+runs 1.4 at equal length, 18 at one leading zero, 1197 at sixty-three, and 8371 once the
+digit count really differs. Pre-fix 97 to fixed 18 is about fivefold attenuation, not
+removal, and it replicates on aarch64 (87 to 17, control 1.15). The loop bound is real but
+needs a nonce short by a whole digit, which a uniform nonce is 2^-64 likely to be. The
+general claim is stronger than the old one: balancing control flow by operation count does
+not give constant time on variable-time arithmetic.
+
+*The verdict rule was not a valid test.* A fixed band on `tau = |t|/sqrt(n)` is not
+budget-invariant under the null: `|t|` is O(1) when nothing is there, so tau falls as
+n^-1/2, and the band that means `|t|=3.7` at n=40k means `|t|=59` at n=1e7. Our own
+0.73-tick replicated effect sat below it. A falling tau also proves nothing, since tau
+decreases with n for every effect size, so the "tau converges down, therefore null" reading
+of the aarch64 control is **withdrawn**. Replaced by `bin/dudect_permute.py --assemble`: a
+permutation null from each run's own committed samples, labels shuffled within batch,
+absorbing dudect's 102 crops, Benjamini-Hochberg controlled across all 18 arms. It
+reproduces every published verdict. The correct aarch64 reading is not detected (p=0.62)
+because the effect is below one tick of `cntvct_el0`, a resolution limit rather than a
+clean verdict. Note in the record: `kyberslash_patched` carries an uncorrected p of 0.022
+that BH declines, which is the expected count of borderline results over 18 tests, and it
+is reported rather than dropped.
+
+*Exploitability relabelled.* "The leak carries a recoverable key" assumed the oracle: that
+lattice run was fed nonces labelled with the key it was meant to recover. MatrixSSL is now
+leak-presence certified, recovery pending. The "fast host" excuse was also wrong, and
+measurement refuted it: on the same host, AUC between timing and nonce shortness is 0.63
+for MatrixSSL against 0.80 for libgcrypt, with 31% against 3.3% contamination in the
+fastest 90 signatures. It is information content, not host noise (`bin/exploit_budget.py`).
+
+Also this round: every pair with a local recovery declares the channel that recovery
+consumes (`class.certification_channel`), enforced by a new control CLS-6, because
+`ecdsa-address` declares an address observable while its lattice runs on a co-located
+timing channel, so its tier certifies the nonce bit-length and not the address trace. The
+leak-class counter in `bin/build.py` matched opcodes only, so the software-division helpers
+named in KyberSlash's declared class could never fire; it now matches call targets too. That change is verified to alter no committed count two ways: rebuilding every locked pair reproduces its recorded `.text` digest, and recounting the 49 committed disassemblies under both matchers gives identical numbers. The `hmac-timing` pair, which declares a required cell, turned out never to have been locked, so `BIN-2` was silently not checking it; it is built and locked now (the leak is emitted in all eight cells), and `BIN-2` now names any pair that declares a cell without a locked build instead of passing over it in silence. A new control `STAT-1` digests each committed dudect dump against the permutation row computed from it, because that record is minutes of compute and nothing regenerates it on the way to a build. `bin/build.py` also merges into the lock rather than replacing it: a `--pair` run used to write a lock containing only that pair. Amplification is stated per pair rather than in
+general, and the general form was wrong: it is asymmetric on the two nonce pairs (the
+loop is in the vulnerable arm only), symmetric on the HMAC and rejection pairs (the
+same loop runs in both arms, widening a difference the control flow already makes), and
+absent on the division pair. The `hmac-timing` and `hqc-reject` divergence notes
+carried the same error and are corrected. The
+fix outcomes get a taxonomy (removed, relocated, attenuated, reshaped, incomplete), the
+survey's triage records all five candidates including the two not built, and the three
+MatrixSSL builds are pinned by tag commit and archive digest. The paper is now 32 pages.
+
+Closing the fourth review's remaining items, 2026-08-25 (UTC). An audit of all 44 review
+items against the repository found 11 addressed, 23 partly, 8 not, and 2 excluded by
+instruction (the disclosure action, and new hardware). Closing them surfaced a regression
+of our own that had been shipping in clean builds.
+
+*Coverage was wrong, and the machinery said nothing.* Adding `certification_channel` to the
+`[class]` block of `pair.toml` lengthened every corpus pair's facet tuple from five keys to
+six. The census attests five-facet cells, so six of nine pairs matched nothing, coverage
+fell from 7 of 11 to 3 of 11, and the uncovered list grew to eight, naming cells that pairs
+already cover. The paper printed 27.3% through several builds that passed every gate. The
+cause is that the covered-set filter was a denylist, "every `[class]` key except two", so
+any new field is silently promoted to a facet; it is now an allowlist read from the closed
+vocabulary. No control caught it because `CLS-5` checks only that the coverage arithmetic is
+self-consistent, and 11 - 3 = 8 is as consistent as 11 - 7 = 4. A new control `CLS-7` joins
+every corpus pair to an attested census cell and fails naming any orphan; it was verified by
+planting a facet break and watching it fire. Coverage is 7 of 11 again, corroborated by the
+review's own reference to four uncovered cells.
+
+*Exploitability is now measured rather than argued.* `results/exploit_budget.json` records,
+on the same host and estimator, an AUC between signing time and nonce shortness of 0.63 for
+the MatrixSSL residual against 0.80 for the libgcrypt leak that does yield, with the fastest
+90 signatures 44% contaminated against 3.3% at a matched budget, improving only to 27% when
+this arm's budget is raised forty-fold. That is what "recovery pending" means quantitatively.
+Getting there required catching a key/trace mismatch: pairing the 250k trace with the wrong
+private key gives an AUC of 0.4993, which is the signature of random labels rather than a
+finding. The libgcrypt key is not assumed; it is what that pair's own committed recovery
+returns. The retracted claims are out of `results/fix_verification.json`, the acquisition
+script and the evidence note, which had all kept the loop-bound attribution and the
+"host-conditional" excuse after the paper dropped them.
+
+*Registered rather than narrated.* `preregistration/PR-4-permutation-verdict.md` registers
+the permutation rule and records the deviations this round created: that PR-3's band was
+applied before being retired, that its prediction C7 was falsified by the harness fix, and
+that PR-2's five-pair detection curve remains unrun and still rests on the retired band.
+
+Also: policy recall renamed to policy detection and always paired with the patched-arm alarm
+count (3 of 9 for the taint checker); dudect's crop ladder, its excluded second-order test,
+and both counter frequencies stated so ticks convert to cycles; and coverage bracketed across
+facet granularities, 56% to 70% around the 63.6% point value, which is the disagreement that
+exposed the regression above.
+
+The last of the fourth review's items, 2026-08-25 (UTC). Two remained: the five-pair
+detection curve this project registered in advance and had never run, and a
+certified-negative set too small to support the false-positive rate it fed. Both are
+closed, and both went against us.
+
+*The registered curve falsifies a registered expectation.* Each pair's amplification was
+compiled into its arms, which is why the curve had gone unrun for two revisions; each now
+guards its constant with `#ifndef AMP`, so the factor is a build-time parameter and the
+default build is byte-identical to what was committed. Run over all five pairs at factors
+one through eight, on both arms, decided by permutation: **four of the five already reject
+their null at factor one**. The nonce pairs read |t| = 17 unamplified, the message pair
+220, the rejection sampler 165. The amplification those pairs carry is therefore not what
+earns their detections, and the caveat this work has been repeating, that a detection is
+earned at an amplitude we chose, is weaker than we had stated it. The shapes also separate
+three behaviours a single factor hides: the nonce pairs grow with gain (17 to 59,
+asymmetric amplification of a real effect), the rejection sampler is flat (165 to 165,
+symmetric amplification scaling signal and noise together), and the message pair climbs
+steeply (220 to 1901, symmetric but against a fixed overhead). The division stays null
+across the range, corroborating the separate paired sweep by an independent route.
+
+*The prior-work comparison was wrong in our favour, twice.* Sweeping the libgcrypt pair to
+its boundary gives N*(p=1) = 6000 signatures and N*(p=0.5) = 3000, against the 1200 Minerva
+reports for real cryptographic library data: we are five times less efficient on the same
+kind of target. An earlier entry in this file claimed a factor under two, by comparing
+their real-library result against our amplified reproduction, which needs 2000. The
+amplified pair is cheaper precisely because it is amplified, so that was never the
+like-for-like comparison. It is printed the unflattering way now.
+
+*The certified-negative set is doubled*, from the general multiply and the add/sub/carry
+chain to include the squaring path and serialisation, the last chosen because it is the
+shape most likely to draw a spurious flag from an address-sensitive checker. Four pairs by
+four analysers, sixteen scorings, zero false positives.
+
+One control earned its place in the process. Adding those two pairs committed four new raw
+dumps and left the permutation record describing only the previous eighteen; every other
+gate passed, and `STAT-1` failed and named the four files. Nothing else in the repository
+cross-checks that record against the samples on disk.
+
+A control for the class of error this round kept producing, 2026-08-25 (UTC). Several
+defects found while closing the fourth review shared one structure, and it is worth a
+mechanism rather than a warning.
+
+For a measurement that seeks a null, an instrument that fails produces the same
+observation as the result being sought. A profiler whose binary never loaded reports
+identical instruction counts between two classes, which reads as "the difference is
+microarchitectural rather than algorithmic". A consistency check that iterates a field its
+input does not carry reports no discrepancies. A correlation computed against a mismatched
+key returns an AUC of one half, which reads as "the timing carries no information". An
+instruction counter pointed at a caller whose callee was not inlined reports a
+division-free build. Every one of those is a clean reading, and this corpus's findings are
+largely clean readings, so nothing downstream has cause to question one. There is a
+second, harder variant: a failure that produces the result which merely looks
+conservative. The census join broke and coverage fell, and this repository's own prose
+calls a falling coverage "the honest direction".
+
+The corpus already had the answer and was applying it in one direction only. `SENT-1` and
+`SENT-2` void an analyser's rows unless it detects a planted leak and stays clean on a
+certified one, at the same build and invocation. `INST-1` turns that inward: every
+instrument the corpus reports through is now exercised on two committed inputs whose
+answers are known, one loud and one quiet. The permutation null must reject the planted
+sentinel and must not reject the certified-clean arm; the leak-class counter must find a
+division in a cell recorded as emitting one and none in a cell recorded as emitting none;
+the information measure must see a planted association between timing and a secret bit and
+must not see one once the labels are shuffled. A one-sided check cannot catch this class,
+because the failure is the quiet side.
+
+`META-1` enforces a rule this file has stated since it was written and never checked: no
+control may report a pass having examined nothing. The suite now inspects its own results
+and fails if any pass is hollow. Seventeen controls, and both new ones were verified by
+planting a failure rather than by watching them pass.
+
+One detail worth keeping. `FW-1`, the vocabulary firewall, rejected the new control's own
+docstring for a reserved cross-repository term. The firewall stores digests rather than
+plaintext, so the hit was located by hashing the line's n-grams and reporting only its
+shape, never the word. A control caught the controls, because it was watching a property
+their author was not thinking about, which is the same reason `META-1` inspects results
+rather than trusting each control's self-report.
+
+Blind panel review, 2026-08-25 (UTC). A second review process was built alongside the
+grounded one and is kept because the two find different things. Three referees and an
+action editor read the rendered submission and nothing else: no repository, no data, no
+prior rounds, no sight of one another. A grounded reviewer catches numbers that disagree
+with their source. A blind referee catches what a reader catches, which is a claim the
+paper does not carry, an argument whose steps do not connect, and a contribution that
+cannot be restated from the text. Only the blind reviewer is in the reader's position.
+
+The process is `~/.claude/workflows/blindpanel.js`. Regenerate the submission from the
+built PDF before each round and check that no source is newer than it; the first run
+reviewed a stale document and the round was wasted.
+
+*What it found that the grounded review had not.* Round 1: we were grading wolfSSL
+although our own two-sided oracle forbids it. That oracle requires the recovery to
+succeed on the vulnerable arm and fail on the patched one; for wolfSSL it succeeds on
+neither, so the instrument never demonstrated the bug and cannot certify its removal.
+The verdict is withdrawn, and the fix taxonomy's `attenuated` cell is now empty, because
+the attenuation that case exhibits belongs to the pre-fix build one release before the
+patch under test. Two decided cases and one out of the method's reach is the honest
+count, and the boundary is worth more than the grade: fix verification as defined here
+needs an exploitable vulnerable arm, so a leak the vendor already closed falls outside it.
+
+Round 1 also forced the headline to be reported to the standard the paper imposes on
+everything else, and that changed the numbers. The recorded values were dudect's own
+printed maximum, which includes the second-order test the permutation null excludes: the
+pre-fix design reads 79 rather than 97, the fixed design 15 rather than 18, the
+same-digit design 213 rather than 1197. Reporting effect sizes alongside makes the
+mechanism argument stronger, not weaker: by the statistic the same-digit and
+different-digit designs are indistinguishable (213 against 218), while in ticks they are
+148,176 against 901,716. The statistic saturates; the difference in ticks keeps scaling
+with the work each design changes. That is the case for the reporting rule, made against
+our own headline.
+
+Round 2 found the wolfSSL withdrawal left standing in three other sections, the third
+time in this cycle that a corrected claim was not swept. `bin/paper_check.py` now reads
+each case's committed outcome and fails on any prose that grades a withdrawn one.
+Building that guard exposed a worse one: the identity scan had been globbing
+`paper/tches/*.tex` and never reading `sec/`, so every anonymity pass on a double-blind
+submission had been checking about a twentieth of the paper.
+
+Five blind-panel rounds, complete, 2026-08-25 (UTC). Three independent referees and an
+action editor, each round against a freshly rendered submission and nothing else.
+Recommendations went 3x major, 3x major, 3x major, then two referees at minor, then one,
+with the editor closing at "major revision at the light end".
+
+The panel never found an arithmetic error. The grounded review had already cleared those,
+and all three referees checked the internal arithmetic each round and reported it
+consistent. What the panel found instead, every single round, was one thing: the paper
+failing to hold itself to a rule it states. It graded a case its own two-sided oracle
+forbids. It reported its headline below the standard it demands of every other arm. It
+merged, in its own summary table, the two axes it argues must be kept apart. It stated a
+reproducibility guarantee without its one exception. It shipped a control whose written
+predicate would have voided the paper's own policy-versus-exploit finding. It omitted the
+attack model from the table although its own task formulation makes that index mandatory.
+And it wrote an admission rule that, as phrased, forbade the most consequential outcome
+the method could report.
+
+None of that is visible to a reviewer checking numbers against data, because each number
+was right. What was wrong was the licence to state the claim, and only a reader who has
+the paper and nothing else is positioned to notice.
+
+The last round's most serious finding was an error introduced two rounds earlier while
+correcting a different one. The cost of one leading zero was printed as 1,436
+instructions, which is 90,449 divided by 63: the sixty-three-zero average presented as the
+one-zero figure, against the 37,382 the same section gives two paragraphs later. The
+corrected shape is better evidence than the wrong one. The first leading zero accounts for
+37,382 of the 90,449 that sixty-three save, so each further zero adds about 855, and that
+sublinearity independently supports the mechanism: the dummy path never updates the
+accumulators, so the first such iteration is what stops the accumulation and later ones
+run on state that is already small. Were the extra big-integer copies the dominant term,
+the saving would scale with the count instead, since every dummy iteration pays for three
+of them. The lesson worth carrying is that correcting a claim is exactly when a new wrong
+number enters the same paragraph.
+
+
+## Cutting the main body to nineteen pages
+
+The paper had grown to 41 pages, and most of the growth was defensive. Because every
+scored pair is a reproduction rather than a wild binary, each result had accumulated its
+own hedge, and the hedges had started to outweigh what they qualified. The revision moves
+the machinery behind the findings out of the body and leaves the findings in it.
+
+The main body is now seven sections over 19 pages: introduction, background,
+the three deployed fixes, the certified ground truth, one section carrying F1, F2 and F3
+as subsections, the limits, and the conclusion. F1, F2 and F3 were three separate sections
+before; merging them keeps their `sec:blindspots`, `sec:toolchain` and `sec:microarch`
+labels alive as subsection labels, so every cross-reference in the paper still resolves
+without being rewritten. The recall corpus section became Appendix C, and the takeaway
+section folded into the conclusion.
+
+Six appendices now carry what a reader consults rather than reads: the glossary and
+capability table with the applicability accounting and the verdict semantics (A), the
+statistical rule in full with the retired bands, the registration deviations and both
+amplification sweeps (B), the corpus inventory, census, recovery cards and cost (C), the
+emission control, flag sweep, in-context check and the three per-operation quantities per
+host (D), the remaining limits including the harness artifact this work had to correct
+(E), and the control table (F). Four floats moved with them: the blind-spot figure, which
+duplicated the outcome table it sat beside, the detection-curve figure, the glossary and
+the capability table.
+
+What was cut rather than moved was self-commentary: sentences that graded the paper's own
+honesty instead of reporting a result. The failure-class contribution stays, because it is
+a contribution. `INST-1` and `META-1` are still stated in the body as a general claim,
+that for a measurement seeking a null an instrument that fails produces the same
+observation as the result being sought, with the two-sided instrument sentinels that close
+it. What went is the surrounding apology.
+
+The paper builds at 34 pages, 19 of main body, references on 20 and 21, appendices from
+22. All 18 controls pass, the 14 tests pass, and `paper_check` and `namecheck` are clean.
+
+## Thirteen rounds of blind review, and the standard that came out of it
+
+Rounds 1 to 5 converged: three major recommendations down to "major revision at the light
+end". Rounds 6 to 8 did not. All three were three-major, and the reason was visible in the
+findings rather than the scores: a large share of each round's blocking items were defects
+introduced by the previous round's fixes. Round 8 named six internal collisions and three
+were ours from round 7, including a claim withdrawn in the body while a verbatim copy
+survived in an appendix. The body meanwhile grew from 19 to 21 pages of increasingly
+self-referential caveats, and the caveats were what the next round searched.
+
+`docs/review-standard.md` is the protocol that replaced the loop. Findings are classified
+before anything is fixed: inconsistency, overclaim, obtainable gap, unobtainable gap,
+structural fact. The last two are re-raised every round because the panel is blind and has
+no memory, and they are stated once and never re-litigated. Inconsistencies are never fixed
+by hand alone: each gets a declarative rule in `data/paper_consistency.toml`, enforced by
+`bin/paper_check.py`, with `[[retired]]` claims that must not reappear and `[[ratio]]`
+percentages recomputed from their macros. The first version of that check passed over the
+real defect because the claim was split across a line break; whitespace-insensitive matching
+fixed it, and there is a planted-failure test.
+
+What the later rounds actually bought, none of it a caveat:
+
+- **The containment arithmetic.** 42,633,192 retired instructions cannot fit inside a
+  1,015,936-tick signature; that needs 42 instructions per counter tick. It also cannot
+  comfortably fit inside the 5,535,140-tick isolated region, which needs 7.7 per tick
+  sustained on dependency-bound bignum arithmetic. All three figures are mutually
+  impossible and which is wrong is undetermined. The paper says so.
+- **A power column.** Every patched arm now carries its class difference and CI half-width.
+  The division's patched arm resolves to 0.022 ticks, so that measurement would have caught
+  an effect an order of magnitude larger than the 0.001-tick step present there.
+- **BIN-1 run and recorded.** 80 binaries rebuilt to their recorded `.text` digest, zero
+  drift, written to `results/bin1_check.json` and given its own "on demand" status.
+- **Two real bugs in our own tools.** `bin/dudect_ci.py` never decompressed, so on the only
+  form the artifact commits it parsed gzip containers as records. INST-1's information
+  measure tested a re-implemented AUC instead of the script that produces the numbers.
+- **The nonce draw schedule**, which a referee asked for and the harness already got right:
+  redrawn per measurement with only the top byte fixed, so the residual is a difference
+  between distributions and not between two values.
+
+The title now reads *a default-on Minerva fix whose site is still open*, which is what the
+evidence carries. Every figure that cannot be recomputed from committed samples is marked on
+the page.
+
+## Restructured around one thesis
+
+Thirteen blind-review rounds put the paper at major revision and held it there for a reason
+that turned out to be countable. **30 of 33 blocking items (91%) attached to the MatrixSSL
+fix case. Zero ever attached to the emission map or to the task formulation,** the two
+things every referee from round 9 on named as the contribution. The paper was spending 11 of
+26 body pages on its weakest-evidenced asset and about 2 on its strongest.
+
+The paper is now organised around the claim that unifies what it already measured: **a
+constant-time claim is meaningless unless it is indexed, and it needs an arbiter that is not
+a tool.** The label is indexed by the build cell, by the host, and by what an analyser can
+observe at what budget; a fix's status is indexed by site, secret facet, attack model and
+budget. Stated with a quantifier rather than as a truism: the index changes the answer, and
+by how much.
+
+Three consequences of the reordering are worth recording, because they were latent in the old
+structure and invisible:
+
+- **libgcrypt stopped being a non-result.** The same patch is closed at the signing routine
+  and open at the primitive a tool reaches. `sec/threats.tex` already said "every result is
+  indexed by it" and filed it as a threat to validity. It is now the cleanest single instance
+  of the thesis, and it leads the fix section.
+- **wolfSSL's refusal became a feature.** A formulation with no domain boundary is not a
+  method, so a case the admission rule declines is evidence the rule has teeth.
+- **The containment anomaly became reflexive.** That the paper cannot pin its own site is,
+  under the old framing, an embarrassment in a caveat. Under this one it is the paper
+  applying its own rule to itself and failing the test in public.
+
+Body: 26 pages to 19, ten sections. Appendices: six to four. Total 42 pages to 35. An audit
+found 484 of 2,063 source lines removable across 27 ranges: 34 strong self-commentary
+instances, nine hedging stacks stating one limitation 3 to 6 times, two figures cited once
+and zero times, and the `\nrmark` convention now marking every figure that cannot be
+recomputed from committed samples.
+
+Two mechanical changes support it. `bin/applicability_table.py` was generating a table
+nothing included; it is now wired into Appendix A, and its caption had an unterminated
+`\caption{` that only surfaced when something finally `\input` it. And `bin/regen.py` no
+longer emits `mxAttenuation`, `mxResidualPercent*`, `mxTau*` or `icResidualPercent`: those
+served claims this paper withdrew, and an emitter left behind is an invitation to quote them
+again.
+
+The restructure moved about 40% of the body text between files, which is the operation this
+project's own record says goes wrong. Before any text moved, `data/paper_consistency.toml`
+gained a `[[retired]]` rule per relocated claim, with `allow_in` naming the destination, so
+every rule failed until its move completed and `paper_check` went green only when the last
+stale copy was gone. It worked: zero stale copies survived.
+
+### Round 14: the first minor vote in eight rounds
+
+The restructured paper went back to the blind panel unchanged in its evidence and returned
+**major, major, minor**. Thirteen rounds had returned three majors every time from round 6 on.
+The editor's line is the one worth keeping: *"None of them thinks this is caveat covering a
+thin result."* Nothing was measured between round 13 and round 14; what changed is which
+measurement the paper leads with.
+
+Five findings were applied.
+
+**The KyberSlash clean reading was asserted three times and two of them were wrong.** The
+paper said in three places that a direct microbenchmark measured the divider constant time on
+this host "independently of any statistical test", which reads as a demonstration that no
+operand dependence exists. It is not: the chained sweep finds no operand-dependent step, and a
+per-call design that includes the call's surroundings resolves an effect we have not localised.
+All three passages now say the narrower thing, which is that the clean verdict is consistent
+with what was measured in the arrangement dudect uses.
+
+**The Benjamini-Hochberg family is now enumerated rather than counted.** Twenty-two arms is
+eleven items at two arms each, and the composition is not the obvious one: five corpus pairs
+with committed dumps, four certified negatives and two synthetic sentinels. The fixtures are
+inside the multiplicity family and outside every recall denominator, because multiplicity is a
+property of how many tests were run and recall of which ones are scored, and the paper now says
+so instead of leaving a reader to reconcile the two.
+
+**The divergence claim was universal and its table was not.** `sec/threats.tex` said "each
+pair's departures are recorded in a committed divergence block" over a table with six rows.
+The claim is now scoped to the recall-eligible pairs, with the tier-C reproductions named as
+absent from it and their divergences located in their manifests.
+
+**The applicability accounting now closes on the page.** The identity was checkable only by
+someone willing to hunt for the pieces; Appendix A now writes it out, and
+`\Cref{tab:applicability}` names all 21 excluded rows with a reason each, so the split is
+checkable row by row.
+
+**Ten arms had been acquired twice and the paper never said so.** The detection curve runs each
+pair at amplification factor 1, which is the default build at the committed budget, so those
+rows are a second independent acquisition of a corpus arm rather than a different experiment.
+`bin/repeatability.py` compares them: the verdict agrees on 10 of 10, and on the 5 patched arms
+carrying an effect estimate the move between acquisitions stayed below what the coarser
+acquisition could resolve in 5 of 5, the largest move being 25.442 ticks against a largest
+half-width of 57.111. Two acquisitions is n=2, so it estimates no spread and no interval was
+widened by it. What it retires is the reading that a single-acquisition verdict here turned on
+the particular run. The comparison is under control REPT-1, because a count of agreement drifts
+in the reassuring direction as easily as the other one.

@@ -4,3 +4,4 @@ ks_range_x86
 ks_leak_x86
 _probe_*.o
 detection_curve
+magnitude_sensitivity

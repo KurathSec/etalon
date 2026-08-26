@@ -1,0 +1,29 @@
+{
+  "finding": "Binary and source confirmation of the mechanism the four-design decomposition located statistically: the leading-zero phase's dummy doubling is out of place, and the out-of-place path in eccProjectiveDblPoint copies three big integers the in-place path skips.",
+  "method": "objdump -dr on the built crypto/libcrypt_s.a of each pinned MatrixSSL tree, per symbol, with addresses and relocation offsets normalised so two builds are comparable; plus the guarded copy read out of the source.",
+  "symbols": {
+    "4-2-1-open eccMulmod (pre-fix)": {
+      "instructions": 456
+    },
+    "4-3-0-open eccMulmod (entry point after the fix)": {
+      "instructions": 2,
+      "note": "a two-instruction thunk that jumps to the constant-time routine, which is what 'enabled by default' looks like in the binary: the old entry point no longer contains the old algorithm."
+    },
+    "4-3-0-open eccMulmodCt": {
+      "instructions": 380
+    },
+    "4-6-0-open eccMulmodCt": {
+      "instructions": 380
+    }
+  },
+  "byte_identity": "The normalised disassembly of eccMulmodCt is IDENTICAL between 4-3-0-open and 4-6-0-open (same 380 instructions, same digest of the normalised listing). The earlier reported 0.123 -> 0.084 movement between those releases was therefore run-to-run variation on the same code, and is retracted.",
+  "static_call_profile": {
+    "note": "The static call profile of 4-2-1 eccMulmod and 4-3-0 eccMulmodCt is identical, including 9 pstm_copy sites and 3 eccProjectiveAddPoint sites. The fix did not add or remove call sites; it changed which of them run and with what arguments. That is why a static diff alone cannot settle the mechanism and the dynamic decomposition was needed."
+  },
+  "the_cost_asymmetry": {
+    "dummy_path_source": "ecc_math.c, mode==0 branches: eccProjectiveDblPoint(pool, M[1], M[2], ...) with P = M[1] and R = M[2], so P != R.",
+    "real_path_source": "ecc_math.c, accumulating branch: eccProjectiveDblPoint(pool, M[i], M[i], ...) with P = R, so P == R.",
+    "the_guard": "eccProjectiveDblPoint opens with `if (P != R) { pstm_copy(&P->x, &R->x); pstm_copy(&P->y, &R->y); pstm_copy(&P->z, &R->z); }`. The dummy path takes that branch and the real path does not, so each leading zero costs three extra big-integer copies. pstm_copy is variable time in the operand's `used` digit count, which is what makes an operation-count balance fail to be a cost balance."
+  },
+  "generator": "recorded from objdump -dr and the pinned sources; see method above"
+}

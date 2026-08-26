@@ -1,0 +1,161 @@
+schema = "pair/1"
+
+[pair]
+id      = "libgcrypt-minerva"
+title   = "Minerva in real libgcrypt: 1.8.4 vulnerable, 1.8.5 patched, both acquired here"
+role    = "corpus"
+status  = "active"
+tier    = "A"
+added   = "2026-08-24"
+synthetic = false
+replicate  = true
+replicates = "minerva"
+summary = """
+The deployed Minerva leak (CVE-2019-13627) in the real library, not a
+reproduction of its mechanism. Two libgcrypt builds one patch apart, 1.8.4 and
+1.8.5, are compiled here from their pinned source tarballs and made to sign a
+fixed digest under random per-signature nonces; each gcry_pk_sign is timed on
+this host with rdtscp. The vendored Minerva lattice attack recovers the private
+key from the 1.8.4 signatures and its guess reproduces that run's public key
+(d*G == Q, verified here); on the 1.8.5 signatures the same attack fails.
+
+This is the tier-A upgrade of the observation-only `minerva` pair. There the
+patched arm was modelled (a real vulnerable measurement with its timing column
+zeroed); here BOTH arms are real measured builds of the actual library, so the
+patched arm is 1.8.5 itself rather than a stand-in, and the recovery runs here on
+both. It is the pair that grounds the buildable `ecdsa-nonce` reproduction in the
+deployed code: the reproduction is what the analysers are scored on, and this
+pair confirms the reproduced mechanism recovers a real libgcrypt key.
+"""
+
+[class]
+observable   = "latency"
+secret_role  = "nonce"
+origin       = "source-level"
+granularity  = "bit"
+exploit_path = "lattice-hnp"
+certification_channel = "latency"
+mechanism_classes = ["timing-observation"]
+rationale = """
+Same class as `minerva` and `ecdsa-nonce` (latency / nonce / source-level / bit /
+lattice-hnp): all three are the nonce-bit-length class, and this is its real-
+library, both-arms-measured representative.
+
+mechanism_classes is timing-observation only, and deliberately so: this pair
+ships the deployed library's timing behaviour and a key recovery, not a source
+site an analyser can be pointed at. The reason is measured, not assumed. The
+deployed fix is not in the scalar-multiplication primitive but in libgcrypt's
+internal ECDSA signing, where the nonce is a secure-memory MPI whose scalar
+multiplication is clamped to the field bit-length; the public gcry_mpi_ec_mul an
+analyser would drive does not reach that path and leaks the scalar bit-length in
+BOTH 1.8.4 and 1.8.5 (acquire/record.json records the numbers). A per-arm
+analyser verdict on the primitive would therefore report a property of the public
+API, unchanged across the patch, not of the deployed fix. So this pair is scored
+by the end-to-end recovery, which does exercise real signing and does
+discriminate the builds, and the analysers are scored on the `ecdsa-nonce`
+reproduction, which relocates the fix into the primitive on purpose.
+"""
+
+[provenance]
+provenance_kind = "release-pair"
+provenance_kind_note = """
+Two upstream release tarballs, 1.8.4 and 1.8.5, built here from pinned checksums. The only pair in the corpus whose two arms are real releases.
+"""
+upstream_repo   = "gnupg/libgcrypt (release tarballs 1.8.4 and 1.8.5)"
+disclosed       = "2019-10-01"
+doi             = ["10.46586/tches.v2020.i4.281-308"]
+advisory        = ["CVE-2019-13627"]
+licence         = "LGPL-2.1-or-later"
+redistributable = true
+note = """
+The real deployed library, built from the pinned upstream tarballs (checksums in
+acquire/acquire.sh and acquire/record.json). CVE-2019-13627 is the libgcrypt
+Minerva assignment, and unlike `ecdsa-address` this pair actually reproduces it:
+1.8.4 is the vulnerable release and 1.8.5 is the fix. The DOI is the Minerva
+TCHES 2020 paper. Only the committed timing traces are redistributed, not a
+vendored copy of libgcrypt.
+"""
+
+[[build]]
+arm = "vulnerable"
+source = "libgcrypt 1.8.4, built from tarball (see acquire/)"
+entry_symbol = "gcry_pk_sign -> _gcry_mpi_ec_mul_point"
+secret_input = "the per-signature ECDSA nonce, generated internally by libgcrypt"
+note = "a real build, not a source site we author; the leak is the deployed library's"
+
+[[build]]
+arm = "patched"
+source = "libgcrypt 1.8.5, built from tarball (see acquire/)"
+entry_symbol = "gcry_pk_sign -> _gcry_mpi_ec_mul_point"
+secret_input = "identical signing workload; 1.8.5's fix removes the nonce-bit-length dependence"
+note = "same signing harness and curve as the vulnerable arm, so the oracle can require recovery to fail here"
+
+[toolchain]
+cells_required = []
+note = """
+No bin/build.py cell: this pair is built by its acquisition script from pinned
+source tarballs (offline, checksummed), not by the corpus cell system, so it
+declares no cell and the standard BIN controls are handled by that pinned build
+rather than reported per cell. The build recipe (compiler image, configure flags,
+--disable-asm) is committed in acquire/ so the binary is reproducible.
+"""
+
+[acquisition]
+origin    = "ours"
+platform  = "x86-64 host, single performance core (taskset -c 2), rdtscp"
+procedure = "acquire/acquire.sh"
+counter   = "rdtscp"
+sigs      = 6000
+reps      = 1
+grade     = "evidence"
+note = "Tier A: both builds compiled and both arms signed and timed here. 6000 signatures per arm are committed."
+
+[recovery]
+entry   = "recover/recover.py"
+runtime = "image"
+image   = "localhost/ct-toolchain/minerva-recover:1"
+inputs  = ["traces/vulnerable.csv.z"]
+vendored_attack = "vendor/attack, crocs-muni/minerva at 8182d000, MIT"
+ci_instance   = 6000
+full_instance = 6000
+note = """
+The vendored Minerva lattice attack, unchanged, run against signatures produced
+by the real libgcrypt 1.8.4 build. It recovers d and its guess reproduces the
+public key embedded in the trace, so the label is certified by arithmetic on
+public material. runtime is image because the reduction needs fpylll.
+"""
+
+[oracle]
+verifier   = "recover/fixtures/verifier.json"
+predicate  = "ecdsa-pubkey-match"
+expected_vulnerable = "recovered"
+expected_patched    = "not-recovered"
+note = """
+A recovered scalar verifies iff d*G equals the run's public key on secp256r1,
+upstream's own success test, using only public material. ORC-1 requires recovery
+on the 1.8.4 arm; ORC-2 requires failure on the 1.8.5 arm. Both pass here.
+"""
+
+[cost]
+effort_hours = 8
+portable_hours = 3
+acquisition_hours = 5
+note = "Tier A: acquisition cost is the offline build of two libgcrypt versions plus their libgpg-error and the timed signing. Portable effort is the recovery wrapper and oracle."
+
+[divergence]
+from_deployment = """
+This is the deployed library, so the divergence from the wild is the smallest of
+any nonce-class pair. Two axes remain. First, the builds are --disable-asm, so
+the timing reflects libgcrypt's portable C scalar multiplication rather than an
+asm variant a distribution might ship; the Minerva leak is in the C bit-length
+handling, so this preserves the mechanism. Second, the nonces are libgcrypt's own
+random nonces at signing time, not chosen, so the vulnerable-arm signal is the
+deployed magnitude rather than an amplified one, which is why recovery needs a few
+thousand signatures rather than a handful.
+"""
+
+[[divergence.structured]]
+axis       = "assembly"
+deployed   = "distribution builds may enable tuned asm scalar multiplication"
+reproduced = "--disable-asm portable C, where the Minerva bit-length handling lives"
+effect     = "the exploitable mechanism is preserved; a specific asm path's constant is not measured"

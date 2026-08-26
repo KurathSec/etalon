@@ -1,0 +1,34 @@
+{
+  "pair": "libgcrypt-minerva",
+  "tier": "A",
+  "acquired_on": "2026-08-24",
+  "host": "x86-64, single performance core (taskset -c 2), rdtscp",
+  "build_cell": {
+    "compiler": "gcc in localhost/ct-toolchain/gcc-bookworm:1, offline (--network=none)",
+    "configure": "--enable-static --disable-shared --disable-asm --with-libgpg-error-prefix=<inst>",
+    "cflags": "-O2",
+    "libgpg_error": "1.36 (babd98437208c163175c29453f8681094bcaf92968a15cafb1a276076b33c97c)",
+    "vulnerable": "libgcrypt 1.8.4 (f638143a0672628fde0cad745e9b14deb85dffb175709cacc1f4fe24b93f2227)",
+    "patched": "libgcrypt 1.8.5 (3b4a2a94cb637eff5bdebbcaf46f4d95c4f25206f459809339cdada0eb577ac3)"
+  },
+  "signing": {
+    "curve": "NIST P-256",
+    "digest": "sha256 of 0x5a repeated 32 times, signed raw",
+    "nonce": "libgcrypt default random per signature",
+    "sigs_per_arm": 6000,
+    "counter": "rdtscp",
+    "trace_format": "line 1 '<pubkey_hex> <message_hex>', then 'r_hex,s_hex,cycles' rows"
+  },
+  "recovery": {
+    "attack": "vendored Minerva lattice attack (vendor/COMMIT), unchanged",
+    "vulnerable_1_8_4": "recovered d=98a720e9a6e94cd9c6e9d96fede4bf597c5e2a6851cbc5d604d5e79d83c57e61; d*G equals the trace's public key (verified here)",
+    "patched_1_8_5": "no key recovered",
+    "note": "This is the analyser-independent ground truth and the reason the pair is tier A and recall-eligible: the fix in 1.8.5's ECDSA signing removes the exploitable nonce-bit-length leak, so the same lattice attack that recovers the 1.8.4 key fails on 1.8.5."
+  },
+  "primitive_timing": {
+    "probe": "acquire/ecmul_timing_probe.c, rdtscp minimum cycles for gcry_mpi_ec_mul over a short vs a full secure-memory scalar, one core",
+    "min_cycles_short_vs_full_1_8_4": [827140, 1700254],
+    "min_cycles_short_vs_full_1_8_5": [814618, 1736264],
+    "interpretation": "The public scalar-multiplication primitive's time depends on the scalar bit-length in BOTH versions (the short scalar is multiplied in roughly half the cycles): it is unchanged across the patch. 1.8.5's fix lives in the internal ECDSA signing path, where the nonce is a secure-memory MPI whose scalar multiplication is clamped to the field bit-length, which the public gcry_mpi_ec_mul does not reach. A timing test pointed at the primitive therefore cannot discriminate the two builds; the end-to-end recovery, which exercises real signing, is what discriminates them. This is why the pair is scored by recovery, not by a per-arm analyser verdict, and it is recorded rather than turned into a tool row that would report a property of the public API rather than of the deployed fix."
+  }
+}

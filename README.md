@@ -715,3 +715,73 @@ half-width of 57.111. Two acquisitions is n=2, so it estimates no spread and no 
 widened by it. What it retires is the reading that a single-acquisition verdict here turned on
 the particular run. The comparison is under control REPT-1, because a count of agreement drifts
 in the reassuring direction as easily as the other one.
+
+## Rebuilt to the venue's house form
+
+The paper had never been checked against TCHES itself. Two research passes, over the CHES 2026
+call for papers and over the eight CHES best-paper winners from 2018 to 2025, turned up a hard
+constraint the project had been violating.
+
+**The page limit counts appendices.** The call is explicit: *"up to 20 pages, including all
+figures, tables, and appendices, but excluding the bibliography"*, and papers over that are
+returned without review unless pre-approved. This project had been treating twenty pages as a
+*body* cap with appendices free. Measured against the real rule the paper was 32 pages. The
+award winners confirm the reading: every one since 2022 has zero appendices, and MIRACLE says
+why in its own text, deferring its long survey to the eprint.
+
+So there are two builds from one source tree. `main.tex` is the submission, body only, twenty
+pages exactly. `main-eprint.tex` is the same body with the appendices restored.
+`shared/{preamble,front,body}.tex` are inputted by both, so neither can drift. The hard rule is
+that **no body paragraph is conditional**: a claim worth making appears in both PDFs and only
+the pointers differ, through `\epref`, which prints a cross-reference where the appendix exists
+and the place in the repository where the material lives where it does not. For a paper whose
+claim is that its numbers regenerate from a cold clone, naming the generating script is a
+better pointer than naming a page.
+
+**Nine section-level changes, all from the survey of what the venue's best papers do.**
+
+- The limitations section is gone. Two pages titled "What is not established" sat immediately
+  before the conclusion; no CHES best paper arranges limitations that way. Each one now sits
+  with the claim it bounds, the acquisition host and the reproduction bound open the method
+  section before any number, and nothing was left over for a trailing dump.
+- The conclusion is a discussion split by audience: practitioners, implementers, corpus
+  authors, tool authors. Three paragraphs that were asides elsewhere are recommendations here.
+- Contributions are numbered bold run-ins, each ending in a section pointer, after the CHES
+  2024 winner. A `Remit.` paragraph states scope limits in the same breath, after the CHES 2022
+  winner, which is the highest reviewer-defence per word in the surveyed set.
+- The responsible-disclosure and artifact statements moved from page 19 to page 2.
+- The abstract went from 453 words with its first number in sentence six to 295 opening on one.
+- Five new floats, all generated from committed data: the four-index summary with its exact
+  denominators on page 2, the code listing of the four lines the paper is about, the MatrixSSL
+  four-design ladder, the five-candidate fix-survey funnel, and the field-wide analyser matrix.
+- Eight new citations, all TCHES-published, all placed where they do work.
+
+**Deliberately not done.** Numbered research questions, which are the strongest device in this
+genre at CCS, USENIX and S&P and are used by no CHES best paper. The venue's form was used
+instead. And no scalability column in the analyser matrix: the paper that carries one calls it
+a rough estimation from the tools' own publications and devotes a limitation paragraph to why
+it cannot be quantified, and inheriting a column its authors disown is the unindexed number
+this paper argues against.
+
+### Four new gates, and three of them caught something the same day
+
+- **The page cap is a control.** `\label{endofcontent}` before the bibliography, asserted
+  against the limit, refusing to pass if the label is missing, because a control that passes
+  having examined nothing is a failure this corpus already has a name for.
+- **Duplicated prose.** A duplicate is not a contradiction, which is why it survives every
+  other rule, and it is how a claim comes to be corrected in one place and left standing in
+  another. Run over the paper it found twelve, including one introduced that morning while
+  fixing a round-14 finding. All twelve are gone.
+- **`[[once]]` and `[[forbidden]]`.** The first makes distributing the limitations safe by
+  counting them; writing it found the cold-clone claim already stated twice, eight words, under
+  the duplicate rule's twelve-word window. The second refuses survey vocabulary in the section
+  holding the analyser matrix, because that table classifies a field the paper did not survey.
+- **Float anchoring and undefined citations.** Three of four body floats were referenced only
+  from appendices and two were referenced nowhere. And a bad bibliography key renders as `[?]`
+  under a LaTeX warning the reference gate did not cover; two had shipped.
+
+Two of these gates read clean on their first run and were wrong. One used a character class
+excluding per cent signs that also matched newlines, so a greedy prefix swallowed whole blocks;
+the other matched `Citation \`key' undefined` where LaTeX writes `Citation \`key' on page N
+undefined`. Both were caught by planting the failure, which is the rule that says a control is
+decoration until you have watched it fail.

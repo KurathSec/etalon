@@ -205,3 +205,24 @@ why = "the n=1 bound is stated in the remit and must not be re-hedged at each us
 [[once]]
 phrase = "so the core frequency is not pinned and core isolation is partial"
 why = "the acquisition host's bound is stated once, where the statistics are decided"
+
+# ---------------------------------------------------------------- the anti-survey gate
+# The analyser matrix classifies a field this paper explicitly did not survey: its rows are
+# a pinned third-party inventory filtered by two of that inventory's own predicates. The
+# table is scaffolding for a scoring claim, not a systematisation, and TCHES has a separate
+# SoK category for work that is. A rule you can enforce beats a rule you remember.
+
+[[forbidden]]
+phrase = "we survey"
+in_files = ["sec/f1-blindspots.tex"]
+why = "the rows are a third-party inventory; claiming a survey would be false and would invite the paper to be read as an SoK"
+
+[[forbidden]]
+phrase = "we systematise"
+in_files = ["sec/f1-blindspots.tex"]
+why = "same"
+
+[[forbidden]]
+phrase = "our classification of the field"
+in_files = ["sec/f1-blindspots.tex"]
+why = "same: the classification axes are ours, the rows are not"

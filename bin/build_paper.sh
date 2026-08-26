@@ -18,6 +18,7 @@ python3 "$REPO/bin/recovery_cards.py"
 python3 "$REPO/bin/listing.py"
 python3 "$REPO/bin/survey_table.py"
 python3 "$REPO/bin/index_table.py"
+python3 "$REPO/bin/analyser_table.py"
 python3 "$REPO/bin/capability_table.py"
 python3 "$REPO/bin/controls_table.py"
 

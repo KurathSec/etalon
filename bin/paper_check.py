@@ -370,10 +370,21 @@ def _pages(paper: Path) -> list[str]:
     bad = []
     log = paper / "main.log"
     if log.exists():
-        n = len(re.findall(r"LaTeX Warning: Reference", log.read_text(errors="replace")))
+        txt = log.read_text(errors="replace")
+        n = len(re.findall(r"LaTeX Warning: Reference", txt))
         if n:
             bad.append(f"{n} dangling reference(s) in the build; a \\Cref to a label that "
                        f"does not exist renders as ?? and no other gate sees it")
+        # A wrong bibliography key renders as [?] and LaTeX calls it an undefined
+        # CITATION, a different warning from an undefined reference. Two of them shipped
+        # into a generated table before this line existed.
+        # LaTeX writes "Citation `key' on page N undefined on input line M.", so the
+        # word undefined does not follow the key. Matching only the adjacent form found
+        # nothing, and a planted bad key sailed through the first version of this gate.
+        cites = sorted(set(re.findall(r"Citation `([^']+)'(?:[^\n]*?)undefined", txt)))
+        if cites:
+            bad.append(f"{len(cites)} undefined citation(s), which render as [?]: "
+                       + ", ".join(cites[:6]))
     aux = paper / "main.aux"
     if aux.exists():
         m = re.search(r"\\newlabel\{endofcontent\}\{\{[^{}]*\}\{(\d+)\}",

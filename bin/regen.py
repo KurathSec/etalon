@@ -909,6 +909,24 @@ def as_tex(report: dict) -> str:
             out.append(tex_macro("effPatched" + suffix, f"{r['effect_ticks']:,.3f}"))
             out.append(tex_macro("ciHalfPatched" + suffix,
                                  f"{r['ci_half_width_ticks']:,.3f}"))
+    # The field the scored analysers were drawn from. The row set is a computation over a
+    # pinned third-party inventory, so these are counts and not claims; nFieldIndexed also
+    # retires the hand-typed 55 that data/facts.toml carried from a web page.
+    amp_p = REPO / "results" / "analyser_matrix.json"
+    if amp_p.exists():
+        am = json.loads(amp_p.read_text())
+        out.append(tex_macro("nFieldIndexed", str(am["indexed"])))
+        out.append(tex_macro("nFieldTargetEligible", str(am["target_eligible"])))
+        out.append(tex_macro("nFieldAvailEligible",
+                             str(am["classified"] - am["added_by_us"])))
+        out.append(tex_macro("nFieldClassified", str(am["classified"])))
+        out.append(tex_macro("nFieldAdded", str(am["added_by_us"])))
+        out.append(tex_macro("nFieldAddedWord", WORDS[am["added_by_us"]] if am["added_by_us"] < len(WORDS)
+                             else str(am["added_by_us"])))
+        out.append(tex_macro("nFieldVarlatStated", str(am["varlat_stated"])))
+        out.append(tex_macro("nFieldVarlatUnstated", str(am["varlat_unstated"])))
+        out.append(tex_macro("nFieldScored", str(am["scored"])))
+
     # Between-acquisition agreement. Every per-arm interval bounds sampling within one
     # acquisition; these are the ten arms that were acquired a second time, and the
     # counts say what the second acquisition agreed with. n=2 estimates no spread.

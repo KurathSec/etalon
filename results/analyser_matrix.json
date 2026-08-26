@@ -1,0 +1,38 @@
+{
+ "finding": "the field this paper's four analysers were drawn from",
+ "why": "The row set is a pinned third-party inventory filtered by two predicates it publishes about itself, plus the analysers scored here that it does not carry. We contribute no rows and did not survey the field.",
+ "generator": "bin/analyser_table.py",
+ "inventory_commit": "dcdfa82feef64c3c400b38bcd579de26b549cd0a",
+ "indexed": 55,
+ "target_eligible": 45,
+ "classified": 37,
+ "added_by_us": 2,
+ "scored": 4,
+ "varlat_stated": 5,
+ "varlat_unstated": 32,
+ "budget_corroborated": 1,
+ "dropped_target": [
+  "Blazer",
+  "COCO-CHANNEL",
+  "CT-WASM",
+  "DifFuzz",
+  "ENCoVer",
+  "FaCT",
+  "Owl",
+  "Pendulum",
+  "Themis",
+  "tlsfuzzer"
+ ],
+ "dropped_unavailable": [
+  "ABPV13",
+  "CaSym",
+  "CaType",
+  "CacheD",
+  "CacheS",
+  "FlowTracker",
+  "KMO12",
+  "SKKJH18",
+  "STACCO",
+  "tis-ct"
+ ]
+}

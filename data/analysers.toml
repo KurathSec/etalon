@@ -1,0 +1,92 @@
+# The field, classified. The ROW SET is a computation, not a list we assembled: it is the
+# pinned ct-tools inventory (data/inventories/cttools.jsonl, commit dcdfa82f, retrieved
+# 2026-08-26) filtered by two predicates the inventory itself publishes, plus the analysers
+# this paper scores that the inventory does not carry. We contribute no rows to that
+# inventory and we did not survey the field; the table exists to say why four tools are
+# scored and not to systematise anything.
+#
+# This file is the OVERLAY: the cells no inventory publishes. Every one of them carries a
+# source. A cell with no source is not an opinion we are entitled to, so it stays unstated
+# and is counted as unstated, which is itself the finding for the variable-latency column.
+
+schema = "analysers/1"
+
+[meta]
+inventory = "cttools"
+retrieved = "2026-08-26"
+# The filter, in the inventory's own vocabulary. Both predicates are its declarations at
+# the pinned commit, not our tests, which is what stops "available" being a judgement we
+# made about somebody's website.
+target_eligible = ["C", "LLVM IR", "Binary", "Trace", "x86"]
+require_available = true
+# The budget an analyser's CLEAN verdict is conditional on is not published by anyone, so
+# it is DERIVED from technique by this rule and marked as derived. Cells the tool's own
+# documentation corroborates are marked separately.
+budget_rule = "Statistical -> n; Dynamic -> cov; Symbolic -> path; Formal -> none"
+# ct-tools and the Fourne et al. classification share an author, so treating them as two
+# independent readings would overstate the corroboration. Recorded rather than relied on.
+independence_caveat = "cttools and the usect classification share an author"
+
+# ---------------------------------------------------------------- rows we add
+# Neither is in the inventory: varlat is the patched Valgrind the KyberSlash authors wrote
+# and has no separate tool publication, and SCOUT-CT postdates the pinned commit.
+
+[analyser.varlat]
+title = "varlat (patched Valgrind)"
+cite = "kyberslash"
+year = 2024
+target = "Binary"
+technique = "Dynamic"
+guarantees = "no"
+url = "https://kyberslash.cr.yp.to"
+added_because = """not in the inventory: it is the instrument the KyberSlash authors had to
+build because no tool in the field declared the mechanism, which is this table's point"""
+
+[analyser.scoutct]
+title = "SCOUT-CT"
+cite = "scoutct"
+year = 2026
+target = "Binary"
+technique = "Formal"
+guarantees = "sound with restrictions"
+url = "https://eprint.iacr.org/2026/776"
+added_because = "postdates the pinned inventory commit"
+
+# ---------------------------------------------------------------- mechanism cells
+# Does the tool's own description state that it reports a secret-dependent BRANCH, a
+# secret-dependent ADDRESS, or a VARIABLE-LATENCY instruction on secret operands? Geimer's
+# definition of the constant-time policy contains all three, and most tools labelled with
+# that policy say nothing about the third. Where we have a source we record it; where we do
+# not, the cell is unstated and counted.
+
+[mech.dudect]
+branch = "yes"
+address = "unstated"
+varlat = "yes"
+source = "data/tools.toml, from the tool's own description: it times the target under two input classes and tests the difference, so any mechanism that changes time is in range and address effects are not separately reported"
+
+[mech.timecop]
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "https://www.post-apocalyptic-crypto.org/timecop/ (2026-08-26): \"Valgrind cannot spot cases where variable-time code is caused by variable-time CPU instructions.\""
+
+[mech.ctgrind]
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "same memcheck substrate as timecop, whose page states the limitation; ctgrind is the tool timecop descends from"
+
+[mech.varlat]
+branch = "yes"
+address = "unstated"
+varlat = "yes"
+source = "data/tools.toml; the patch exists precisely to report variable-latency instructions on defined data"
+
+[mech.binsec]
+branch = "yes"
+address = "yes"
+varlat = "yes"
+source = "probed from the pinned image 2026-08-26: binsec -checkct-help lists -checkct-features control-flow, memory-access, multiplication, dividend and divisor"
+budget_corroborated = true
+budget_source = "BINSEC relse.md: a verdict is secure only when no leak was found AND all paths were explored, under -sse-timeout, -sse-depth, -sse-jump-enum and -smt-timeout"

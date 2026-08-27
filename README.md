@@ -363,13 +363,19 @@ permutation null from each run's own committed samples, labels shuffled within b
 absorbing dudect's 102 crops, Benjamini-Hochberg controlled across all 18 arms. It
 reproduces every published verdict. The correct aarch64 reading is not detected (p=0.62)
 because the effect is below one tick of `cntvct_el0`, a resolution limit rather than a
-clean verdict. Note in the record: `kyberslash_patched` carries an uncorrected p of 0.022
-that BH declines, which is the expected count of borderline results over 18 tests, and it
-is reported rather than dropped.
+clean verdict. The uncorrected column is reported whatever it holds: an earlier revision
+noted that `kyberslash_patched` carried an uncorrected p of 0.022 that BH declines; that arm
+has since been re-acquired under upstream's own fix and reads p = 0.16, and no declined arm
+now sits below 0.05 (the lowest is 0.11, `results/dudect_permutation.json`).
 
 *Exploitability relabelled.* "The leak carries a recoverable key" assumed the oracle: that
 lattice run was fed nonces labelled with the key it was meant to recover. MatrixSSL is now
-leak-presence certified, recovery pending. The "fast host" excuse was also wrong, and
+leak-presence certified and not recovered by the published attack: nine timing-ordered
+lattice attempts on the fixed build, 25,000 to 100,000 signatures at lattice dimensions 90
+to 130, recover no key (`results/matrixssl_recovery.json`), and the reason is the attack's
+rank model, which assumes a multi-bit bias where the fix leaves one bit, not the selection:
+on traces taken with the host otherwise idle the fastest 90 are 5.6% contaminated
+(`results/exploit_budget_matrixssl_50000.json`, `_100000.json`). The "fast host" excuse was also wrong, and
 measurement refuted it: on the same host, AUC between timing and nonce shortness is 0.63
 for MatrixSSL against 0.80 for libgcrypt, with the fastest 90 signatures 28.9% contaminated
 against 3.3%, both from committed traces and keys
@@ -421,7 +427,8 @@ quote 44% at a matched budget improving only to 27% at a forty-fold larger budge
 figures came from an uncommitted 250,000-signature trace that was the 4.2.1 pre-fix build,
 so the matched-budget row and the budget sweep are withdrawn and the contamination is now
 read from the committed 25,000-signature 4-3-0 trace and key, see `_correction` in that
-record). That is what "recovery pending" means quantitatively. Getting there required
+record). That is what the committed 25,000-signature trace's contamination means quantitatively,
+and the quiet-host traces show most of it was the acquisition rather than the residual. Getting there required
 catching a key/trace mismatch: pairing the committed 4-3-0 key with the 4-2-1 trace gives
 an AUC of 0.5047, which is the signature of random labels rather than a finding. The
 libgcrypt key is not assumed; it is what that pair's own committed recovery returns. The retracted claims are out of `results/fix_verification.json`, the acquisition

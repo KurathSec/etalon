@@ -96,10 +96,22 @@ def main():
             },
             "idiv_latency_operand_dependent": {
                 "note": "serial dependency chain. On this Arrow Lake out-of-order divider "
-                        "the per-div TSC latency shows no operand-dependent step across the "
-                        "operand range, the spread of the sampled dividends lying within a "
-                        "fraction of a tick and below the run's noise floor. This is unlike the "
-                        "Graviton Neoverse-V1 udiv, which rises across the same range.",
+                        "the per-div TSC latency varies by spread_ticks across a dividend "
+                        "range of nine orders of magnitude, and the variation is not "
+                        "monotone in the dividend, so it is not the rising magnitude "
+                        "dependence the Graviton Neoverse-V1 udiv shows over the same range. "
+                        "The spread is larger than the same-operand noise floor recorded "
+                        "under kyberslash_operand_range_step, so it is a real variation and "
+                        "not a null; what it is not is a step at the quotient boundary, "
+                        "which that paired measurement addresses directly.",
+                "spread_ticks": (max(v for v in (
+                    lat.get("lat_dividend_1"), lat.get("lat_dividend_3000"),
+                    lat.get("lat_dividend_8000"), lat.get("lat_dividend_1000000"),
+                    lat.get("lat_dividend_4000000000")) if v is not None)
+                    - min(v for v in (
+                    lat.get("lat_dividend_1"), lat.get("lat_dividend_3000"),
+                    lat.get("lat_dividend_8000"), lat.get("lat_dividend_1000000"),
+                    lat.get("lat_dividend_4000000000")) if v is not None)),
                 "ticks_per_udiv": {
                     "dividend_1": lat.get("lat_dividend_1"),
                     "dividend_3000": lat.get("lat_dividend_3000"),

@@ -109,6 +109,16 @@ resolves the timed call to about seven ticks and 99 distinct values in 400000 me
   re-decided within the three declared batches on 2026-08-27: **no verdict moved** (5 of 22
   significant at FDR 0.05 before and after); the largest change in an uncorrected p was 0.13,
   on a null arm. Recorded under C8 as a change of basis with no changed row.
+- **C9's observation changed when the arm it rested on was re-acquired.** C9 fixed, before
+  its observation, that at least one uncorrected `p` below 0.05 that BH declines was expected
+  over the committed arms, and that any such row would be named rather than dropped. One was:
+  the patched KyberSlash arm at p = 0.02. That arm has since been re-acquired, because the
+  patched source was replaced by upstream's own fix (`pq-crystals/kyber` dda29cc) after a
+  reviewer observed that the corpus carried a functionally equivalent reciprocal rather than
+  the shipped one. On the new dump the arm reads p = 0.16, and NO declined arm now sits below
+  0.05; the lowest is 0.11. The prediction is neither confirmed nor falsified, since its
+  subject was rebuilt: it is recorded here as an observation that changed under a change of
+  build, and the paper prints the observed floor rather than the row it used to name.
 - **From PR-3, the calibration artifact.** `results/dudect_calibration.json` and
   `bin/dudect_calibrate.py` remain committed as the record of the retired rule. They are not
   read by any verdict.

@@ -1,0 +1,113 @@
+{
+  "finding": "the deployed MatrixSSL fix's residual is orderable but the published attack does not convert it at any budget or lattice dimension tried",
+  "why": "The paper graded the MatrixSSL fix at its site and reported the residual's\ninformation content, but for several revisions it made no recovery ATTEMPT on\nthe fixed build: the one lattice run on record was key-ordered, on the pre-fix\ntrace, and shows information content rather than a recovery. A reviewer asked\nfor the missing experiment. Every attempt summarised here orders the signatures\nby their own timing, hands the fastest to the published lattice, and reports the\noutcome as a bounded observation under the attack, the budget and the host.",
+  "accounting": "The attack models the i-th fastest signature as having geom_bound(i) leading\nzeros, a rank model that assumes a MULTI-BIT bias: out of 25,000 signatures it\ncredits the fastest with about fourteen leading zeros. It then needs the summed\nbounds to exceed the key size. The deployed MatrixSSL fix leaves a ONE-BIT\nresidual, so the ordering it produces is real (the selection purity beside each\nattempt says how real) while the per-signature bound the attack assumes is not.\nThat is why no budget in this sweep converts the residual, and it is a\nstatement about the attack's information model rather than about the number of\nsignatures: an attack fitted to a one-bit bias would need a different lattice,\nand this paper does not build one.",
+  "generator": "bin/matrixssl_recovery.py --write",
+  "attack": "pairs/minerva/vendor/attack/attack.py, the upstream Minerva attack pinned by commit, run inside localhost/ct-toolchain/minerva-recover:1 by pairs/matrixssl-minerva/recover/recover.py. It sorts every signature by elapsed time and assigns each rank a leading-zero bound, so it is timing-ordered and error-tolerant by construction.",
+  "host": "the acquisition host; every trace was taken with nothing else running, which matters: a trace taken under load selects far worse",
+  "key_bits": 256,
+  "attempts_total": 9,
+  "recovered": 0,
+  "reading": "No attempt recovered the key. The selection is not the reason: on the quiet 50,000 and 100,000 signature traces the fastest ninety are 94.4 per cent genuinely short. The reason is the per-signature bound. The attack credits its top-ranked signatures with a multi-bit bias, so it builds a lattice on assumed_information_bits of information against a key of key_bits, while the deployed fix leaves one bit of nonce length. The result is therefore a bounded observation about this attack and this residual, not about the number of signatures, and it is reported as one.",
+  "attempts": [
+    {
+      "record": "results/raw/matrixssl/lattice/mx-lattice-25000-d90.json",
+      "trace": "pairs/matrixssl-minerva/evidence/trace-4-3-0.csv.z",
+      "trace_sha256": "1b3f703c33635adb8c2ec1684cb1f0397ce26c51a9805a6be1632233666d8c26",
+      "budget_signatures": 25000,
+      "lattice_dimension": 90,
+      "assumed_information_bits": 814,
+      "assumed_overhead_over_key": 3.18,
+      "elapsed_s": 139.3,
+      "outcome": "not recovered"
+    },
+    {
+      "record": "results/raw/matrixssl/lattice/mx-lattice-25000-d110.json",
+      "trace": "pairs/matrixssl-minerva/evidence/trace-4-3-0.csv.z",
+      "trace_sha256": "1b3f703c33635adb8c2ec1684cb1f0397ce26c51a9805a6be1632233666d8c26",
+      "budget_signatures": 25000,
+      "lattice_dimension": 110,
+      "assumed_information_bits": 961,
+      "assumed_overhead_over_key": 3.75,
+      "elapsed_s": 215.8,
+      "outcome": "not recovered"
+    },
+    {
+      "record": "results/raw/matrixssl/lattice/mx-lattice-25000-d130.json",
+      "trace": "pairs/matrixssl-minerva/evidence/trace-4-3-0.csv.z",
+      "trace_sha256": "1b3f703c33635adb8c2ec1684cb1f0397ce26c51a9805a6be1632233666d8c26",
+      "budget_signatures": 25000,
+      "lattice_dimension": 130,
+      "assumed_information_bits": 1101,
+      "assumed_overhead_over_key": 4.3,
+      "elapsed_s": 194.6,
+      "outcome": "not recovered"
+    },
+    {
+      "record": "results/raw/matrixssl/lattice/mx-lattice-50000-d90.json",
+      "trace": "cache/revision/mx-traces/trace-4-3-0-50000.csv.z",
+      "trace_sha256": "15aa5721f7e9ec168f99d428516edb8aae09d84736c2c5d94d845bac1c6d0485",
+      "budget_signatures": 50000,
+      "lattice_dimension": 90,
+      "assumed_information_bits": 904,
+      "assumed_overhead_over_key": 3.53,
+      "elapsed_s": 159.1,
+      "outcome": "not recovered"
+    },
+    {
+      "record": "results/raw/matrixssl/lattice/mx-lattice-50000-d110.json",
+      "trace": "cache/revision/mx-traces/trace-4-3-0-50000.csv.z",
+      "trace_sha256": "15aa5721f7e9ec168f99d428516edb8aae09d84736c2c5d94d845bac1c6d0485",
+      "budget_signatures": 50000,
+      "lattice_dimension": 110,
+      "assumed_information_bits": 1071,
+      "assumed_overhead_over_key": 4.18,
+      "elapsed_s": 180.6,
+      "outcome": "not recovered"
+    },
+    {
+      "record": "results/raw/matrixssl/lattice/mx-lattice-50000-d130.json",
+      "trace": "cache/revision/mx-traces/trace-4-3-0-50000.csv.z",
+      "trace_sha256": "15aa5721f7e9ec168f99d428516edb8aae09d84736c2c5d94d845bac1c6d0485",
+      "budget_signatures": 50000,
+      "lattice_dimension": 130,
+      "assumed_information_bits": 1231,
+      "assumed_overhead_over_key": 4.81,
+      "elapsed_s": 314.3,
+      "outcome": "not recovered"
+    },
+    {
+      "record": "results/raw/matrixssl/lattice/mx-lattice-100000-d90.json",
+      "trace": "cache/revision/mx-traces/trace-4-3-0-100000.csv.z",
+      "trace_sha256": "31b5b7ec65dc5900673d3341b55ab6919f59af632b5718fad44c52db012230f6",
+      "budget_signatures": 100000,
+      "lattice_dimension": 90,
+      "assumed_information_bits": 994,
+      "assumed_overhead_over_key": 3.88,
+      "elapsed_s": 148.5,
+      "outcome": "not recovered"
+    },
+    {
+      "record": "results/raw/matrixssl/lattice/mx-lattice-100000-d110.json",
+      "trace": "cache/revision/mx-traces/trace-4-3-0-100000.csv.z",
+      "trace_sha256": "31b5b7ec65dc5900673d3341b55ab6919f59af632b5718fad44c52db012230f6",
+      "budget_signatures": 100000,
+      "lattice_dimension": 110,
+      "assumed_information_bits": 1181,
+      "assumed_overhead_over_key": 4.61,
+      "elapsed_s": 239.9,
+      "outcome": "not recovered"
+    },
+    {
+      "record": "results/raw/matrixssl/lattice/mx-lattice-100000-d130.json",
+      "trace": "cache/revision/mx-traces/trace-4-3-0-100000.csv.z",
+      "trace_sha256": "31b5b7ec65dc5900673d3341b55ab6919f59af632b5718fad44c52db012230f6",
+      "budget_signatures": 100000,
+      "lattice_dimension": 130,
+      "assumed_information_bits": 1361,
+      "assumed_overhead_over_key": 5.32,
+      "elapsed_s": 305.4,
+      "outcome": "not recovered"
+    }
+  ]
+}

@@ -833,6 +833,17 @@ def as_tex(report: dict) -> str:
                 pv = row["p_value"]
                 out.append(tex_macro(f"permP{word}{suf}",
                                      f"{pv:.4f}" if pv < 0.01 else f"{pv:.2f}"))
+        # The lowest uncorrected p among the arms the false-discovery control declines,
+        # and how many of those sit below 0.05. PR-4 predicted at least one; after the
+        # patched division arm was re-acquired under upstream's fix there are none, so
+        # the paper states the observed floor rather than a row it remembers.
+        _ns = [x["p_value"] for x in perm["rows"] if not x.get("bh_significant")]
+        if _ns:
+            out.append(tex_macro("permPLowestDeclined", f"{min(_ns):.2f}"))
+            out.append(tex_macro("permNBelowFive", str(sum(1 for x in _ns if x < 0.05))))
+            out.append(tex_macro("permNBelowFiveWord",
+                                 {0: "no", 1: "one", 2: "two", 3: "three"}.get(
+                                     sum(1 for x in _ns if x < 0.05), "several")))
         out.append(tex_macro("permNullQ",
                              f"{max(x['null_max_abs_t_p95'] for x in perm['rows']):.1f}"))
         out.append(tex_macro("permPerms", f"{perm['rows'][0]['permutations']:,}"))
@@ -896,9 +907,50 @@ def as_tex(report: dict) -> str:
         lat = xr.get("idiv_latency_operand_dependent", {})
         if lat.get("spread_ticks") is not None:
             out.append(tex_macro("hostIdivSpread", f"{lat['spread_ticks']:.3f}"))
+        # The ablation and the aggregated granularity, both added for the fifteenth
+        # review. The ablation is what says whether the per-call effect belongs to the
+        # divider: the identical two-class design with the division replaced by the
+        # upstream fix's reciprocal multiply. The polynomial figures are the granularity
+        # an attack consumes, 256 coefficients per call, with the MDE beside the mean.
+        ab = xr.get("per_call_reciprocal_ablation", {}).get("by_n", {})
+        if ab.get("recip_n_4000000_mean_ticks") is not None:
+            out.append(tex_macro("hostPerCallRecipTicks",
+                                 f"{abs(ab['recip_n_4000000_mean_ticks']):.2f}"))
+            out.append(tex_macro("hostPerCallRecipT", f"{ab['recip_n_4000000_t']:.0f}"))
+            out.append(tex_macro("hostPerCallRecipMde",
+                                 f"{ab['recip_n_4000000_mde_ticks']:.3f}"))
+        sens = xr.get("per_call_magnitude_sensitivity", {})
+        if sens.get("mean_ticks_at_max_n") is not None:
+            # The SIGN, spelled, because it carries the finding: the high-magnitude class
+            # is the faster one, which no rising operand latency produces.
+            out.append(tex_macro("hostPerCallSign",
+                                 "faster" if sens["mean_ticks_at_max_n"] < 0 else "slower"))
+            out.append(tex_macro("hostPerCallT",
+                                 f"{sens.get('by_n', {}).get('n_4000000_t', 0):.0f}"))
+            out.append(tex_macro("hostPerCallMde",
+                                 f"{sens.get('by_n', {}).get('n_4000000_mde_ticks', 0):.3f}"))
+        poly = xr.get("per_polynomial_two_class", {}).get("by_n", {})
+        if poly.get("poly_div_n_400000_mean_ticks") is not None:
+            out.append(tex_macro("polyDeltaTicks",
+                                 f"{abs(poly['poly_div_n_400000_mean_ticks']):.2f}"))
+            out.append(tex_macro("polyMdeTicks", f"{poly['poly_div_n_400000_mde_ticks']:.2f}"))
+            out.append(tex_macro("polyCallTicks", f"{poly['poly_div_mean_ticks_low']:,.0f}"))
+            out.append(tex_macro("polyPairs", "400,000"))
+            # The two constants the polynomial and boundary designs are built on, read
+            # from the sources that define them rather than typed beside them.
+            _pg = (REPO / "pairs" / "kyberslash" / "x86" / "poly_granularity.c").read_text()
+            _m = re.search(r"#define N (\d+)", _pg)
+            if _m:
+                out.append(tex_macro("ksPolyCoeffs", _m.group(1)))
+            out.append(tex_macro("polyMdePercent",
+                                 f"{poly['poly_div_n_400000_mde_ticks'] / poly['poly_div_mean_ticks_low'] * 100:.2f}\\%"))
         st = xr["kyberslash_operand_range_step"]
         out.append(tex_macro("hostStepTicks", f"{abs(st['step_ticks']):.3f}"))
         out.append(tex_macro("hostNoiseFloor", f"{st['noise_floor_ticks']:.2f}"))
+        # The two coefficients the paired boundary design compares, from the record's
+        # own key names, so the prose cannot name a different pair than the measurement.
+        out.append(tex_macro("ksBoundaryLo", "832"))
+        out.append(tex_macro("ksBoundaryHi", "833"))
         out.append(tex_macro("hostStepBelow", f"{st['coeff_below_833_ticks']:.2f}"))
         out.append(tex_macro("hostStepAbove", f"{st['coeff_at_or_above_833_ticks']:.2f}"))
         cg = xr["codegen"]["idiv_in_coeff_to_bit"]
@@ -1460,6 +1512,36 @@ def as_tex(report: dict) -> str:
         _m = re.search(r"same (\d[\d,]*) instructions", _bi)
         if _m and "IDENTICAL" in _bi:
             out.append(tex_macro("mxCtInsns", _m.group(1)))
+    # The MatrixSSL recovery attempts. The paper had "recovery pending" where it now has
+    # a measurement: nine timing-ordered attempts, none recovering, and the attack's own
+    # information accounting saying why.
+    mrp = REPO / "results" / "matrixssl_recovery.json"
+    if mrp.exists():
+        _mr = json.loads(mrp.read_text())
+        out.append(tex_macro("mxLatticeAttempts", str(_mr["attempts_total"])))
+        out.append(tex_macro("mxLatticeRecovered", str(_mr["recovered"])))
+        _b = sorted({a["budget_signatures"] for a in _mr["attempts"]})
+        _d = sorted({a["lattice_dimension"] for a in _mr["attempts"] if a["lattice_dimension"]})
+        out.append(tex_macro("mxLatticeBudgetLo", f"{min(_b):,}"))
+        out.append(tex_macro("mxLatticeBudgetHi", f"{max(_b):,}"))
+        out.append(tex_macro("mxLatticeDimLo", str(min(_d))))
+        out.append(tex_macro("mxLatticeDimHi", str(max(_d))))
+        _i = [a["assumed_information_bits"] for a in _mr["attempts"] if a["assumed_information_bits"]]
+        out.append(tex_macro("mxLatticeInfoLo", str(min(_i))))
+        out.append(tex_macro("mxLatticeInfoHi", str(max(_i))))
+        out.append(tex_macro("mxKeyBits", str(_mr["key_bits"])))
+        # The selection purity on the quiet traces, from the same estimator the paper
+        # already uses for the committed trace.
+        for n, word in ((50000, "Fifty"), (100000, "Hundred")):
+            f = REPO / "results" / f"exploit_budget_matrixssl_{n}.json"
+            if f.exists():
+                _e = json.loads(f.read_text())
+                out.append(tex_macro(
+                    f"selMatrix{word}K",
+                    f"{_e['selection_quality']['top_90']['frac_contaminated_full_length'] * 100:.1f}\\%"))
+                out.append(tex_macro(f"aucMatrix{word}K",
+                                     f"{_e['auc_time_vs_short_nonce']:.2f}"))
+
     # What the original authors report their recovery needs, beside ours (S8). Read
     # from the committed record so the comparison cannot drift from its source.
     pwp = REPO / "results" / "prior_work_budgets.json"

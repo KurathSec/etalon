@@ -1,0 +1,17 @@
+{
+ "trace": "cache/revision/mx-traces/trace-4-3-0-100000.csv.z",
+ "trace_sha256": "31b5b7ec65dc5900673d3341b55ab6919f59af632b5718fad44c52db012230f6",
+ "signatures_in_trace": 100000,
+ "budget": 100000,
+ "attack": "pairs/minerva/vendor/attack/attack.py (timing-ordered, error-tolerant), params: {\"dimension\": 130, \"betas\": [15, 20, 30, 40, 45, 48, 51, 53, 55, 58, 60], \"attack\": {\"type\": \"full\", \"skip\": 50, \"start\": 3000, \"step\": 200, \"num\": 7000, \"seed\": null}}",
+ "curve": "secp256r1",
+ "hash": "sha256",
+ "image": "localhost/ct-toolchain/minerva-recover:1",
+ "elapsed_s": 305.4,
+ "timed_out": false,
+ "exit": 0,
+ "outcome": "not recovered",
+ "scalar": null,
+ "stdout_tail": "1ae08b7eede7093ce7460d1f54 [301s]\n[ ] Guess: 0x8dd831b9afc069de76bb2cda9d9f918318b36e92c68c1f970cb08ddbb65605fd [301s]\n[ ] Guess: 0x6de677d5f4893f149d524ee8f7b16ffadf1544316eaf6f139a46c0433055e30e [301s]\n[ ] Guess: 0x921988290b76c0ec62adb117084e9004ddd1b67c38682f7159730a7fcc0d4243 [301s]\n[ ] Guess: 0x5cef30a49d11748168f53678249d5ded002166aebcd2e31bd830e6603dca4865 [301s]\n[ ] Guess: 0xa310cf5a62ee8b7f970ac987db62a212bcc593feea44bb691b88e462be98dcec [301s]\n[ ] Guess: 0x84e6dd422861394a7f33404116d5479a8c6bdf72eea906857f2014ff99ab79b7 [301s]\n[ ] Guess: 0x7b1922bcd79ec6b680ccbfbee92ab865307b1b3ab86e97ff7499b5c362b7ab9a [301s]\n[ ] Guess: 0x49705d1c5ab6a546e3d783dea6aaec610f1c1fb14e9b38602e824937278213fb [301s]\n[ ] Guess: 0xb68fa2e2a5495aba1c287c215955139eadcadafc587c6624c537818bd4e11156 [301s]\n[ ] Guess: 0x79d5bb2659118ea8ef7e411240b4279cbffb28471a101dd51f9d7a806740d399 [301s]\n[ ] Guess: 0x862a44d8a6ee71581081beedbf4bd862fcebd2668d0780afd41c5042952251b8 [301s]\n[ ] Guess: 0x2c88528a3a1a29e67c3025519df9fb98473f2ef22e7cb6b1ebce8c13da1b04f3 [301s]\n[ ] Guess: 0xd377ad74c5e5d61a83cfdaae6206046775a7cbbb789ae7d307eb3eaf2248205e [301s]\n[ ] Guess: 0x7d811b70781625ee81f0c7200bce833171c2798796d3bf7cbea6858bbc5c1fbc [301s]\n[ ] Guess: 0x827ee48e87e9da127e0f38dff4317cce4b2481261043df083513453740070595 [301s]\n[ ] Guess: 0xea9ad2a25568314f48e0c199725bff7e6a85c51cd425b6412ecae39cfcbe5930 [301s]\n[ ] Guess: 0x15652d5caa97ceb1b71f3e668da4008152613590d2f1e843c4eee725ffa4cc21 [301s]\n[*] Finished attack.\n",
+ "stderr_tail": ""
+}

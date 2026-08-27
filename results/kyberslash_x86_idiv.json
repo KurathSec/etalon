@@ -2,19 +2,35 @@
   "finding": "kyberslash-x86-leak-presence",
   "measured_utc": "",
   "host": {
-    "_comment": "The x86 acquisition host, captured from this machine (/proc/cpuinfo, /sys) so every host fact the paper states is a regenerated macro rather than a typed claim. Turbo is enabled because disabling it needs root we do not have; that is recorded, not hidden. Regenerable by re-reading /proc/cpuinfo and /sys/devices/system/cpu on the same host.",
+    "_comment": "The x86 acquisition host, captured from this machine by bin/host_facts.py so every host fact in the paper is regenerable rather than typed.",
     "cpu_model": "Intel Core Ultra 9 285H",
-    "microarch": "Arrow Lake",
     "microarch_basis": "CPUID family 6, model 197, stepping 2",
     "cpu_family": 6,
     "cpu_model_num": 197,
     "cpu_stepping": 2,
     "microcode": "0x11b",
-    "smt": "off",
+    "hybrid": true,
+    "pinned_cpu": 2,
+    "pinned_core_type": "performance",
+    "doitm": "not read: /dev/cpu/N/msr requires elevated privileges, not taken here",
+    "smt": "notsupported",
     "turbo": "enabled",
     "governor": "performance",
+    "frequency_khz": {
+      "scaling_min": 400000,
+      "scaling_max": 5400000,
+      "cpuinfo_max": 5400000
+    },
+    "_frequency_sample_khz": {
+      "cur_min": 1076511,
+      "cur_median": 3325093,
+      "cur_max": 4175819,
+      "samples": 40,
+      "note": "sampled at capture time on the pinned core, idle; not pinned; varies between captures by design and is not compared by --check"
+    },
     "kernel": "7.1.8-200.fc44.x86_64",
-    "machine": "x86_64"
+    "machine": "x86_64",
+    "microarch": "Arrow Lake"
   },
   "regenerable": "on this x86 host: taskset -c 2 python3 pairs/kyberslash/x86/measure.py. Unlike the Graviton measurement this is not architecture-locked.",
   "results": {
@@ -26,53 +42,109 @@
       }
     },
     "idiv_latency_operand_dependent": {
-      "note": "serial dependency chain. On this Arrow Lake out-of-order divider the per-div TSC latency shows no operand-dependent step across the operand range: all five dividends lie within 0.034 ticks (9.29106 at dividend 1, the smallest, to 9.32504). An earlier revision of this note called the dividend-1 sample 'higher, a warm-up artifact'; it is in fact the lowest of the five, and the spread is in any case below the run's noise floor. This is unlike the Graviton Neoverse-V1 udiv, which rises across the same range.",
+      "note": "serial dependency chain. On this Arrow Lake out-of-order divider the per-div TSC latency varies by spread_ticks across a dividend range of nine orders of magnitude, and the variation is not monotone in the dividend, so it is not the rising magnitude dependence the Graviton Neoverse-V1 udiv shows over the same range. The spread is larger than the same-operand noise floor recorded under kyberslash_operand_range_step, so it is a real variation and not a null; what it is not is a step at the quotient boundary, which that paired measurement addresses directly.",
       "ticks_per_udiv": {
-        "dividend_1": 9.29106,
-        "dividend_3000": 9.32504,
-        "dividend_8000": 9.31209,
-        "dividend_1e6": 9.31714,
-        "dividend_4e9": 9.31223
+        "dividend_1": 9.28488,
+        "dividend_3000": 9.27777,
+        "dividend_8000": 9.31596,
+        "dividend_1e6": 9.31259,
+        "dividend_4e9": 9.31343
       },
-      "spread_ticks": 0.034
+      "spread_ticks": 0.03819000000000017,
+      "_spread_note": "spread_ticks is max minus min over ticks_per_udiv, derived from the values above rather than measured again; the sweep itself was acquired in the run this record came from."
     },
     "kyberslash_operand_range_step": {
       "note": "the step at dividend=divisor=3329, quotient 0 -> 1, over the KyberSlash range [1664,8320]. Over this range the quotient never exceeds 2 bits, so the operand-dependent latency the wide sweep shows barely moves.",
-      "coeff_below_833_ticks": 9.28503,
-      "coeff_at_or_above_833_ticks": 9.30926,
-      "step_ticks": 0.00126,
-      "noise_floor_ticks": 0.01146,
+      "coeff_below_833_ticks": 9.30467,
+      "coeff_at_or_above_833_ticks": 9.26406,
+      "step_ticks": 0.00434,
+      "noise_floor_ticks": 0.01691,
       "signal_to_noise": 0
     },
     "end_to_end_coeff_to_bit_Os": {
       "note": "two-class low-vs-high magnitude over the real coeff_to_bit with the division forced to a hardware idiv, min-of-11 batches of M each. Low class = coeff in [0,833), high class = coeff in [1664,3329). Operands are generated outside the timed region, from the same seed, and both classes are timed by the same loop over a precomputed array, so the two classes execute identical instructions and differ only in the values fed to the divider. An earlier revision generated each class inside the timed loop with a different constant modulus and a different seed, which conflated the divider's operand dependence with the cost of the operand generation; the delta below is the corrected measurement. This is the x86 rung of the host-magnitude ladder; the single-bit recovery step (above) stays sub-noise.",
-      "low_coeffs_ticks_per_call": 4.33713,
-      "high_coeffs_ticks_per_call": 4.33554,
-      "secret_dependent_delta_ticks": -0.00159,
-      "delta_percent_of_call": -0.0367
+      "low_coeffs_ticks_per_call": 4.33835,
+      "high_coeffs_ticks_per_call": 4.33615,
+      "secret_dependent_delta_ticks": -0.0022,
+      "delta_percent_of_call": -0.0507
     },
     "per_call_magnitude_sensitivity": {
       "note": "low-vs-high magnitude as a per-call two-class test, operands precomputed, order within each pair randomised (timing the two classes in a fixed order makes the second systematically cheaper and shows up as a ~1-tick offset carrying the sign of the ordering, not of the operand). tau = |t|/sqrt(n) is comparable to the scored dudect verdicts and to the calibrated null band. The per-call step is resolvable while the pipelined end-to-end difference above is not: out-of-order execution absorbs it in a realistic loop, which is why the scored fixed-vs-random verdict reads clean.",
       "design": "low [0,833) vs high [1664,3329), paired, order randomised",
       "by_n": {
-        "n_50000_t": 5.4582,
-        "n_50000_tau": 0.02441,
-        "n_50000_mean_ticks": 0.6522,
-        "n_200000_t": 23.998,
-        "n_200000_tau": 0.053661,
-        "n_200000_mean_ticks": 0.73254,
-        "n_800000_t": 20.1717,
-        "n_800000_tau": 0.022553,
-        "n_800000_mean_ticks": 0.75069,
-        "n_2000000_t": 38.9809,
-        "n_2000000_tau": 0.027564,
-        "n_2000000_mean_ticks": 0.77522,
-        "n_4000000_t": 26.0695,
-        "n_4000000_tau": 0.013035,
-        "n_4000000_mean_ticks": 0.734174
+        "n_50000_t": 2.098,
+        "n_50000_tau": 0.009383,
+        "n_50000_mean_ticks": -0.33652,
+        "n_50000_mde_ticks": 0.449112,
+        "n_200000_t": 5.8668,
+        "n_200000_tau": 0.013119,
+        "n_200000_mean_ticks": -0.50312,
+        "n_200000_mde_ticks": 0.240119,
+        "n_800000_t": 17.1725,
+        "n_800000_tau": 0.019199,
+        "n_800000_mean_ticks": -0.55306,
+        "n_800000_mde_ticks": 0.090177,
+        "n_2000000_t": 29.6259,
+        "n_2000000_tau": 0.020949,
+        "n_2000000_mean_ticks": -0.555849,
+        "n_2000000_mde_ticks": 0.052534,
+        "n_4000000_t": 49.075,
+        "n_4000000_tau": 0.024537,
+        "n_4000000_mean_ticks": -0.552091,
+        "n_4000000_mde_ticks": 0.0315
       },
-      "mean_ticks_at_max_n": 0.734174,
-      "tau_at_max_n": 0.013035
+      "mean_ticks_at_max_n": -0.552091,
+      "tau_at_max_n": 0.024537
+    },
+    "per_call_reciprocal_ablation": {
+      "note": "the ablation: the identical per-call two-class design with the divider replaced by the upstream fix's reciprocal multiply, forced through inline asm as the idiv is. An effect that survives here belongs to the surroundings, not the divider.",
+      "by_n": {
+        "recip_n_50000_t": 0.0478,
+        "recip_n_50000_tau": 0.000214,
+        "recip_n_50000_mean_ticks": -0.00564,
+        "recip_n_50000_mde_ticks": 0.330545,
+        "recip_n_200000_t": 2.9241,
+        "recip_n_200000_tau": 0.006539,
+        "recip_n_200000_mean_ticks": -0.14439,
+        "recip_n_200000_mde_ticks": 0.138261,
+        "recip_n_800000_t": 7.1509,
+        "recip_n_800000_tau": 0.007995,
+        "recip_n_800000_mean_ticks": -0.119505,
+        "recip_n_800000_mde_ticks": 0.046793,
+        "recip_n_2000000_t": 7.0057,
+        "recip_n_2000000_tau": 0.004954,
+        "recip_n_2000000_mean_ticks": -0.110957,
+        "recip_n_2000000_mde_ticks": 0.044347,
+        "recip_n_4000000_t": 5.6389,
+        "recip_n_4000000_tau": 0.002819,
+        "recip_n_4000000_mean_ticks": -0.083783,
+        "recip_n_4000000_mde_ticks": 0.041603
+      }
+    },
+    "per_polynomial_two_class": {
+      "note": "the granularity the attack consumes: one 256-coefficient polynomial per timed region, low against high class, division forced to idiv, with a reciprocal twin in the same run and the minimum detectable effect beside every mean.",
+      "by_n": {
+        "poly_div_n_20000_t": 1.5483,
+        "poly_div_n_20000_mean_ticks": -3.4134,
+        "poly_div_n_20000_mde_ticks": 6.172986,
+        "poly_div_n_100000_t": 0.5386,
+        "poly_div_n_100000_mean_ticks": -0.31928,
+        "poly_div_n_100000_mde_ticks": 1.659686,
+        "poly_div_n_400000_t": 0.1899,
+        "poly_div_n_400000_mean_ticks": 0.130955,
+        "poly_div_n_400000_mde_ticks": 1.931343,
+        "poly_recip_n_20000_t": 0.1616,
+        "poly_recip_n_20000_mean_ticks": -0.0538,
+        "poly_recip_n_20000_mde_ticks": 0.932304,
+        "poly_recip_n_100000_t": 0.2326,
+        "poly_recip_n_100000_mean_ticks": 0.04748,
+        "poly_recip_n_100000_mde_ticks": 0.571548,
+        "poly_recip_n_400000_t": 0.9066,
+        "poly_recip_n_400000_mean_ticks": 0.08896,
+        "poly_recip_n_400000_mde_ticks": 0.274739,
+        "poly_div_mean_ticks_low": 1115.722,
+        "poly_div_mean_ticks_high": 1112.384
+      }
     },
     "tsc_ghz": 3.6863
   }

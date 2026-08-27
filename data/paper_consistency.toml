@@ -550,3 +550,17 @@ why = "this described the same paper already cited in the preceding clause under
 phrase = "count retired instructions over two secret classes"
 retired_in = "sec/conclusion.tex, revision A8"
 why = "a check that passes the paper's own headline residual cannot be recommended as the check; the recommendation now asks for cycle-level measurement or operand-magnitude fuzzing at a fixed digit count"
+
+[[retired]]
+phrase = "recovery pending"
+retired_in = "tab:fixes and the abstract, the fifteenth review's E2"
+why = """The paper said the MatrixSSL residual's exploitability was pending a timing-ordered
+lattice attempt on the fixed build. Nine such attempts are now recorded
+(results/matrixssl_recovery.json) and none recovers the key, for a structural reason the
+record states: the published attack's rank model assumes a multi-bit bias where the fix
+leaves one bit. The outcome is a measured, bounded observation and is stated as one."""
+
+[[retired]]
+phrase = "no timing-ordered lattice attempt"
+retired_in = "sec/fixes.tex and sec/app-measure.tex, the fifteenth review's E2"
+why = """Same as 'recovery pending': the attempt has been made, nine times, and is on record."""

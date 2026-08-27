@@ -5,3 +5,5 @@ ks_leak_x86
 _probe_*.o
 detection_curve
 magnitude_sensitivity
+magnitude_sensitivity_recip
+poly_granularity

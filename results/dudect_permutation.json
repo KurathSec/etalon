@@ -4,7 +4,7 @@
   "statistic": "dudect's max |t| over its 101 first-order tests (uncropped plus 100 percentile crops). The second-order test is excluded from both the observed statistic and the null because dudect accumulates it against a running mean.",
   "permutation": "class labels shuffled WITHIN each dudect batch block (a dump concatenates batches whose timing distributions can differ; class assignment is randomised within each), crop thresholds held fixed, 10000 shuffles, p = (1+#{null>=obs})/(perms+1).",
   "multiplicity": "Benjamini-Hochberg across all committed dumps at FDR 0.05. Reported per row as bh_significant, which is the verdict; raw_significant is the uncorrected per-run call and is not.",
-  "agreement_with_retired_band": "After BH control the permutation rule reproduces every verdict the retired band gave: the leaking vulnerable arms are significant and every patched arm and certified negative is not. 1 row(s) carry an uncorrected p below 0.05 that does not survive multiplicity, which is the expected count of borderline results over 22 tests: kyberslash_patched (p=0.0237).",
+  "agreement_with_retired_band": "After BH control the permutation rule reproduces every verdict the retired band gave: the leaking vulnerable arms are significant and every patched arm and certified negative is not.",
   "generator": "bin/dudect_permute.py --assemble",
   "rows": [
     {
@@ -469,22 +469,22 @@
     },
     {
       "path": "results/raw/kyberslash_patched.dudect.bin.gz",
-      "sha256": "59863f186fc23ac64bb59b5b33a990bfd94e7615826dd2242f7adb1e2daef7da",
+      "sha256": "f9a6cf299c8f00e7545fd090301fb7ba7fb7ccb79ab3a706ecc4a7ac3c54b03a",
       "measurements": 59967,
       "batches": 3,
-      "batches_source": "declared-default",
+      "batches_source": "sidecar",
       "blocks_approximate": false,
-      "n_class0": 29932,
-      "n_class1": 30035,
-      "observed_max_abs_t": 2.924,
-      "n_at_argmax_test": 59967,
-      "observed_tau": 0.01194,
+      "n_class0": 29941,
+      "n_class1": 30026,
+      "observed_max_abs_t": 2.2094,
+      "n_at_argmax_test": 44611,
+      "observed_tau": 0.01046,
       "permutations": 10000,
-      "null_max_abs_t_mean": 1.6235,
-      "null_max_abs_t_p95": 2.6685,
-      "null_max_abs_t_max": 4.3155,
-      "p_value": 0.023697630236976304,
-      "raw_significant": true,
+      "null_max_abs_t_mean": 1.6963,
+      "null_max_abs_t_p95": 2.6763,
+      "null_max_abs_t_max": 4.2199,
+      "p_value": 0.1640835916408359,
+      "raw_significant": false,
       "note": "Permutation null over dudect's 101 first-order tests (uncropped plus 100 percentile crops), labels shuffled, crop thresholds held fixed. The second-order test is excluded from BOTH the observed statistic and the null because dudect accumulates it against a running mean. p is budget-matched by construction: no calibrated band is used.",
       "pair": "kyberslash",
       "arm": "patched",
@@ -513,6 +513,5 @@
       "arm": "vulnerable",
       "bh_significant": false
     }
-  ],
-  "_correction": "RE-DECIDED 2026-08-27 under the DECLARED batch structure. The earlier record inferred 9 batches from the 59,967-record dumps (59,967 = 9 x 6,663) where the acquisition ran 3 (3 x (20,000 - 10 - 1)); the nine sub-blocks nested inside the three batches exactly, so the null was valid and only finer than described. Re-deciding every arm within the three declared batches moved no verdict: 5 of 22 significant at FDR 0.05 before and after; the largest change in an uncorrected p was 0.13, on a null arm. Recorded under PR-4 C8: no row changed, and the basis is now the one the paper describes."
+  ]
 }

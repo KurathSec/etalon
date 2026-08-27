@@ -134,6 +134,11 @@ def check_oracle() -> Result:
     checks = sum(len(x["checks"]) for x in results)
     bad = [f"{x['pair']}/{arm}" for x in results
            for arm, c in x["checks"].items() if c.get("status") != "PASS"]
+    unavailable = [x for x in results if x.get("runtime_unavailable")]
+    if unavailable:
+        return Result("ORC-1/2", FAIL, len(results),
+                      f"{len(unavailable)} pair(s) not verified: {unavailable[0]['reason']} "
+                      f"({', '.join(x['pair'] for x in unavailable)})")
     not_run = [x["pair"] for x in results if x.get("status") == "NOT_RUN"]
     if bad:
         return Result("ORC-1/2", FAIL, checks, "failed: " + ", ".join(bad))
@@ -952,18 +957,25 @@ def check_gen2() -> Result:
               ("host_facts", ["bin/host_facts.py", "--check"]),
               ("matrixssl_report", ["bin/matrixssl_report.py",
                                     "results/raw/matrixssl/repeats", "--check"]))
-    bad = []
+    bad, skipped = [], []
     for name, cmd in checks:
         r = subprocess.run([sys.executable, *cmd], cwd=REPO,
                            capture_output=True, text=True)
+        if r.returncode == 2 and name == "host_facts":
+            # The host record can only be re-captured on the acquisition host. On
+            # any other machine the check is not applicable, and host_facts says
+            # so with exit 2 rather than reporting the other machine as drift.
+            skipped.append(f"{name} (not the acquisition host)")
+            continue
         if r.returncode != 0:
             tail = (r.stderr or r.stdout).strip().splitlines()
             bad.append(f"{name}: {tail[-1][:100] if tail else 'nonzero exit'}")
     if bad:
         return Result("GEN-2", FAIL, len(checks), "; ".join(bad))
-    return Result("GEN-2", PASS, len(checks),
+    return Result("GEN-2", PASS, len(checks) - len(skipped),
                   "every --check generator reproduces its committed record: "
-                  + ", ".join(n for n, _ in checks))
+                  + ", ".join(n for n, _ in checks if not any(n in k for k in skipped))
+                  + (f"; skipped {', '.join(skipped)}" if skipped else ""))
 
 
 def check_namecheck() -> Result:

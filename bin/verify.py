@@ -32,6 +32,7 @@ import hashlib
 import importlib.util
 import json
 import pathlib
+import subprocess
 import sys
 import tomllib
 
@@ -43,6 +44,37 @@ def load_module(path: pathlib.Path):
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
+
+
+_RUNTIME_CACHE: dict[str, str | None] = {}
+
+
+def runtime_unavailable(image: str) -> str | None:
+    """Why an image-runtime recovery cannot run here, or None if it can.
+
+    A recovery that needs the pinned image and finds no podman, or no image, must
+    say so. Before this probe, a missing runtime surfaced as "recovered key does
+    not verify": the subprocess failed, the wrapper returned None, and None meant
+    "not recovered". That is the quiet failure INST-1 exists to catch, arriving
+    through the oracle itself. Probed once per image and cached.
+    """
+    import shutil
+    if image in _RUNTIME_CACHE:
+        return _RUNTIME_CACHE[image]
+    why = None
+    if shutil.which("podman") is None:
+        why = "podman is not installed"
+    else:
+        r = subprocess.run(["podman", "image", "exists", image],
+                           capture_output=True, text=True)
+        if r.returncode not in (0, 1):
+            why = f"podman cannot run here (exit {r.returncode}): {r.stderr.strip()[:80]}"
+        elif r.returncode == 1:
+            why = (f"image {image} is not built; build it from its Containerfile "
+                   f"under images/tools/ (podman build -t {image} images/tools/"
+                   f"{image.split('/')[-1].split(':')[0]})")
+    _RUNTIME_CACHE[image] = why
+    return why
 
 
 def verify_pair(pair_dir: pathlib.Path) -> dict:
@@ -69,6 +101,13 @@ def verify_pair(pair_dir: pathlib.Path) -> dict:
     expect = verifier.get("sha256")   # only the sha256-preimage scheme uses it
 
     rec = load_module(pair_dir / "recover" / "recover.py")
+    if manifest.get("recovery", {}).get("runtime") == "image":
+        image = getattr(rec, "IMAGE", None)
+        why = runtime_unavailable(image) if image else "recover.py names no IMAGE"
+        if why:
+            return {"pair": name, "tier": tier, "status": "NOT_RUN", "checks": {},
+                    "runtime_unavailable": True,
+                    "reason": f"recovery runtime unavailable: {why}"}
     out = {"pair": name, "tier": manifest["pair"].get("tier"), "checks": {}}
 
     # Expectations come from the manifest, not from the arm's name. A negative
@@ -162,15 +201,21 @@ def main() -> int:
                       f"({want})  -> {c['status']}{extra}")
     failed = [r for r in results if r["status"] == "FAIL"]
     verified = [r for r in results if r["status"] == "PASS"]
-    not_run = [r for r in results if r["status"] == "NOT_RUN"]
+    not_run = [r for r in results if r["status"] == "NOT_RUN" and not r.get("runtime_unavailable")]
+    # A pair whose recovery could not run is neither verified nor a tier-C not-run.
+    # It is reported by name with the reason, and it fails the run, because an
+    # oracle that did not run has established nothing.
+    unavailable = [r for r in results if r.get("runtime_unavailable")]
     # Under --json, stdout must be only JSON. Appending a human summary to it
     # made the output unparsable for every caller, which is how the controls
     # reported that the oracle "produced no parsable result" while the oracle
     # itself was passing.
     summary = (f"verify: {len(verified)} verified, {len(failed)} failed, "
-               f"{len(not_run)} not run (tier C)")
+               f"{len(not_run)} not run (tier C)"
+               + (f", {len(unavailable)} NOT RUN because the recovery runtime is "
+                  f"unavailable ({unavailable[0]['reason']})" if unavailable else ""))
     print(summary, file=sys.stderr if a.json else sys.stdout)
-    return 1 if failed else 0
+    return 1 if (failed or unavailable) else 0
 
 
 if __name__ == "__main__":

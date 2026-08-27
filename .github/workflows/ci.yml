@@ -14,6 +14,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - run: python3 -m pip install -q -e ".[dev]"
 
       # The vocabulary firewall runs before anything else. It is the one check
       # whose failure cannot be fixed after the fact: this repository becomes
@@ -38,9 +39,17 @@ jobs:
         run: python3 bin/export.py --profile anon --check
 
       # The oracle. This is the deliverable, and the constraint it proves is
-      # that it runs on a stock runner with no containers, no analysers and no
-      # hardware. If this job ever needs any of those, the platform-bound and
-      # portable halves have leaked into each other.
+      # that it runs from a cold clone with no analyser, no measurement and no
+      # hardware. It does need the pinned recovery image, because lattice
+      # reduction needs fpylll and upstream's curve module is GPL and lives in
+      # the image rather than in this tree; the image is built here from its
+      # Containerfile so that need is met by the checkout, not by the host. If
+      # this job ever needs an analyser image or a timing run, the platform-bound
+      # and portable halves have leaked into each other.
+      - name: build the pinned recovery image from its Containerfile
+        run: |
+          command -v podman >/dev/null || (sudo apt-get update -q && sudo apt-get install -y -q podman)
+          podman build -q -t localhost/ct-toolchain/minerva-recover:1 images/tools/minerva-recover
       - name: the oracle verifies from a cold clone
         run: python3 bin/verify.py
 
@@ -68,4 +77,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - run: python3 -m pip install -q -e ".[dev]"
+      # tests/unit/test_oracle.py runs the oracle for real, and the oracle needs
+      # the pinned recovery image; a test that skipped without it would be a
+      # control that lapses silently.
+      - name: build the pinned recovery image from its Containerfile
+        run: |
+          command -v podman >/dev/null || (sudo apt-get update -q && sudo apt-get install -y -q podman)
+          podman build -q -t localhost/ct-toolchain/minerva-recover:1 images/tools/minerva-recover
       - run: python3 -m pytest -q

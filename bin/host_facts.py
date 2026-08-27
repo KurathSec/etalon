@@ -142,6 +142,15 @@ def main() -> int:
         old = json.loads(OUT.read_text()) if OUT.exists() else {}
         drift = {k: (old.get(k), v) for k, v in fresh.items()
                  if k != "_comment" and old.get(k) != v}
+        if "cpu_model" in drift and old.get("cpu_model"):
+            # Not drift: this is not the acquisition host at all. Exit 2 so a
+            # caller can tell "the record no longer matches its host" (exit 1)
+            # from "you are on a different machine" (exit 2); GEN-2 treats the
+            # second as not applicable rather than as a failed control.
+            print(f"different host: committed {old['cpu_model']!r}, "
+                  f"this machine {fresh['cpu_model']!r}; the record cannot be "
+                  f"re-captured here")
+            return 2
         if drift:
             print("host drift against the committed record:")
             for k, (was, now) in sorted(drift.items()):

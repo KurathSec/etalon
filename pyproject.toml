@@ -16,6 +16,12 @@ license = { file = "LICENSE" }
 # dependency is one more thing that can fail to install two years from now.
 dependencies = []
 
+# The TOOLING is not the oracle. bin/ regenerates figures and statistics with
+# numpy and matplotlib, and the tests need pytest; none of that is needed to run
+# bin/verify.py, which stays stdlib plus the pinned recovery image.
+[project.optional-dependencies]
+dev = ["pytest", "numpy", "matplotlib"]
+
 [project.scripts]
 corpus = "corpus.cli:main"
 

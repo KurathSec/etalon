@@ -956,9 +956,13 @@ def as_tex(report: dict) -> str:
         # The two coefficients the paired boundary design compares, from the record's
         # own key names, so the prose cannot name a different pair than the measurement.
         # The boundary coefficient, parsed from the record's own key name so the prose
-        # cannot name a different one than the measurement.
-        _bk = re.search(r"coeff_below_(\d+)_ticks", json.dumps(st))
-        _blo = int(_bk.group(1)) if _bk else 833
+        # cannot name a different one than the measurement. Fail loudly on a miss rather
+        # than fall back to a literal, so a future rename cannot silently freeze it.
+        _bk = re.search(r"_below_(\d+)", json.dumps(st))
+        if not _bk:
+            raise SystemExit("regen: no _below_<n> key in kyberslash_operand_range_step; "
+                             "the boundary coefficient cannot be parsed from the record")
+        _blo = int(_bk.group(1))
         out.append(tex_macro("ksBoundaryLo", str(_blo - 1)))
         out.append(tex_macro("ksBoundaryHi", str(_blo)))
         cg = xr["codegen"]["idiv_in_coeff_to_bit"]
@@ -1381,8 +1385,9 @@ def as_tex(report: dict) -> str:
             out.append(tex_macro("mxRepHi", f"{d['max_effect_ticks']:,.0f}"))
             out.append(tex_macro("mxRepExcl",
                                  str(d["reps_with_interval_excluding_zero"])))
-        # The record count the repeat acquisitions carry: below the corpus budget because
-        # dudect_run.h drops a non-positive delta, and the count of those varies per run.
+        # The effect estimator's post-crop sample size, NOT a record count: the repeat
+        # dumps each hold the full corpus budget and matrixssl_report.py crops to its top
+        # 95 per cent before the bootstrap, so this is smaller than the acquisition.
         _rn = [r["measurements"] for g in rj.values() for r in g.get("per_rep", [])]
         if _rn:
             out.append(tex_macro("mxRepNLo", f"{min(_rn):,}"))
@@ -1561,7 +1566,12 @@ def as_tex(report: dict) -> str:
                                  f"{_dep['credited_mean_leading_zeros_top90']:.0f}"))
             out.append(tex_macro("mxObservedLz",
                                  f"{_dep['observed_mean_leading_zeros_top90']:.1f}"))
-            out.append(tex_macro("mxLzTicksPerZero", "2,300"))
+            # The per-zero step of the fixed build's ladder, the first step of the
+            # 100,000-signature quiet trace, read from the record rather than typed.
+            _lad = json.loads((REPO / "results" /
+                   "exploit_budget_matrixssl_100000.json").read_text())["leading_zero_ladder"]
+            out.append(tex_macro("mxLzTicksPerZero",
+                                 f"{abs(_lad['lz_1']['delta_vs_lz0']):,.0f}"))
         # The selection purity on the quiet traces, from the same estimator the paper
         # already uses for the committed trace.
         for n, word in ((50000, "Fifty"), (100000, "Hundred")):

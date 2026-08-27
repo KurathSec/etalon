@@ -61,9 +61,9 @@ static int dudect_run_and_dump(dudect_config_t *config) {
   dudect_state_t state = DUDECT_NO_LEAKAGE_EVIDENCE_YET;
   /* Records written per batch. The dump has no header, and the permutation null
    * shuffles labels WITHIN each batch, so the block boundaries must be known
-   * exactly: equal splits are right only when no delta was dropped, and a
-   * dropped delta is what makes 56,968 out of 3 x 19,989. The adapter writes
-   * these counts to a sidecar beside the dump. */
+   * exactly: equal splits hold only when no non-positive delta was dropped. On
+   * these acquisitions none was, so every batch is 19,989, but the count is
+   * read from the sidecar this adapter writes rather than assumed. */
   size_t per_batch[64];
   dudect_state_t last = state;
   for (int b = 0; b < batches; b++) {

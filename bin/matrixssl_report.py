@@ -84,7 +84,11 @@ def main() -> int:
         d, lo, hi, n = stats(cl, t)
         rows.setdefault((m["ver"], m["design"]), []).append(
             {"rep": int(m["rep"]), "effect_ticks": d, "ci_low": lo, "ci_high": hi,
-             "measurements": n})
+             # records is the raw dump size; cropped_sample_size is what the estimator
+             # keeps after the 95th-percentile crop. They are named apart because a
+             # sibling record (fix_verification.json) uses "measurements" for the raw
+             # count, and one field name must not mean two things across records.
+             "records": int(cl.size), "cropped_sample_size": n})
 
     out = {}
     print(f"  {'version':8s} {'design':10s} {'reps':>4s} {'mean effect':>14s} "
@@ -130,7 +134,8 @@ def main() -> int:
                 if abs(float(v[f]) - float(w[f])) > 1e-6:
                     bad.append(f"{k}.{f}: {v[f]} != {w[f]}")
             for r1, r2 in zip(v["per_rep"], w["per_rep"]):
-                for f in ("effect_ticks", "ci_low", "ci_high", "measurements"):
+                for f in ("effect_ticks", "ci_low", "ci_high", "records",
+                          "cropped_sample_size"):
                     if abs(float(r1[f]) - float(r2[f])) > 1e-6:
                         bad.append(f"{k}.r{r1['rep']}.{f}: {r1[f]} != {r2[f]}")
         extra = set(doc["designs"]) - set(committed["designs"])

@@ -127,8 +127,10 @@ def detect_batches(n: int, max_batches: int = 32, min_per: int = 5000) -> int:
     times finer than the acquisition's real blocks. For 59,967-record dumps the
     nine sub-blocks happen to nest inside the three batches exactly (19,989 = 3 x
     6,663), so labels stayed exchangeable within every sub-block and the null was
-    valid, only finer than described; for dumps with dropped deltas (56,968) the
-    guessed blocks straddle batch boundaries. permute() now takes the declared
+    valid, only finer than described. For a dump that did lose deltas, a count not
+    divisible into three equal batches, the guessed blocks would straddle batch
+    boundaries; no committed dump is of that kind, all hold 59,967. permute() now
+    takes the declared
     count, or exact block sizes from a sidecar, and records which it used. This
     function is kept for a dump whose provenance is unknown, and its use is
     recorded as batches_source = "inferred"."""

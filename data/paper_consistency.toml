@@ -748,3 +748,18 @@ leaves one bit. The outcome is a measured, bounded observation and is stated as 
 phrase = "no timing-ordered lattice attempt"
 retired_in = "sec/fixes.tex and sec/app-measure.tex, the fifteenth review's E2"
 why = """Same as 'recovery pending': the attempt has been made, nine times, and is on record."""
+
+[[retired]]
+phrase = "to \\mxRepNHi{} records"
+retired_in = "sec/method.tex, round 2 of this cycle"
+why = """The repeat dumps each hold the full dudectBudget (59,967) records, the first
+byte-identical to the committed single dump; mxRepNLo to mxRepNHi (56,968 to 56,970) is the
+effect estimator's post-95%-crop sample size, not a record count. Any prose calling it a
+record count is the retired story, twice re-found before it was rooted out."""
+
+[[retired]]
+phrase = "dumps with dropped deltas"
+retired_in = "bin/dudect_permute.py docstring, round 3 of this cycle"
+why = """No committed dump dropped a delta: every corpus and MatrixSSL dump holds exactly
+59,967 records (19,989 x 3), as the sidecars record. The 56,968 figure is a 95% crop, not a
+dropped-delta remainder."""

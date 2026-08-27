@@ -948,8 +948,14 @@ def as_tex(report: dict) -> str:
             _m = re.search(r"#define N (\d+)", _pg)
             if _m:
                 out.append(tex_macro("ksPolyCoeffs", _m.group(1)))
+            # Re-credit the json record: reading poly_granularity.c above made it the
+            # provenance context, but polyMdePercent and every host macro below is read
+            # from kyberslash_x86_idiv.json, not the C harness.
+            xp.read_text()
             out.append(tex_macro("polyMdePercent",
                                  f"{poly['poly_div_n_400000_mde_ticks'] / poly['poly_div_mean_ticks_low'] * 100:.2f}\\%"))
+        else:
+            xp.read_text()
         st = xr["kyberslash_operand_range_step"]
         out.append(tex_macro("hostStepTicks", f"{abs(st['step_ticks']):.3f}"))
         out.append(tex_macro("hostNoiseFloor", f"{st['noise_floor_ticks']:.2f}"))
@@ -1388,7 +1394,7 @@ def as_tex(report: dict) -> str:
         # The effect estimator's post-crop sample size, NOT a record count: the repeat
         # dumps each hold the full corpus budget and matrixssl_report.py crops to its top
         # 95 per cent before the bootstrap, so this is smaller than the acquisition.
-        _rn = [r["measurements"] for g in rj.values() for r in g.get("per_rep", [])]
+        _rn = [r["cropped_sample_size"] for g in rj.values() for r in g.get("per_rep", [])]
         if _rn:
             out.append(tex_macro("mxRepNLo", f"{min(_rn):,}"))
             out.append(tex_macro("mxRepNHi", f"{max(_rn):,}"))
@@ -1566,12 +1572,7 @@ def as_tex(report: dict) -> str:
                                  f"{_dep['credited_mean_leading_zeros_top90']:.0f}"))
             out.append(tex_macro("mxObservedLz",
                                  f"{_dep['observed_mean_leading_zeros_top90']:.1f}"))
-            # The per-zero step of the fixed build's ladder, the first step of the
-            # 100,000-signature quiet trace, read from the record rather than typed.
-            _lad = json.loads((REPO / "results" /
-                   "exploit_budget_matrixssl_100000.json").read_text())["leading_zero_ladder"]
-            out.append(tex_macro("mxLzTicksPerZero",
-                                 f"{abs(_lad['lz_1']['delta_vs_lz0']):,.0f}"))
+
         # The selection purity on the quiet traces, from the same estimator the paper
         # already uses for the committed trace.
         for n, word in ((50000, "Fifty"), (100000, "Hundred")):

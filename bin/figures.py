@@ -148,13 +148,20 @@ KS_LO = kyber_q() // 2
 KS_HI = (kyber_q() - 1) * 2 + kyber_q() // 2
 
 
-def shade_kyber_range(ax, label=True):
+def shade_kyber_range(ax, label=True, at="top"):
+    """Shade the operand band and label it at the top or the bottom of the axes.
+
+    The label used to sit at the top always, which put it on top of the x86 curve's
+    peak, since on that host the band holds the LARGEST latency; on the Neoverse it
+    holds the smallest, so there the top is clear. The caller says which.
+    """
     ax.axvspan(KS_LO, KS_HI, color=LIGHT, zorder=0)
     if label:
-        ax.annotate("KyberSlash\noperands", xy=((KS_LO * KS_HI) ** 0.5, 1),
-                    xycoords=("data", "axes fraction"), xytext=(0, -12),
-                    textcoords="offset points", fontsize=6.8, color=WARM,
-                    ha="center", va="top")
+        top = at == "top"
+        ax.annotate("KyberSlash\noperands", xy=((KS_LO * KS_HI) ** 0.5, 1 if top else 0),
+                    xycoords=("data", "axes fraction"), xytext=(0, -6 if top else 6),
+                    textcoords="offset points", fontsize=6.5, color=WARM,
+                    ha="center", va="top" if top else "bottom", zorder=4)
 
 
 def fig_graviton():
@@ -170,13 +177,15 @@ def fig_graviton():
     ys = [lat["dividend_1"], lat["dividend_3000"], lat["dividend_8000"],
           lat["dividend_1e6"], lat["dividend_4e9"]]
 
-    fig, a = plt.subplots(figsize=(4.6, 2.4))
-    shade_kyber_range(a)
-    a.plot(xs, ys, "-o", color=TEAL, ms=4, lw=1.4, zorder=3)
+    fig, a = plt.subplots(figsize=(2.6, 1.9))
+    shade_kyber_range(a, at="top")
+    a.plot(xs, ys, "-o", color=TEAL, ms=3.5, lw=1.3, zorder=3)
     a.set_xscale("log")
-    a.set_xlabel("dividend magnitude")
-    a.set_ylabel("ticks / udiv")
-    a.set_title("Neoverse-V1 udiv latency rises with the operand", fontsize=8.5)
+    a.set_xlabel("dividend magnitude", fontsize=7.5)
+    a.set_ylabel("ticks / udiv", fontsize=7.5)
+    a.tick_params(labelsize=6.5)
+    a.set_title("Neoverse-V1: udiv latency vs dividend", fontsize=7.5)
+    fig.tight_layout(pad=0.3)
     fig.savefig(FIG / "fig-graviton.pdf")
     plt.close(fig)
 
@@ -189,14 +198,15 @@ def fig_x86_idiv():
     ys = [lat["dividend_1"], lat["dividend_3000"], lat["dividend_8000"],
           lat["dividend_1e6"], lat["dividend_4e9"]]
 
-    fig, (a, b) = plt.subplots(1, 2, figsize=(5.6, 2.5),
-                               gridspec_kw={"width_ratios": [1.35, 1]})
-    shade_kyber_range(a)
-    a.plot(xs, ys, "-o", color=TEAL, ms=4, lw=1.4, zorder=3)
+    fig, (a, b) = plt.subplots(1, 2, figsize=(2.9, 1.9),
+                               gridspec_kw={"width_ratios": [1.45, 1], "wspace": 0.75})
+    shade_kyber_range(a, at="bottom")
+    a.plot(xs, ys, "-o", color=TEAL, ms=3.5, lw=1.3, zorder=3)
     a.set_xscale("log")
-    a.set_xlabel("dividend magnitude")
-    a.set_ylabel("TSC ticks / div")
-    a.set_title("per-div latency vs dividend", fontsize=8.5)
+    a.set_xlabel("dividend magnitude", fontsize=7.5)
+    a.set_ylabel("TSC ticks / div", fontsize=7.5)
+    a.tick_params(labelsize=6.5)
+    a.set_title("x86: idiv latency vs dividend", fontsize=7.5)
 
     # Right panel: the operand step at the KyberSlash boundary (coeff 832 -> 833) as
     # the robust paired-difference median, with the same-operand noise floor as its
@@ -209,14 +219,16 @@ def fig_x86_idiv():
     b.errorbar([0], [signed_step], yerr=noise, fmt="o", color=WARM, ms=6,
                ecolor=INK, elinewidth=1.2, capsize=5)
     b.set_xticks([0])
-    b.set_xticklabels(["coeff 832 $\\to$ 833"], fontsize=8)
+    b.set_xticklabels(["832 $\\to$ 833"], fontsize=6.5)
     b.set_xlim(-0.7, 0.7)
     lim = max(noise, abs(signed_step)) * 2.4
     b.set_ylim(-lim, lim)
-    b.set_ylabel("paired step (TSC ticks)")
-    b.set_title("no step: within noise of 0", fontsize=8.5)
-    b.annotate(f"step {abs(signed_step):.3f}\n$\\pm$ noise {noise:.3f}", xy=(0, signed_step),
-               xytext=(0.14, lim * 0.45), fontsize=7.5, color=INK, ha="left")
+    b.tick_params(labelsize=6.5)
+    b.set_ylabel("paired step (ticks)", fontsize=7.5)
+    b.set_title("step at the boundary", fontsize=7.5)
+    b.annotate(f"{abs(signed_step):.3f}\n$\\pm${noise:.3f}", xy=(0, signed_step),
+               xytext=(0.12, lim * 0.5), fontsize=6.5, color=INK, ha="left")
+    fig.tight_layout(pad=0.3)
     fig.savefig(FIG / "fig-x86-idiv.pdf")
     plt.close(fig)
 

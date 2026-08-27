@@ -84,7 +84,7 @@ def main() -> int:
         f"build cell is BIN-1, {b1['binaries_checked']:,} binaries reproduced to their "
         f"recorded \\texttt{{.text}} digest with {b1.get('discrepancies', 0)} discrepancies.}}\n"
         "\\label{tab:indices}\n"
-        "\\begin{tabular}{@{}llp{0.30\\linewidth}ll@{}}\n\\toprule\n"
+        "\\setlength{\\tabcolsep}{4pt}%\n\\begin{tabular}{@{}l>{\\raggedright\\arraybackslash}p{0.21\\linewidth}>{\\raggedright\\arraybackslash}p{0.27\\linewidth}>{\\raggedright\\arraybackslash}p{0.21\\linewidth}l@{}}\n\\toprule\n"
         "Index & Ranges over & What moved & Out of & \\\\\n\\midrule\n"
         + body + "\n\\bottomrule\n\\end{tabular}\n\\end{table}\n")
     print(f"index_table: wrote {OUT} ({len(rows)} indices)")

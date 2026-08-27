@@ -2,6 +2,11 @@
   "finding": "power for every patched arm: the class difference in ticks with its bootstrap 95% CI, so a clean verdict is not printed without saying what size of effect the measurement could have resolved.",
   "reading": "The CI half-width is the resolution floor at this budget. An effect smaller than it would not have been distinguished from zero here, which is a bound on the measurement and not a property of the program.",
   "generator": "bin/patched_power.py, over the committed patched-arm dumps",
+  "design": {
+    "alpha": 0.05,
+    "power": 0.8,
+    "ci_level": 0.95
+  },
   "arms": {
     "_sentinel-negative": {
       "measurements": 59967,

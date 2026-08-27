@@ -27,7 +27,7 @@ pairs use them:
 | --- | --- |
 | `id` | directory name, repeated here so the file is self-describing |
 | `title` | one line, human |
-| `role` | `corpus` (scored, enters denominators), `sentinel-positive` / `sentinel-negative` (fixtures, never scored), or `certified-negative` (proven constant-time, measures false positives) |
+| `role` | `corpus` (scored, enters denominators), `sentinel-positive` / `sentinel-negative` (fixtures, never scored), `certified-negative` (proven constant-time, measures false positives), or `fix-case` (a deployed remediation graded at its fix site by `results/fix_verification.json`; enumerated by the manifest controls, scored by no analyser, in no denominator, and skipped by `bin/score.py` and `bin/verify.py`) |
 | `synthetic` | true if the arms were written here rather than taken from upstream |
 | `status` | `active` or `retired` |
 | `tier` | `A` acquired and recovered here, `B` recovered here on published observations, `C` published exploit not re-run here |

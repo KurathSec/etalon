@@ -35,6 +35,23 @@ that adds a pair from another paper by following that document and nothing else.
 names the two mistakes that cost this project the most, timing your own scaffolding and
 caricaturing the two classes, so the next person does not have to rediscover them.
 
+## Verifying it in one command
+
+```
+sh bin/verify_all.sh        # or: make verify-all
+```
+
+runs every gate in order and prints one line per gate: `bin/verify.py` (the recovery
+oracle, ORC-1/ORC-2 on every recall-eligible pair), `bin/selfcheck.py` (every control),
+`python3 -m pytest -q` (the tests, which plant defects and assert the gates see them),
+`bin/paper_check.py` (the manuscript rules, skipped when the untracked paper tree is
+absent), and `bin/regen.py --headline`, which must refuse to print an aggregate recall
+figure while the census is expanded rather than complete. That last line is the paper's
+claim that the generator refuses, checked rather than asserted. Every macro the paper
+prints is mapped to the emitter line and the committed record it was read from by
+`bin/regen.py --provenance`, which instruments every file read during generation and
+writes the eprint's provenance table.
+
 ## What it is not
 
 Read this part before quoting any number out of it.
@@ -160,7 +177,7 @@ Revised 2026-08-24 (UTC), against a third-party review. Grounding the review
 against the source and data separated genuine defects from staleness. The changes
 that landed: an x86 leak-presence microbenchmark (`pairs/kyberslash/x86/`,
 regenerable on this host) measures the division constant-time on the acquisition
-host, so F1 is reframed from "dudect misses a leak the others catch" to "a timing
+host, so I3 (the analyser index) is reframed from "dudect misses a leak the others catch" to "a timing
 test reports a host-conditional truth while instruction-class tools report a
 host-independent policy, and the two answer different questions"; the tier-C
 exclusion is corrected from circularity to reproduction drift; the patched nonce
@@ -222,7 +239,7 @@ all four tools score it.
 Prose honesty fixes: the cross-ISA claim that instruction-class tools flag "the
 identical binary" that "leaks on the Arm core" is reworded (an x86 binary does not run
 on aarch64; the tools flag the x86 binary's division as a policy fact, and the same
-source built for the Arm core is what leaks); the F2 emission mechanism is corrected to
+source built for the Arm core is what leaks); the I1 emission mechanism is corrected to
 the real per-compiler lowering; Simon et al. and the KyberSlash catalogue are cited;
 `ecdsa-address` drops the mismatched libgcrypt CVE for its OpenSSL/Weiser DOI; the
 tier-B datasets are named as observation-only with modelled patched arms. The
@@ -283,10 +300,10 @@ against source separated genuine defects from staleness once more. The load-bear
 was ours: the nonce pairs' "residual" that had been read as a tool blind spot was a harness
 artifact (the dudect driver timed its own BIGNUM conversion, and its classes were a
 10-bit-vs-256-bit caricature). Fixed, dudect discriminates both nonce pairs (exploit recall
-1/1, reversing the round-2 reading). The x86 F3 end-to-end number was confounded (two
+1/1, reversing the round-2 reading). The x86 host-index (I2) end-to-end number was confounded (two
 operand classes used different constant reductions inside the timed loop; the delta fell
 from 1.6% to ~0 when corrected), and the Graviton twin had the same confound. Re-measured
-2026-08-25 on a fresh c7g: corrected, x86 reads ~0 (flat idiv) and Graviton reads 19.1%
+2026-08-25 on a fresh c7g: corrected, x86 reads ~0 (idiv with no step resolvable in a serial chain) and Graviton reads 19.1%
 (delta 0.391 ticks, tight CI), a sharper contrast than the confounded 5.8%; the aarch64
 dudect control reads clean with tau converging down to 0.0043 while native |t| crosses 10,
 a clean validation of the budget-invariant-tau rule. Kaufmann et al. (CANS 2016) added;
@@ -296,7 +313,7 @@ controls appendix is generated from selfcheck.py; host facts (P-core, DOITM) are
 regenerable.
 
 The reframe, at the user's direction: the paper's spine moves from three findings about
-analysers (F1/F2/F3) to a single question the instrument is built to answer, whether a
+analysers (now I1 to I3) to a single question the instrument is built to answer, whether a
 deployed constant-time fix actually holds. Pointed at three real Minerva remediations, it
 finds three outcomes. libgcrypt fixed the leak upstream of the primitive an analyser can be
 pointed at. wolfSSL's fix holds, over a deployed leak its own dummy-operation balancing had
@@ -307,7 +324,7 @@ bound from the secret nonce's digit count: the fix is incomplete, its residual m
 latest open release (4.6.0). The leak carries a recoverable key; end-to-end recovery from
 raw timing is host-conditional and not achieved on this fast benchmark core. MatrixSSL's
 sources are an archived mirror (upstream withdrawn post-Rambus) and are marked as such.
-F1/F2/F3 are demoted to supporting evidence for why a single tool verdict is not this check.
+The three index findings are demoted to supporting evidence for why a single tool verdict is not this check.
 Evidence in `results/fix_verification.json` and `pairs/{libgcrypt,matrixssl}-minerva/`; new
 headline section `sec/fixes.tex`.
 
@@ -593,14 +610,15 @@ the machinery behind the findings out of the body and leaves the findings in it.
 
 As of 2026-08-26, before the restructure and the house-form rebuild recorded below, the main
 body was seven sections over 19 pages: introduction, background,
-the three deployed fixes, the certified ground truth, one section carrying F1, F2 and F3
-as subsections, the limits, and the conclusion. F1, F2 and F3 were three separate sections
+the three deployed fixes, the certified ground truth, one section carrying the three index findings
+as subsections, the limits, and the conclusion. They were three separate sections
 before; merging them keeps their `sec:blindspots`, `sec:toolchain` and `sec:microarch`
 labels alive as subsection labels, so every cross-reference in the paper still resolves
 without being rewritten. The recall corpus section became Appendix C, and the takeaway
 section folded into the conclusion. (None of those counts describes the tree now: the body
-has nine sections including the indexing section, F1, F2 and F3 are back at section level
-under the same labels, the corpus section sits in Appendix A, the eprint build carries five
+has nine sections including the indexing section, the three index sections are back at
+section level under the same labels and titled I1 to I3 in reading order (the earlier letter labels
+were never defined and ran against that order), the corpus section sits in Appendix A, the eprint build carries five
 appendices, and the body ends on page 20; see the house-form entry below.)
 
 At that date six appendices, lettered A to F, carried what a reader consults rather than

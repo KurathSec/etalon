@@ -41,3 +41,30 @@ source = "Geimer et al., CCS 2023: five tools studied in depth, Abacus, Binsec/R
 [fact.nUsectTools]
 value = 6
 source = "Fourne et al., USENIX Security 2024: a usability study over six constant-time analysis tools."
+
+# Rows of the comparison table in the background section (item A5). Each is a
+# quotation from the cited work, with the page or table it is read from; none is
+# a measurement of ours.
+[fact.nGeimerBenchmarks]
+value = 25
+source = "Geimer et al., CCS 2023, Section 7: totaling 25 benchmarks (Table 2)."
+
+[fact.nGeimerReproduced]
+value = 4
+source = "Geimer et al., CCS 2023, Section 8.1 and Table 3: vulnerabilities from three publications reproduced in four calling contexts, the operations set in bold in Table 3 (P256 sign and RSA keygen in OpenSSL, RSA validation in MbedTLS, ECDH decryption in Libgcrypt)."
+
+[fact.nPqdssTools]
+value = 4
+source = "arXiv 2509.04010, abstract: TIMECOP and Binsec/Rel2 for policy compliance, dudect and RTLF for statistical timing analysis."
+
+[fact.nKyberslashImplsFloor]
+value = 1000
+source = "Bernstein et al., TCHES 2025(2), abstract: the patched Valgrind is applied to more than 1000 implementations of cryptographic primitives in SUPERCOP."
+
+[fact.nMinervaLibraries]
+value = 5
+source = "Jancar et al., TCHES 2020(4), abstract and Table 1: one certified smartcard and five cryptographic libraries (libgcrypt, wolfSSL, MatrixSSL, SunEC, Crypto++)."
+
+[fact.nMiracleDevices]
+value = 14
+source = "Marshall, Page and Webb, TCHES 2022(1), abstract: 14 different devices spanning 4 instruction set architectures."

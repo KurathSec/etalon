@@ -632,8 +632,8 @@ def check_inst1() -> Result:
         pos = REPO / "results" / "raw" / "_sentinel-positive_vulnerable.dudect.bin.gz"
         neg = REPO / "results" / "raw" / "_sentinel-negative_patched.dudect.bin.gz"
         if pos.exists() and neg.exists():
-            rp = dp.permute(pos, perms=200)
-            rn = dp.permute(neg, perms=200)
+            rp = dp.permute(pos, perms=200, n_batches=dp.DECLARED_BATCHES)
+            rn = dp.permute(neg, perms=200, n_batches=dp.DECLARED_BATCHES)
             checks.append("permutation null")
             if rp.get("p_value", 1.0) > 0.05:
                 bad.append(f"permutation null did not reject the planted sentinel "

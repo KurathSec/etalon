@@ -13,7 +13,9 @@
       "fix_location": "internal ECDSA signing (_gcry_dsa_modify_k) plus a clamp in the secure-memory scalar-multiplication path",
       "outcome": "fix moved UPSTREAM of the primitive",
       "detail": "The public gcry_mpi_ec_mul an analyser can be pointed at leaks the scalar bit-length in BOTH versions (short scalar ~half the cycles of a full one, either way); only the internal secure-nonce signing path is fixed. A primitive-level tool sees no change across the patch. Recovery-certified via real signing (pairs/libgcrypt-minerva, ORC-1/2 pass).",
-      "pair": "pairs/libgcrypt-minerva"
+      "pair": "pairs/libgcrypt-minerva",
+      "site_closure": "relocated",
+      "site_closure_basis": "Definition 4, tab:closure row 2: the secret-dependent construct is present at the primitive s an analyser drives and absent along the deployed signing path s'; decided by the two-sided recovery, not by a timing test at s."
     },
     "wolfssl": {
       "cve": "CVE-2019-13628",
@@ -30,7 +32,9 @@
       "residual_method": "0.029% is the difference in MEDIAN whole-signature time between 256-bit and <=254-bit nonces over 6000 signatures, nonces reconstructed from the known signing key. It is a whole-signature figure, not a scalar-multiplication one; the dudect numbers quoted for wolfSSL are the separate at-the-site measurement.",
       "decision_rule_basis": "DECIDED UNDER THE RETIRED TAU BAND, and this is the one case in the study that is not decided by the permutation rule the paper now uses. The wolfSSL arms were measured before that rule replaced the band, their raw dudect samples are not committed under results/raw/, and there is no pairs/wolfssl* tree, so the case cannot be re-decided without rebuilding 4.0.0 and 4.1.0 and re-acquiring. The reading is unlikely to change: both arms sat far inside the band (0.0164 and 0.0076) rather than near it, and the lattice recovered from neither at 6,000 or 50,000 signatures, which is a decision that does not depend on the statistical rule at all. But 'neither arm rejects its own permutation null' would be a claim about a test we did not run, so the paper does not make it.",
       "why_this_is_a_finding_not_only_a_retraction": "The deployed 4.0.0 arm was ALREADY balanced with dummy operations to a 0.03% residual before the patch under test was written, so what our instrument would have had to detect is a leak the vendor had largely closed one release earlier. That is a boundary of the method rather than a gap in this case: fix verification as defined here needs an exploitable vulnerable arm, and a leak already too small to exploit falls outside its reach. Naming that boundary is more useful than grading the case, because it says which remediations this method can and cannot audit.",
-      "taxonomy_note": "This case no longer populates the 'attenuated' cell of the fix taxonomy. The attenuation it exhibits is the pre-fix 4.0.0 build's own dummy-operation balancing, which predates the 4.1.0 patch under test, so crediting it to that patch would attribute to the fix an effect present before it."
+      "taxonomy_note": "This case no longer populates the 'attenuated' cell of the fix taxonomy. The attenuation it exhibits is the pre-fix 4.0.0 build's own dummy-operation balancing, which predates the 4.1.0 patch under test, so crediting it to that patch would attribute to the fix an effect present before it.",
+      "site_closure": "not graded",
+      "site_closure_basis": "Outside the domain of Definition 3: the oracle demonstrates the bug on neither arm, and the only timing readings were taken under the retired band on uncommitted samples, so no delta or MDE is printed for it."
     },
     "matrixssl": {
       "cve": "CVE-2019-13629",
@@ -214,7 +218,7 @@
             "max_abs_t": 1.6484,
             "measurements": 59967,
             "n_at_argmax": 47789,
-            "permutation_p": 0.4076592340765923,
+            "permutation_p": 0.4771522847715228,
             "permutations": 10000,
             "call_ticks": 836697.9174897909,
             "residual_fraction": 0.00012502180800760872
@@ -266,7 +270,7 @@
             "max_abs_t": 2.2417,
             "measurements": 59967,
             "n_at_argmax": 41508,
-            "permutation_p": 0.30196980301969806,
+            "permutation_p": 0.23147685231476853,
             "permutations": 10000,
             "call_ticks": 1585605.6109817207,
             "residual_fraction": 4.356562820572321e-05
@@ -318,7 +322,7 @@
             "max_abs_t": 1.7222,
             "measurements": 59967,
             "n_at_argmax": 56470,
-            "permutation_p": 0.44195580441955806,
+            "permutation_p": 0.5263473652634737,
             "permutations": 10000,
             "call_ticks": 1577751.7931303116,
             "residual_fraction": 6.746151043834568e-05
@@ -356,7 +360,9 @@
         "acquisition_count_disclosure": "THREE acquisitions per design, from one retained build. This field said ONE, and said that re-acquiring was 'the right insurance and is not done here' because the build tree was gone. The tree was rebuilt and retained (bin/matrixssl_rebuild.sh), so between-acquisition spread is now measured rather than conceded: the per-design record, with the mean, the range and each repetition's interval, is in results/matrixssl_repeats.json. The bootstrap CI beside each figure still bounds sampling error within one run; the range in the repeats file is what bounds variation between runs. The four independent routes that made a reversal unlikely are unchanged, and one of them is now a measurement instead of an argument.",
         "generator": "bin/fix_report.py --write, over results/raw/matrixssl/*.bin.gz",
         "dump_sha256_note": "Digests of the dumps every design in this block was computed from. Replaced 2026-08-26 when the corpus re-acquired this case on a corrected harness: the earlier dumps were taken with a zeroed curve `a` coefficient where the library passes NULL, so they timed a different curve. STAT-1 refuses a dump whose bytes do not match its digest, which is what caught the replacement."
-      }
+      },
+      "site_closure": "incomplete",
+      "site_closure_basis": "Definition 4, tab:closure row 4: delta at s is resolvable within the design's measurements on the acquisition host (mx430_bit255v256, every acquisition's interval excluding zero) and no threshold under the attack model is shown to exceed it, no timing-ordered lattice attempt on the fixed build being recorded."
     }
   },
   "cross_cutting": "The corpus's reproduction pairs detect because they are amplified (40x per-bit work); these deployed leaks in shipped configurations are 0.03% to sub-percent, at or below a fast host's timing floor. That gap between a tool benchmark and a real attacker is itself a measured result, and it is why recovery certification, not a tool verdict, is the label.",
@@ -393,9 +399,11 @@
         "triage": "leading-zero branches merged and the dummy double made in-place; loop bound also moved off the secret's digit count",
         "built": true,
         "measured": true,
+        "retained": false,
+        "retained_note": "Built and measured, not retained. The 4.0.0 and 4.1.0 arms were built and timed on the acquisition host, and no tree, binary or sample survives: every reading was taken under the retired verdict rule on samples that were never committed, so nothing of this case regenerates and the paper counts it as built and measured but not retained.",
         "class_predicted_from_source": "attenuated",
         "class_confirmed": false,
-        "class_note": "The source-level triage PREDICTED attenuated. The measurement cannot confirm or refute it, because every timing reading of this case was taken under the retired verdict rule on samples that were never committed, so the paper declines to grade it and the taxonomy's attenuated cell stays empty rather than being filled by a prediction. Corrected 2026-08-26: an earlier revision carried the prediction as an assignment here and in taxonomy.assignments, which contradicted this library's own outcome field and the paper. A blind referee found it."
+        "class_note": "The source-level triage PREDICTED attenuated. The measurement cannot confirm or refute it, because every timing reading of this case was taken under the retired verdict rule on samples that were never committed, so the paper does not grade it and the taxonomy's attenuated cell stays empty rather than being filled by a prediction. Corrected 2026-08-26: an earlier revision carried the prediction as an assignment here and in taxonomy.assignments, which contradicted this library's own outcome field and the paper. A blind referee found it."
       },
       "MatrixSSL CVE-2019-13629 (4.2.1->4.3.0)": {
         "triage": "bare 'continue' on leading zeros replaced by dummy add+double, balanced by operation count",

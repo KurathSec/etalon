@@ -69,6 +69,26 @@ def applicable(tool: dict, pair_mechanisms: list, has_harness: bool,
     return True, ""
 
 
+def _reason_for(tools: dict, tool_name: str, pair_name: str) -> str | None:
+    """The applicability reason the scoring loop would record for (tool, pair) now.
+
+    Recomputed from the manifest and the tool declaration alone, so --rescore can
+    refresh a committed reason without running any analyser. Returns None when the
+    pair or tool no longer exists, or when the row would be applicable.
+    """
+    tool = tools.get(tool_name)
+    pair = REPO / "pairs" / pair_name
+    if tool is None or not (pair / "pair.toml").exists():
+        return None
+    man = tomllib.loads((pair / "pair.toml").read_text())
+    mech = man["class"].get("mechanism_classes", [])
+    harness_cfg = pair / "harness" / f"{tool_name}.toml"
+    has_source = any((pair / "src").glob("*.c"))
+    has_harness = harness_cfg.exists() and has_source
+    ok, reason = applicable(tool, mech, has_harness, has_source)
+    return None if ok else reason
+
+
 FDR = 0.05
 
 
@@ -155,6 +175,12 @@ def main() -> int:
                     "its rows, leaving the other tools' committed rows untouched (used "
                     "to re-acquire dudect under the PR-3 verdict rule without disturbing "
                     "the deterministic taint and symbolic rows).")
+    ap.add_argument("--arms", default="vulnerable,patched",
+                    help="with --pair: which arms to RUN the adapters on (comma list). The "
+                         "other arm's statuses are taken from its committed row, so a change "
+                         "to one arm's source (the patched arm becoming upstream's real fix) "
+                         "does not re-acquire the other arm's dump and move its numbers for "
+                         "no reason. Every row this produces records which arms were run.")
     ap.add_argument("--rescore", action="store_true",
                     help="re-derive every committed outcome from its committed arm "
                          "statuses under the rule now in force, running no analyser. "
@@ -166,9 +192,21 @@ def main() -> int:
     if a.rescore:
         vp = REPO / "results" / "verdicts.jsonl"
         rows = [json.loads(l) for l in vp.read_text().splitlines() if l.strip()]
+        tools = tomllib.loads((REPO / "data" / "tools.toml").read_text())["tool"]
         changed = []
         for r in rows:
             v, pt = r.get("vulnerable_status"), r.get("patched_status")
+            if r.get("applicable") is False:
+                # An inapplicable row's reason is also a pure function of the manifest
+                # and the tool declaration, so it is refreshed here too. Six rows once
+                # carried a reason string this scorer no longer emits, and the only
+                # thing that noticed was a tolerant reader in bin/regen.py that
+                # accepted both spellings, which is how the drift stayed hidden.
+                want = _reason_for(tools, r["tool"], r["pair"])
+                if want is not None and want != r.get("reason"):
+                    changed.append((r["tool"], r["pair"], "reason", "refreshed"))
+                    r["reason"] = want
+                continue
             if not r.get("applicable") or v is None or pt is None:
                 continue
             want = decide(v, pt)
@@ -201,6 +239,13 @@ def main() -> int:
             man = tomllib.loads((pair / "pair.toml").read_text())
             role = man["pair"].get("role")
             tier = man["pair"].get("tier")
+            if role == "fix-case":
+                # A deployed-library fix case (pairs/matrixssl-minerva) is graded at its
+                # fix site by the fix-verification instrument, not by the analyser grid.
+                # It carries no analyser row in this revision, so it enters neither the
+                # applicability grid nor any denominator; skipping it here is what keeps
+                # the scored-item and corpus counts unchanged by its manifest.
+                continue
             # Allowlist from the closed vocabulary, never "all keys except a few".
             # The denylist form silently promotes any new [class] field to a facet,
             # which is how the census join broke once already; recall grouping would
@@ -221,9 +266,38 @@ def main() -> int:
                 rows.append(row)
                 continue
 
-            # Run the adapter on both arms.
-            vuln = adapter.score(pair, "vulnerable")
-            patch = adapter.score(pair, "patched")
+            # Run the adapter on the requested arms; reuse the committed row for the
+            # rest. A reused arm is reconstructed from the committed fields so the
+            # merge below sees a complete row, and the row says which arms ran.
+            run_arms = [x.strip() for x in a.arms.split(",") if x.strip()]
+            committed_row = None
+            if set(run_arms) != {"vulnerable", "patched"}:
+                vp = REPO / "results" / "verdicts.jsonl"
+                for l in vp.read_text().splitlines():
+                    if not l.strip():
+                        continue
+                    r0 = json.loads(l)
+                    if r0.get("pair") == pair.name and r0.get("tool") == tool_name:
+                        committed_row = r0
+                if committed_row is None:
+                    raise SystemExit(f"--arms: no committed row for {tool_name}/{pair.name} "
+                                     f"to reuse; run both arms")
+
+            def reuse(who):
+                r0 = committed_row
+                return {"status": r0.get(f"{who}_status"), "max_t": r0.get(f"{who}_max_t"),
+                        "max_tau": r0.get(f"{who}_max_tau"),
+                        "effect_ticks": r0.get(f"{who}_effect_ticks"),
+                        "ci_low": (r0.get(f"{who}_ci") or [None, None])[0],
+                        "ci_high": (r0.get(f"{who}_ci") or [None, None])[1],
+                        "raw": r0.get(f"{who}_raw"),
+                        "permutation_p": r0.get(f"{who}_permutation_p")}
+
+            vuln = adapter.score(pair, "vulnerable") if "vulnerable" in run_arms else reuse("vulnerable")
+            patch = adapter.score(pair, "patched") if "patched" in run_arms else reuse("patched")
+            if committed_row is not None:
+                row["arms_run"] = run_arms
+                row["arms_reused_from_committed_row"] = [x for x in ("vulnerable", "patched") if x not in run_arms]
             outcome = decide(vuln["status"], patch["status"])
             row.update({"applicable": True, "outcome": outcome,
                         "vulnerable_status": vuln["status"],

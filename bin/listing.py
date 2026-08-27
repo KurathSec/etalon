@@ -73,7 +73,7 @@ def main() -> int:
         "\\caption{The whole of the leak, from \\texttt{pairs/kyberslash/src/}. The two arms "
         "differ in one line. \\texttt{KYBER\\_Q} is \\ksModulus{}, not a power of two, so "
         "whether the division on the left becomes a hardware divide or a reciprocal multiply "
-        "is a decision the compiler makes: it becomes one in \\nLeakingCells{} of "
+        "is a decision the compiler makes. It becomes one in \\nLeakingCells{} of "
         "\\nEmissionCells{} pinned build cells and the other in \\nConstantTimeCells{} "
         "(\\Cref{fig:emission}). The right-hand arm is the upstream fix and emits no division "
         "in any cell. Neither arm contains a branch or a secret-indexed load. The source's own "

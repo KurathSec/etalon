@@ -118,6 +118,6 @@
   "isolated_comparison": {
     "disagreements": []
   },
-  "conclusion": "The emission map is unchanged by context. In all 16 cells, for both arms, the inlined build emits a division exactly where the isolated build does: the vulnerable arm under gcc at -Os and clang at -O0, and nowhere else. So F2's map is a property of the (compiler, optimisation) cell rather than of compiling the function in isolation, and the objection that context would change the lowering does not materialise in these cells.",
+  "conclusion": "The emission map is unchanged by context. In all 16 cells, for both arms, the inlined build emits a division exactly where the isolated build does: the vulnerable arm under gcc at -Os and clang at -O0, and nowhere else. So I1's map is a property of the (compiler, optimisation) cell rather than of compiling the function in isolation, and the objection that context would change the lowering does not materialise in these cells.",
   "detail_worth_keeping": "At -O0 both compilers leave the callee as its own symbol rather than inlining it, so 'inlined context' is the source arrangement, not always the emitted one. That is why the count is taken over the object and why the per-cell symbol presence is recorded here rather than assumed."
 }

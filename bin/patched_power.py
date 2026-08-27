@@ -62,6 +62,10 @@ def main() -> int:
                    "smaller than it would not have been distinguished from zero here, which "
                    "is a bound on the measurement and not a property of the program.",
         "generator": "bin/patched_power.py, over the committed patched-arm dumps",
+        # The design constants the paper's Definition 1 quotes: the size of the test, the
+        # power the minimum detectable effect is computed at, and the CI level. Emitted here
+        # so the paper reads them as macros rather than retyping them.
+        "design": {"alpha": 0.05, "power": 0.8, "ci_level": 0.95},
         "arms": arms,
     }
     out = pathlib.Path(a.out)

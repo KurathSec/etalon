@@ -1,7 +1,8 @@
 # KyberSlash on AWS Graviton3 (Neoverse V1)
 
-A platform-bound acquisition, run once on a rented aarch64 host on 2026-08-23
-(UTC) and recorded in `results/kyberslash_graviton.json`. Like the pair's key
+A platform-bound acquisition on rented aarch64 hosts: first run 2026-08-23 (UTC),
+re-run 2026-08-25 on a fresh instance after the harness correction, and it is
+that re-run which is recorded in `results/kyberslash_graviton.json`. Like the pair's key
 recovery, it cannot be re-derived on the x86 build host; it needs an aarch64
 machine. These three programs are the acquisition script, committed so the
 measurement is reproducible given the hardware.
@@ -15,7 +16,12 @@ measurement is reproducible given the hardware.
 
 ## How it was run
 
-A `c7g.4xlarge` (Graviton3, Neoverse V1, part 0xd40), Ubuntu 26.04, gcc 15.2.0.
+A `c7g.xlarge` (Graviton3, Neoverse V1, part 0xd40), Ubuntu 26.04, gcc 15.2.0,
+the instance's own unpinned host compiler (an earlier revision of this file said
+`c7g.4xlarge`; the record, `measure_arm.py` and the acquisition log all say
+`c7g.xlarge`). This cell is outside the digest-pinning discipline of the x86-64
+build cells: `locks/textprints/` holds its vulnerable-arm disassembly only and
+`locks/binaries.lock.json` records no `.text` digest for it.
 The instance is virtualized, not `.metal`: `PMCCNTR_EL0` SIGILLs from userspace,
 so timing used the virtual counter `cntvct_el0` at 1.05 GHz, averaged over a
 dependency chain. That coarse timer was sufficient. A `.metal` instance and a PMU

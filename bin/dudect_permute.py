@@ -113,13 +113,25 @@ def _welch_max(M, x, x2, L, n_tot, s_tot, q_tot):
     return best, n_at
 
 
-def detect_batches(n: int, max_batches: int = 32, min_per: int = 5000) -> int:
-    """Number of equal dudect batches concatenated in a dump.
+# Every corpus acquisition runs DUDECT_BATCHES=3 (src/corpus/score/adapters/dudect.py,
+# bin/matrixssl_acquire.sh), and dudect_run.h writes 20,000 - 10 - 1 records per batch
+# when no delta is dropped: 59,967 in all. That number is the budget the paper prints.
+DECLARED_BATCHES = 3
 
-    dudect_run.h appends one block per batch, each block a fresh prepare_inputs()
-    with fresh class assignments. Blocks are equal length when no measurement is
-    dropped, which is the common case, so the batch count is the largest k that
-    divides n into blocks of a sane size. Falls back to 1."""
+
+def detect_batches(n: int, max_batches: int = 32, min_per: int = 5000) -> int:
+    """FALLBACK ONLY: guess the batch count from the record count.
+
+    It guessed wrong for every corpus dump. 59,967 = 9 x 6,663, so this returned 9
+    where the acquisition ran 3 batches, and the within-batch shuffle was three
+    times finer than the acquisition's real blocks. For 59,967-record dumps the
+    nine sub-blocks happen to nest inside the three batches exactly (19,989 = 3 x
+    6,663), so labels stayed exchangeable within every sub-block and the null was
+    valid, only finer than described; for dumps with dropped deltas (56,968) the
+    guessed blocks straddle batch boundaries. permute() now takes the declared
+    count, or exact block sizes from a sidecar, and records which it used. This
+    function is kept for a dump whose provenance is unknown, and its use is
+    recorded as batches_source = "inferred"."""
     best = 1
     for k in range(2, max_batches + 1):
         if n % k == 0 and n // k >= min_per:
@@ -150,10 +162,33 @@ def permute(path: pathlib.Path, perms: int = 10000, seed: int = 20260825,
     cl, t = load(path)
     if t.size == 0:
         return {"error": "empty dump", "path": str(path)}
-    nb = n_batches or detect_batches(t.size)
-    step = t.size // nb
-    blocks = [slice(i * step, (i + 1) * step if i < nb - 1 else t.size)
-              for i in range(nb)]
+    # Block structure, in order of trust: exact per-batch record counts from the
+    # sidecar the adapter writes beside a new dump; the declared batch count with
+    # equal splits (exact when nothing was dropped, approximate otherwise); the
+    # divisor guess, recorded as such.
+    meta = path.with_name(path.name.split(".dudect")[0] + ".dudect.meta.json") \
+        if ".dudect" in path.name else path.with_suffix(".meta.json")
+    sizes = None
+    if meta.exists():
+        try:
+            m = json.loads(meta.read_text())
+            if sum(m.get("records_per_batch", [])) == int(t.size):
+                sizes = [int(x) for x in m["records_per_batch"]]
+        except (ValueError, KeyError, TypeError):
+            sizes = None
+    if sizes:
+        edges = np.cumsum([0] + sizes)
+        blocks = [slice(int(edges[i]), int(edges[i + 1])) for i in range(len(sizes))]
+        nb, source, approximate = len(sizes), "sidecar", False
+    else:
+        nb = n_batches if n_batches else DECLARED_BATCHES
+        source = "declared" if n_batches else "declared-default"
+        step = t.size // nb
+        blocks = [slice(i * step, (i + 1) * step if i < nb - 1 else t.size)
+                  for i in range(nb)]
+        # Equal splits are exact only when every batch wrote the same number of
+        # records, which dudect_run.h guarantees unless a delta was dropped.
+        approximate = (t.size % nb != 0)
     M = crop_masks(t)
     # Centre the timings: algebraically neutral for a difference of means, and it
     # keeps the sums of squares well conditioned on counters with a large offset.
@@ -189,7 +224,9 @@ def permute(path: pathlib.Path, perms: int = 10000, seed: int = 20260825,
         # samples on disk instead of the paper quietly resting on a stale verdict.
         "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
         "measurements": int(t.size),
-        "batches_detected": nb,
+        "batches": nb,
+        "batches_source": source,
+        "blocks_approximate": bool(approximate),
         "n_class0": int((cl == 0).sum()), "n_class1": int((cl == 1).sum()),
         "observed_max_abs_t": round(observed, 4),
         "n_at_argmax_test": int(observed_n),
@@ -281,7 +318,9 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("dump", nargs="+")
     ap.add_argument("--perms", type=int, default=10000)
-    ap.add_argument("--batches", type=int, default=None, help="override batch-block detection")
+    ap.add_argument("--batches", type=int, default=None,
+                    help=f"declared batch count (default {DECLARED_BATCHES}; a sidecar "
+                         f"<dump>.meta.json with records_per_batch overrides it)")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--assemble", metavar="OUT",
                     help="write the committed record (BH-corrected) to OUT")

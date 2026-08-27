@@ -83,9 +83,15 @@ def verify_pair(pair_dir: pathlib.Path) -> dict:
 
     # A certified-negative control has no oracle: it is proven-constant-time code
     # scored for false positives, not a leak to recover, so there is nothing to verify.
-    if manifest["pair"].get("role") == "certified-negative" or "oracle" not in manifest:
+    # A fix case (role fix-case, the MatrixSSL remediation) has none either: it is
+    # graded at its fix site by results/fix_verification.json, and no recovery from
+    # timing has succeeded on it, so there is no key for this oracle to check.
+    role = manifest["pair"].get("role")
+    if role in ("certified-negative", "fix-case") or "oracle" not in manifest:
         return {"pair": name, "tier": manifest["pair"].get("tier"), "status": "NOT_RUN",
-                "checks": {}, "reason": "no oracle: certified negative or non-recoverable control"}
+                "checks": {}, "reason": ("no oracle: fix case graded at its site, not by recovery"
+                                         if role == "fix-case" else
+                                         "no oracle: certified negative or non-recoverable control")}
 
     # A tier C pair has no reproduced oracle yet: its acquisition needs hardware
     # that is not in hand. It is reported as NOT_RUN, distinct from PASS and from

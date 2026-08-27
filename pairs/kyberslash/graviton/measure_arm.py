@@ -83,7 +83,8 @@ def main():
                 "textprint": "locks/textprints/kyberslash/gcc-15.2.0-Os-aarch64-linux-gnu/vulnerable.asm",
             },
             "udiv_latency_operand_dependent": {
-                "note": "Serial dependency chain. Unlike the flat x86 divider, the Neoverse-V1 "
+                "note": "Serial dependency chain. Unlike the x86 divider, which resolves no "
+                        "operand-dependent step in the same serial chain, the Neoverse-V1 "
                         "udiv latency RISES with dividend magnitude (more significant quotient "
                         "bits cost more): this is the leak.",
                 "ticks_per_udiv": {

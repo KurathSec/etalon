@@ -13,6 +13,18 @@
   "smt": "notsupported",
   "turbo": "enabled",
   "governor": "performance",
+  "frequency_khz": {
+    "scaling_min": 400000,
+    "scaling_max": 5400000,
+    "cpuinfo_max": 5400000
+  },
+  "_frequency_sample_khz": {
+    "cur_min": 1076511,
+    "cur_median": 3325093,
+    "cur_max": 4175819,
+    "samples": 40,
+    "note": "sampled at capture time on the pinned core, idle; not pinned; varies between captures by design and is not compared by --check"
+  },
   "kernel": "7.1.8-200.fc44.x86_64",
   "machine": "x86_64",
   "microarch": "Arrow Lake"

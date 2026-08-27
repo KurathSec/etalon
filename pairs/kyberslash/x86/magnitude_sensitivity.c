@@ -67,6 +67,8 @@ int main(void){
     printf("RESULT n_%d_t %.4f\n", n, t);
     printf("RESULT n_%d_tau %.6f\n", n, t/sqrt((double)n));
     printf("RESULT n_%d_mean_ticks %.6f\n", n, mean);
+    /* Minimum detectable effect at alpha 0.05, power 0.8, on this run's spread. */
+    printf("RESULT n_%d_mde_ticks %.6f\n", n, 2.80 * sqrt(var / n));
   }
   return 0;
 }

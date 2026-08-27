@@ -97,6 +97,18 @@ resolves the timed call to about seven ticks and 99 distinct values in 400000 me
   was written. The prediction is unchanged in substance, at least one uncorrected `p` below
   0.05 that BH declines, and it is what happened; the denominator is recorded here so a reader
   comparing the paper's figure against the 18 above finds the reason rather than a discrepancy.
+- **From PR-4 itself, the batch structure of the permutation null.** This registration says
+  labels are shuffled "within each measurement batch". The implementation inferred the batch
+  count from the record count and, for every 59,967-record dump, inferred nine where the
+  acquisition ran three (59,967 = 9 x 6,663 = 3 x 19,989). The nine sub-blocks nested inside
+  the three batches exactly, so labels stayed exchangeable within every sub-block and the
+  null was valid, only finer than described; for the MatrixSSL dumps, where dropped deltas
+  leave 56,968 records, the guessed blocks straddled batch boundaries. The generator now takes
+  the declared count (`bin/dudect_permute.py`, `DECLARED_BATCHES`), or exact per-batch record
+  counts from a sidecar the adapter writes beside every new dump. Every committed arm was
+  re-decided within the three declared batches on 2026-08-27: **no verdict moved** (5 of 22
+  significant at FDR 0.05 before and after); the largest change in an uncorrected p was 0.13,
+  on a null arm. Recorded under C8 as a change of basis with no changed row.
 - **From PR-3, the calibration artifact.** `results/dudect_calibration.json` and
   `bin/dudect_calibrate.py` remain committed as the record of the retired rule. They are not
   read by any verdict.

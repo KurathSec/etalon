@@ -103,6 +103,13 @@ scored_against = "policy"  # decides a constant-time policy over explored paths
 # caught the pair. The pair is tier C and outside every denominator either way.
 provenance = "postdates:kyberslash"
 image   = "docker.io/binsec/binsec@sha256:2a51e455f055874d71cbf030a778e8be19455876bcd57c1845c163fed6fc482f"
+# The release the pinned digest is: `binsec -version` inside the image prints
+# "Binsec version dfe4739", and dfe4739 is the commit upstream tags 0.11.2 (probed
+# 2026-08-27). Recorded so the paper can cite the release its varlat cell rests on
+# rather than a digest, and so that -checkct-features dividend,divisor of 0.10.0 is
+# shown to be inside the image actually run.
+image_version = "0.11.2"
+image_version_probe = "binsec -version in the pinned image: 'Binsec version dfe4739'; upstream tag 0.11.2 is dfe4739f03a474cf2ebc5ae419760e57ce0050c3"
 technique = "symbolic-relse"
 level     = "binary"
 # Binsec/Rel2 relational symbolic execution. Proves or refutes constant time over

@@ -92,6 +92,41 @@ def _doitm(cpu: int) -> str:
         return f"not read: {type(e).__name__}"
 
 
+def frequency_range(cpu: int, samples: int = 40, interval_s: float = 0.05) -> dict | None:
+    """cpufreq bounds and a sampled running frequency for one core, in kHz.
+
+    scaling_min_freq, scaling_max_freq and cpuinfo_max_freq are the governor's
+    bounds; scaling_cur_freq is sampled `samples` times `interval_s` apart. The
+    sample is a picture of this capture, not of an acquisition: the acquisition
+    scripts record their own sample beside each dump when they can. None of this
+    pins anything; it is what makes "ticks, not cycles" a bounded statement
+    rather than an unbounded one."""
+    import statistics, time
+    base = f"/sys/devices/system/cpu/cpu{cpu}/cpufreq"
+    def num(name):
+        v = _read(f"{base}/{name}")
+        return int(v) if v and v.strip().isdigit() else None
+    cur = []
+    for _ in range(samples):
+        v = num("scaling_cur_freq")
+        if v is not None:
+            cur.append(v)
+        time.sleep(interval_s)
+    if not cur and num("scaling_min_freq") is None:
+        return None
+    return {
+        "bounds": {"scaling_min": num("scaling_min_freq"),
+                   "scaling_max": num("scaling_max_freq"),
+                   "cpuinfo_max": num("cpuinfo_max_freq")},
+        "sample": {"cur_min": min(cur) if cur else None,
+                   "cur_median": int(statistics.median(cur)) if cur else None,
+                   "cur_max": max(cur) if cur else None,
+                   "samples": len(cur),
+                   "note": "sampled at capture time on the pinned core, idle; not pinned; "
+                           "varies between captures by design and is not compared by --check"},
+    }
+
+
 def capture() -> dict:
     ci = _cpuinfo()
     ctype, hybrid = _core_type(PINNED_CPU)
@@ -101,6 +136,7 @@ def capture() -> dict:
     smt = _read("/sys/devices/system/cpu/smt/control")
     no_turbo = _read("/sys/devices/system/cpu/intel_pstate/no_turbo")
     gov = _read(f"/sys/devices/system/cpu/cpu{PINNED_CPU}/cpufreq/scaling_governor")
+    freq = frequency_range(PINNED_CPU)
     return {
         "_comment": ("The x86 acquisition host, captured from this machine by "
                      "bin/host_facts.py so every host fact in the paper is "
@@ -121,6 +157,12 @@ def capture() -> dict:
         "turbo": ("enabled" if no_turbo == "0" else
                   "disabled" if no_turbo == "1" else "unknown"),
         "governor": gov,
+        # The core frequency cannot be pinned without root on this host, so it is
+        # REPORTED instead: the cpufreq bounds and a sample of the running frequency
+        # on the pinned core, so a tick can be placed against a cycle within a stated
+        # range. This is the only substitute for pinning that user space allows.
+        "frequency_khz": freq["bounds"] if freq else None,
+        "_frequency_sample_khz": freq["sample"] if freq else None,
         "kernel": _read("/proc/sys/kernel/osrelease"),
         "machine": "x86_64",
     }
@@ -140,8 +182,11 @@ def main() -> int:
             fresh["microarch"] = old["microarch"]
     if a.check:
         old = json.loads(OUT.read_text()) if OUT.exists() else {}
+        # Keys beginning with "_" are annotations and samples, not host facts, and
+        # are not compared: the frequency sample differs between two captures on
+        # the same idle host by design.
         drift = {k: (old.get(k), v) for k, v in fresh.items()
-                 if k != "_comment" and old.get(k) != v}
+                 if not k.startswith("_") and old.get(k) != v}
         if "cpu_model" in drift and old.get("cpu_model"):
             # Not drift: this is not the acquisition host at all. Exit 2 so a
             # caller can tell "the record no longer matches its host" (exit 1)

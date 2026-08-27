@@ -1,0 +1,139 @@
+schema = "pair/1"
+
+[pair]
+id      = "matrixssl-minerva"
+title   = "MatrixSSL's default-on Minerva fix (4.2.1 -> 4.3.0 -> 4.6.0), graded at its site"
+role    = "fix-case"
+status  = "active"
+tier    = "A"
+added   = "2026-08-25"
+synthetic = false
+summary = """
+The fix case of the paper's fourth index (I4, fix site and facet), not a corpus
+pair. MatrixSSL added a constant-time scalar multiplication (eccMulmodCt) in
+4.3.0 'in response to the Minerva attack', enabled by default, and the paper
+grades whether that shipped fix closes the nonce-bit-length leak at its site.
+Three releases are built here from pinned tarballs of an archived mirror of the
+withdrawn upstream (4-2-1-open pre-fix, 4-3-0-open fix added, 4-6-0-open latest
+open release) and timed at the scalar multiplication; the site result and its
+budget live in results/fix_verification.json, and the leak's mechanism
+recoverability in evidence/mechanism_recovery.md.
+
+This manifest exists so the fix case is enumerated by the manifest controls
+rather than invisible to them. It is scored by no analyser in this revision:
+bin/score.py skips the fix-case role, so it carries no row in the applicability
+grid, enters no recall denominator and does not count toward the corpus. It
+carries no oracle: no timing-ordered recovery has succeeded on any of its
+arms, so nothing here is certified by a key that verifies, and the label it
+does carry is a statistical fix-site label with its host and budget.
+"""
+
+[class]
+observable   = "latency"
+secret_role  = "nonce"
+origin       = "source-level"
+granularity  = "bit"
+exploit_path = "lattice-hnp"
+mechanism_classes = ["timing-observation"]
+rationale = """
+The Minerva class (latency / nonce / source-level / bit / lattice-hnp), the
+same cell as `minerva`, `ecdsa-nonce` and `libgcrypt-minerva`. The class tuple
+is declared so the fix case files under the cell it remediates; it does not
+add the cell to coverage, because coverage counts corpus pairs only.
+mechanism_classes is timing-observation because the case ships a timing
+residual at a site, not a source site an analyser is pointed at here.
+"""
+
+[provenance]
+provenance_kind = "release-pair"
+provenance_kind_note = """
+Three upstream release tags of an archived third-party mirror, built here from
+pinned tarball checksums (acquire/acquire.sh, bin/matrixssl_rebuild.sh). A
+mirror, not the vendor: the upstream repository was withdrawn after the
+vendor's acquisition, so no vendor checksum or commit hash exists to pin.
+"""
+upstream_repo   = "github.com/BlobbyBob/matrixssl (archived mirror), tags 4-2-1-open, 4-3-0-open, 4-6-0-open"
+disclosed       = "2019-10-01"
+doi             = ["10.46586/tches.v2020.i4.281-308"]
+advisory        = ["CVE-2019-13629"]
+licence         = "GPL-2.0-or-later (MatrixSSL open-source release)"
+redistributable = false
+note = """
+CVE-2019-13629 is the MatrixSSL Minerva assignment. Only the committed timing
+traces, the labelling key this artifact generated, and the disassembly
+confirmation are redistributed (evidence/); the sources are fetched by checksum.
+"""
+
+[[build]]
+arm = "vulnerable"
+source = "MatrixSSL 4-2-1-open, built from the pinned tarball (see acquire/)"
+entry_symbol = "eccMulmod"
+secret_input = "the per-signature ECDSA nonce, in the scalar multiplication"
+note = "pre-fix release; the leading-zero branch is a bare continue"
+
+[[build]]
+arm = "patched"
+source = "MatrixSSL 4-3-0-open and 4-6-0-open, built from the pinned tarballs (see acquire/)"
+entry_symbol = "eccMulmodCt"
+secret_input = "identical signing workload; the fix balances the leading-zero phase by operation count"
+note = "the vendor's shipped constant-time path, on by default (USE_CONSTANT_TIME_ECC_MULMOD)"
+
+[toolchain]
+cells_required = []
+note = """
+No bin/build.py cell: the three releases are built by bin/matrixssl_rebuild.sh in
+the pinned toolchain image from checksummed tarballs, with the source digests
+recorded in results/fix_verification.json, so the BIN controls do not apply per
+cell and the build is reproducible from that record.
+"""
+
+[acquisition]
+origin    = "ours"
+platform  = "x86-64 host, single performance core (taskset -c 2), rdtscp"
+procedure = "bin/matrixssl_acquire.sh"
+counter   = "rdtscp"
+reps      = 1
+grade     = "evidence"
+note = """
+Fix-verification acquisition: each release is timed at the scalar multiplication
+under a fixed key with nonces of chosen bit length, repeated per design, and the
+per-acquisition dumps are committed under results/. The budget each residual is
+graded within is printed beside it in the paper's fix table.
+"""
+
+[recovery]
+entry   = "recover/recover.py"
+runtime = "image"
+image   = "localhost/ct-toolchain/minerva-recover:1"
+vendored_attack = "pairs/minerva/vendor/attack, crocs-muni/minerva at 8182d000, MIT (shared)"
+note = """
+A timing-ordered lattice attempt on a committed trace, reported as a bounded
+observation at its budget. It declares no `inputs` and no [oracle] because no
+recovery from raw timing has succeeded on this pair: the one key-ordered lattice
+run in the record shows information content, not a recovery, and the fixed
+build has had no timing-ordered attempt. CLS-6 therefore expects no
+certification channel here, and bin/verify.py reports the case NOT_RUN.
+"""
+
+[cost]
+effort_hours = 14
+note = """
+Fix-case cost, kept off both corpus clocks: three offline library builds, four
+timing designs repeated per release, the instruction-count and containment
+drivers, and the disassembly confirmation. Not priced as a corpus pair because
+bin/regen.py's cost clocks average corpus pairs only.
+"""
+
+[divergence]
+from_deployment = """
+The deployed library itself, built from the vendor's open-source release tags with
+its stock default configuration, so the divergence is the archive's provenance (a
+mirror with no vendor checksum) and the host: the residual is a property of these
+archives on the acquisition host at the printed budget.
+"""
+
+[[divergence.structured]]
+axis       = "provenance"
+deployed   = "the vendor's withdrawn repository"
+reproduced = "an archived third-party mirror, pinned by tarball checksum"
+effect     = "the finding is a property of those archives; no vendor checksum corroborates them"

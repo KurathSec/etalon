@@ -35,12 +35,111 @@ why = "Comparing the shapes of the two bases presumes the same comparability the
 [[retired]]
 phrase = "this one cell of"
 retired_in = "sec/fixes.tex, round 8"
-why = "wolfSSL has no row in tab:fixes; prose must not point at one."
+why = """The phrase pointed at a wolfSSL measurement cell. Since revision A6 wolfSSL has a row
+in tab:fixes, but its delta and MDE cells read 'not committed' and its exploitability 'not
+graded', so there is still no measurement cell for prose to point at."""
 
 [[retired]]
 phrase = "of the call, \\mxResidualPerSig"
 retired_in = "sec/fixes.tex, round 8"
 why = "The site's tick figure was printed beside the end-to-end percentage, which divides a different numerator."
+
+[[retired]]
+phrase = "every label here is settled by arithmetic"
+retired_in = "shared/front.tex, sec/intro.tex, revision A1"
+why = """The universal covered the fix-site results too, which are statistical propositions
+about one host at one budget and are not settled by any arithmetic. The restricted form is
+now the only one: every corpus pair label is settled by a key recovery that verifies under
+the published public key; fix-site labels are statistical and carry their host and budget.
+The two kinds are defined once in sec/method.tex and tabulated in sec/index.tex."""
+
+[[retired]]
+phrase = "positive label here is settled by arithmetic"
+retired_in = "sec/intro.tex, revision A1"
+why = "The introduction's copy of the same universal, with 'positive' in it."
+
+[[retired]]
+phrase = "certifies each label by arithmetic"
+retired_in = "sec/method.tex, revision A1"
+why = "The apparatus section's copy of the same universal; it now says corpus pair label."
+
+[[retired]]
+phrase = "flat divider"
+retired_in = "shared/front.tex, sec/f3-microarch.tex, sec/intro.tex, sec/f1-blindspots.tex, bin/index_table.py, bin/regen.py, README.md, results/kyberslash_graviton.json and pairs/kyberslash/graviton/measure_arm.py, revision A7"
+why = """'Flat' asserted a property of the divider that no measurement here supports: the
+serial-chain sweep on the acquisition host resolves no operand-dependent step at the
+0.01-tick floor, while a per-call two-class test on the same host does resolve an
+operand-magnitude effect. The claim is now stated with its resolution and its arrangement,
+no operand-dependent step resolvable at \\hostNoiseFloor{} tick in a serial chain, and the
+six-number table in sec/f3-microarch.tex carries the figures behind it."""
+
+[[retired]]
+phrase = "flat hardware"
+retired_in = "sec/intro.tex, sec/f3-microarch.tex, revision A7"
+why = "The introduction's and section 5's copies of the same unqualified 'flat'."
+
+[[retired]]
+phrase = "divider is flat"
+retired_in = "sec/f1-blindspots.tex, sec/f3-microarch.tex, revision A7"
+why = "Same claim in its predicate form; the resolution and the arrangement must travel with it."
+
+[[retired]]
+phrase = "latency is flat"
+retired_in = "sec/f3-microarch.tex, results/kyberslash_x86_idiv.json and pairs/kyberslash/x86/measure.py, revision A7"
+why = "The caption's copy of the same unqualified 'flat', and the x86 record note that seeded it."
+
+[[retired]]
+phrase = "invisible from in-process is invisible from anywhere"
+retired_in = "sec/index.tex, revision A2"
+why = """The claim ran the vantage licence the wrong way: a clean in-process verdict is bound
+to its budget n, and a remote adversary is not bound to ours, so it licenses no claim about a
+remote adversary at a budget this paper does not measure. Lemma 1 in sec/index.tex states
+the licence precisely, in one direction only, and this wording must not return."""
+
+[[retired]]
+phrase = "the method declines to grade"
+retired_in = "shared/front.tex, sec/intro.tex, revision A3"
+why = """The wolfSSL outcome was stated as a refusal by the method, an inversion that reads as
+the method's choice. The outcome is a fact about admission: wolfSSL does not meet the
+admission rule (the two-sided oracle recovers nothing on the vulnerable arm) and is not
+graded. The declarative is now the only form, in the abstract, the introduction and
+sec/fixes.tex."""
+
+[[retired]]
+phrase = "declines to grade"
+retired_in = "shared/front.tex, sec/intro.tex, revision A3"
+why = "The same inversion without its subject."
+
+[[retired]]
+phrase = "decline to grade"
+retired_in = "sec/fixes.tex, revision A3"
+why = "The first-person copy of the same inversion in the fix section."
+
+[[retired]]
+phrase = "Do constant-time fixes hold?"
+retired_in = "shared/front.tex, revision A3"
+why = """The interrogative title did not match what is delivered; the reviewer asked for a
+declarative title naming the indices and the three remediations, and the title is now that."""
+
+[[retired]]
+phrase = "of the signing path's own key generation inside the signature"
+retired_in = "shared/front.tex, revision A3"
+allow_in = ["sec/fixes.tex", "sec/app-measure.tex"]
+why = """The abstract's containment sentence (the mxGenkeyGap figure) was replaced by the
+clause 'measured on the routine called directly'; the containment argument itself is stated
+once in sec/fixes.tex and detailed in the eprint measurement appendix, not in the abstract."""
+
+[[retired]]
+phrase = "the vantage strengthens a \\emph{clean} verdict"
+retired_in = "sec/index.tex, revision A2"
+why = "The same overclaim in its second half; see the entry above."
+
+[[retired]]
+phrase = "stronger vantage than that adversary has"
+retired_in = "sec/index.tex, revision A2"
+why = """The third form of the same claim: it read the in-process vantage as dominating the
+remote one, which is the direction Lemma 1 refuses. The vantage is now one element of the
+attack-model four-tuple, and the licence between vantages is stated by the lemma alone."""
 
 # ---------------------------------------------------------------- printed ratios
 # num / den must equal pct. Macros are read from the generated numbers.tex, so this
@@ -282,6 +381,19 @@ the recall-eligible ones. Three of its rows are tier C and outside every recall 
 and three recall-eligible pairs have no row in it at all. Calling it the recall-eligible corner
 invites a reader to divide its detections by its rows and read the result as recall."""
 
+# ---------------------------------------------------------------- sentence length
+# A reviewer's cap: about 35 words, one claim per sentence. Reported as a warning with
+# the count per file until the writing pass brings the body under it; then fail = true.
+# The cap is hard over the body and the abstract (revision A9 brought them to zero over
+# it). The eprint-only appendices are exempt for now: they are outside the submission and
+# were not written to the cap; drop them from this list when they are.
+[sentence_cap]
+max_words = 35
+fail = true
+exempt_files = ["main.tex", "main-eprint.tex", "refs.bib",
+  "sec/app-defs.tex", "sec/app-measure.tex", "sec/app-stats.tex", "sec/app-threats.tex",
+  "sec/ep-related.tex", "sec/ep-limits.tex"]
+
 # ---------------------------------------------------------------- duplicated prose
 # A duplicate is not a contradiction, which is why it passes every other rule here,
 # and it is precisely how a claim comes to be corrected in one place and left standing
@@ -321,12 +433,27 @@ phrase = "has no maintainer to coordinate with"
 why = "the disclosure statement owns the MatrixSSL coordination fact"
 
 [[once]]
+phrase = "ANONYMISED-LINK"
+why = """The anonymised repository link the reviewer asked for at submission. The Artifact
+paragraph of sec/intro.tex carries a url{ANONYMISED-LINK} placeholder the author fills by
+hand before submission; registering it here means the placeholder cannot be forgotten
+(the rule fails if it is deleted without a replacement being registered) and cannot be
+pasted into a second file."""
+
+[[once]]
 phrase = "establishes that a blind spot exists in a class, not how often it occurs"
-why = "the n=1 bound is stated in the remit and must not be re-hedged at each use"
+why = "the n=1 bound is stated in the I3 contribution bound (sec/intro.tex) and must not be re-hedged at each use"
 
 [[once]]
 phrase = "so the core frequency is not pinned and core isolation is partial"
 why = "the acquisition host's bound is stated once, where the statistics are decided"
+
+# Revision A9: the tick-to-cycle relation is stated once, in the Apparatus section beside
+# the verdict rule, and the host figure's caption points at it rather than restating the
+# tick length per host.
+[[once]]
+phrase = "a tick is coarser than the core cycle"
+why = "the counter-tick unit and its relation to the core cycle are stated once, in sec/method.tex; every other site prints ticks and points there"
 
 # ---------------------------------------------------------------- the anti-survey gate
 # The analyser matrix classifies a field this paper explicitly did not survey: its rows are
@@ -348,6 +475,25 @@ why = "same"
 phrase = "our classification of the field"
 in_files = ["sec/f1-blindspots.tex"]
 why = "same: the classification axes are ours, the rows are not"
+
+# The four indices are numbered I1 to I4 in reading order (build cell, host, analyser and
+# budget, fix site and facet). The old F1/F2/F3 labels were never defined in the text and
+# ran against reading order (F2, F3, then F1), which a reviewer noticed. They are refused
+# everywhere in the body so they cannot come back in a section title or a cross-reference.
+[[forbidden]]
+phrase = "F1:"
+in_files = ["sec/f1-blindspots.tex", "sec/f2-toolchain.tex", "sec/f3-microarch.tex", "sec/intro.tex", "sec/index.tex", "sec/method.tex", "sec/fixes.tex", "sec/conclusion.tex", "sec/background.tex", "shared/front.tex"]
+why = "the indices are I1 to I4 in reading order; F1/F2/F3 were undefined labels in section titles"
+
+[[forbidden]]
+phrase = "F2:"
+in_files = ["sec/f1-blindspots.tex", "sec/f2-toolchain.tex", "sec/f3-microarch.tex", "sec/intro.tex", "sec/index.tex", "sec/method.tex", "sec/fixes.tex", "sec/conclusion.tex", "sec/background.tex", "shared/front.tex"]
+why = "same"
+
+[[forbidden]]
+phrase = "F3:"
+in_files = ["sec/f1-blindspots.tex", "sec/f2-toolchain.tex", "sec/f3-microarch.tex", "sec/intro.tex", "sec/index.tex", "sec/method.tex", "sec/fixes.tex", "sec/conclusion.tex", "sec/background.tex", "shared/front.tex"]
+why = "same"
 
 # ---------------------------------------------------------------- cannot both be true
 # The register of claim pairs that have contradicted each other once. The duplicate and
@@ -379,3 +525,28 @@ against = "after the rebuild two remain"
 why = """The introduction promised three groups of non-recomputable quantities and the fix
 section named two. The count is now stated in exactly one place and pointed at from the
 other."""
+
+# ---------------------------------------------------------------- item A5, background
+# The novelty is stated once, in the background section, as per-pair certified labels that
+# carry their indices; the introduction points at it rather than restating it.
+[[once]]
+phrase = "per-pair certified labels that carry"
+why = "the novelty statement lives in sec/background.tex and is pointed at from elsewhere"
+
+# One paper cited under two keys as if it were two works: the usability study of Fourne et
+# al. was cited as usect and again, characterised as a separate developer study, as
+# usectusability. The second characterisation is withdrawn with the key; the work keeps one
+# sentence under usect.
+[[retired]]
+phrase = "a developer study finds every tool it tried affected by problems that prevent effective"
+retired_in = "sec/background.tex, item A5"
+why = "this described the same paper already cited in the preceding clause under a second key; the merged citation says what the study did once"
+
+# The implementer recommendation once prescribed a retired-instruction count over two secret
+# classes as a sufficient check. By the paper's own data that check passes the residual it
+# found: the count moves by about one percent across the leading-zero range while the clock
+# moves by nearly two orders of magnitude. Count balance is necessary, not sufficient.
+[[retired]]
+phrase = "count retired instructions over two secret classes"
+retired_in = "sec/conclusion.tex, revision A8"
+why = "a check that passes the paper's own headline residual cannot be recommended as the check; the recommendation now asks for cycle-level measurement or operand-magnitude fuzzing at a fixed digit count"

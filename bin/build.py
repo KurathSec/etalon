@@ -204,7 +204,7 @@ def main() -> int:
         rec.write_text(json.dumps({
             "control": "BIN-1",
             "finding": "every locked build cell rebuilds to the .text digest recorded for "
-                       "it, so the pinned cells behind F2 are reproducible rather than "
+                       "it, so the pinned cells behind I1 are reproducible rather than "
                        "asserted from the lock.",
             "binaries_checked": n,
             "pairs": sorted(lock),

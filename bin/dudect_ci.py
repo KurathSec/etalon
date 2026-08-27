@@ -102,6 +102,41 @@ def analyse(cl: np.ndarray, t: np.ndarray, crop_pct: float = 95.0,
             "ci_excludes_zero": bool(lo > 0 or hi < 0)}
 
 
+def mde(cl: np.ndarray, t: np.ndarray, alpha: float = 0.05, power: float = 0.8,
+        crop_pct: float = 95.0) -> dict:
+    """Minimum detectable effect of this run, in ticks, under the paper's Definition 1.
+
+    The smallest class difference of means a two-sample Welch test of size alpha on this
+    run's own sample variances would reject with the given power, by the normal
+    approximation: (z_{1-alpha/2} + z_{power}) * sqrt(s0^2/n0 + s1^2/n1). It is a
+    property of the acquisition (its noise and its budget), not of the program, which is
+    why a clean verdict is printed beside it: an effect below it would not have been
+    resolved here, whatever the binary does.
+
+    The same upper-tail crop as analyse() is applied first, so the MDE and the effect
+    size it is read against describe the same sample. z is taken from the standard
+    library's NormalDist, so no scipy is needed to regenerate it.
+    """
+    from statistics import NormalDist
+    if t.size == 0:
+        return {"mde_ticks": None, "n0": 0, "n1": 0, "note": "empty dump"}
+    keep = t <= np.percentile(t, crop_pct)
+    cl, t = cl[keep], t[keep]
+    t0, t1 = t[cl == 0], t[cl == 1]
+    if t0.size < 2 or t1.size < 2:
+        return {"mde_ticks": None, "n0": int(t0.size), "n1": int(t1.size),
+                "note": "a class has fewer than two observations"}
+    z = NormalDist().inv_cdf(1 - alpha / 2) + NormalDist().inv_cdf(power)
+    se = float(np.sqrt(t0.var(ddof=1) / t0.size + t1.var(ddof=1) / t1.size))
+    return {"mde_ticks": z * se, "n0": int(t0.size), "n1": int(t1.size),
+            "alpha": alpha, "power": power, "welch_se_ticks": se}
+
+
+def mde_path(path: Path, **kw) -> dict:
+    cl, t = load(path)
+    return mde(cl, t, **kw)
+
+
 def analyse_path(path: Path, **kw) -> dict:
     cl, t = load(path)
     return analyse(cl, t, **kw)
@@ -111,7 +146,9 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("dump", type=Path)
     a = ap.parse_args()
-    print(json.dumps(analyse_path(a.dump), indent=2))
+    r = analyse_path(a.dump)
+    r.update(mde_path(a.dump))
+    print(json.dumps(r, indent=2))
     return 0
 
 

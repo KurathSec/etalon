@@ -10,10 +10,15 @@
 
 PY ?= python3
 
-.PHONY: verify check test acquire numbers rebuild-check clean
+.PHONY: verify verify-all check test acquire numbers rebuild-check clean
 
 verify:
 	$(PY) bin/verify.py
+
+# Every gate, in order, one line each: the recovery oracle, the controls, the
+# tests, the manuscript checks, and the generator's refusal of a headline recall.
+verify-all:
+	sh bin/verify_all.sh
 
 rebuild-check:
 	$(PY) bin/build.py --check

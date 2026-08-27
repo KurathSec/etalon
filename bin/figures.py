@@ -108,7 +108,7 @@ def fig_emission():
     opts = ["O0", "O2", "O3", "Os"]
     grid = {(c["vendor"], c["opt"]): c for c in cells}
 
-    fig, ax = plt.subplots(figsize=(4.2, 2.0))
+    fig, ax = plt.subplots(figsize=(4.2, 1.15))
     for r, v in enumerate(vendors):
         for col, o in enumerate(opts):
             c = grid[(v, o)]
@@ -164,27 +164,56 @@ def shade_kyber_range(ax, label=True, at="top"):
                     ha="center", va="top" if top else "bottom", zorder=4)
 
 
+def annotate_pipelined(ax, e2e: dict, at: str, pct_fmt: str):
+    """Write the pipelined per-call class difference on a latency panel.
+
+    The serial-chain curve a panel plots is the divider's latency; what an attacker
+    observes is the difference between a low-operand and a high-operand call once the
+    division is pipelined into the real coeff_to_bit loop. That figure lives in the
+    same record under end_to_end_coeff_to_bit_Os, and printing it on the panel is what
+    keeps the picture from being read as the observable."""
+    if e2e.get("MEASUREMENT_STATUS", "").startswith("CONFOUNDED"):
+        return
+    d = e2e["secret_dependent_delta_ticks"]
+    pct = e2e["delta_percent_of_call"]
+    # pct_fmt matches the precision bin/regen.py prints the same percentage at for
+    # this host, so the panel and the prose show one number.
+    txt = f"pipelined per-call:\n{d:+.3f} ticks ({pct:{pct_fmt}}%)"
+    top = at == "top"
+    ax.annotate(txt, xy=(1, 1 if top else 0), xycoords="axes fraction",
+                xytext=(-3, -3 if top else 3), textcoords="offset points",
+                fontsize=5.8, color=INK, ha="right", va="top" if top else "bottom",
+                zorder=5, bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none",
+                                    alpha=0.85))
+
+
 def fig_graviton():
     # Single clean panel: the per-udiv latency rising with dividend magnitude on the
     # Neoverse-V1 (a serial-dependency chain at a fixed dividend, so both classes run
-    # identical code). This is the operand-magnitude dependence that carries F3. The
+    # identical code). This is the operand-magnitude dependence that carries I2, the host index. The
     # earlier right panel plotted a low-vs-high end-to-end percentage whose measurement
     # program generated the two classes with different constant reductions; that number
     # is confounded and pending re-measurement, so it is not plotted.
     g = json.loads((REPO / "results" / "kyberslash_graviton.json").read_text())
     lat = g["results"]["udiv_latency_operand_dependent"]["ticks_per_udiv"]
+    e2e = g["results"]["end_to_end_coeff_to_bit_Os"]
     xs = [1, 3000, 8000, 1e6, 4e9]
     ys = [lat["dividend_1"], lat["dividend_3000"], lat["dividend_8000"],
           lat["dividend_1e6"], lat["dividend_4e9"]]
 
-    fig, a = plt.subplots(figsize=(2.6, 1.9))
+    fig, a = plt.subplots(figsize=(2.6, 1.2))
     shade_kyber_range(a, at="top")
     a.plot(xs, ys, "-o", color=TEAL, ms=3.5, lw=1.3, zorder=3)
     a.set_xscale("log")
     a.set_xlabel("dividend magnitude", fontsize=7.5)
-    a.set_ylabel("ticks / udiv", fontsize=7.5)
+    a.set_ylabel("counter ticks / div", fontsize=7.5)
     a.tick_params(labelsize=6.5)
     a.set_title("Neoverse-V1: udiv latency vs dividend", fontsize=7.5)
+    # Both panels of the figure are in counter ticks, and each carries the pipelined
+    # per-call difference read from the same record the paper's macros come from, so
+    # the figure and the six-number table cannot disagree. The percentage is not
+    # retyped: it is the record's own delta_percent_of_call.
+    annotate_pipelined(a, e2e, at="bottom", pct_fmt="+.1f")
     fig.tight_layout(pad=0.3)
     fig.savefig(FIG / "fig-graviton.pdf")
     plt.close(fig)
@@ -194,19 +223,23 @@ def fig_x86_idiv():
     x = json.loads((REPO / "results" / "kyberslash_x86_idiv.json").read_text())["results"]
     lat = x["idiv_latency_operand_dependent"]["ticks_per_udiv"]
     step = x["kyberslash_operand_range_step"]
+    e2e = x["end_to_end_coeff_to_bit_Os"]
     xs = [1, 3000, 8000, 1e6, 4e9]
     ys = [lat["dividend_1"], lat["dividend_3000"], lat["dividend_8000"],
           lat["dividend_1e6"], lat["dividend_4e9"]]
 
-    fig, (a, b) = plt.subplots(1, 2, figsize=(2.9, 1.9),
+    fig, (a, b) = plt.subplots(1, 2, figsize=(2.9, 1.2),
                                gridspec_kw={"width_ratios": [1.45, 1], "wspace": 0.75})
     shade_kyber_range(a, at="bottom")
     a.plot(xs, ys, "-o", color=TEAL, ms=3.5, lw=1.3, zorder=3)
     a.set_xscale("log")
     a.set_xlabel("dividend magnitude", fontsize=7.5)
-    a.set_ylabel("TSC ticks / div", fontsize=7.5)
+    a.set_ylabel("counter ticks / div", fontsize=7.5)
     a.tick_params(labelsize=6.5)
     a.set_title("x86: idiv latency vs dividend", fontsize=7.5)
+    # Headroom so the annotation does not sit on the curve's peak.
+    a.set_ylim(min(ys) - (max(ys) - min(ys)) * 0.1, max(ys) + (max(ys) - min(ys)) * 0.55)
+    annotate_pipelined(a, e2e, at="top", pct_fmt="+.2f")
 
     # Right panel: the operand step at the KyberSlash boundary (coeff 832 -> 833) as
     # the robust paired-difference median, with the same-operand noise floor as its
@@ -291,7 +324,7 @@ def fig_matrixssl_ladder():
                 ("mx4-6-0", "4.6.0\nlatest")]
     rows = [("same", "same length\n256 v 256"), ("bit255v256", "one leading zero\n255 v 256"),
             ("samedigit", "same digit count\n193 v 256"), ("diffdigit", "digit count differs\n192 v 256")]
-    fig, ax = plt.subplots(figsize=(5.4, 2.9))
+    fig, ax = plt.subplots(figsize=(5.4, 2.4))
     width, colours, FLOOR = 0.26, [WARM, TEAL, MUTE], 0.7
     for vi, (vkey, vlab) in enumerate(versions):
         xs, ys, los, his, nz = [], [], [], [], []

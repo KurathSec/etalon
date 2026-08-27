@@ -64,6 +64,13 @@ def main():
     # host, and at what budget, so the clean scored verdict can be read as a located
     # sensitivity floor rather than an unqualified null.
     sens = run(build("magnitude_sensitivity.c", ["-O2"], libs=["-lm"]))
+    # The ablation: the same per-call design with the divider replaced by the
+    # upstream fix's reciprocal multiply. If the per-call effect survives here it
+    # belongs to the surroundings, not the divider.
+    recip = run(build("magnitude_sensitivity_recip.c", ["-O2"], libs=["-lm"]))
+    # The attack's own granularity: one 256-coefficient polynomial per timed region,
+    # low against high class, with the reciprocal twin in the same run.
+    poly = run(build("poly_granularity.c", ["-O2"], libs=["-lm"]))
     # The end-to-end binary is the REAL coeff_to_bit at -Os, where the emission map
     # records gcc emitting a hardware division. Confirm the idiv is actually there.
     div_in_os = idiv_count_source("Os")
@@ -89,10 +96,10 @@ def main():
             },
             "idiv_latency_operand_dependent": {
                 "note": "serial dependency chain. On this Arrow Lake out-of-order divider "
-                        "the per-div TSC latency is essentially flat across the operand range, "
-                        "within a fraction of a tick; the higher first sample at dividend 1 is a "
-                        "warm-up artifact. This is flatter than the Graviton Neoverse-V1 udiv, "
-                        "which rises across the same range.",
+                        "the per-div TSC latency shows no operand-dependent step across the "
+                        "operand range, the spread of the sampled dividends lying within a "
+                        "fraction of a tick and below the run's noise floor. This is unlike the "
+                        "Graviton Neoverse-V1 udiv, which rises across the same range.",
                 "ticks_per_udiv": {
                     "dividend_1": lat.get("lat_dividend_1"),
                     "dividend_3000": lat.get("lat_dividend_3000"),
@@ -145,6 +152,20 @@ def main():
                 "by_n": {k: v for k, v in sens.items() if k.startswith("n_")},
                 "mean_ticks_at_max_n": sens.get("n_4000000_mean_ticks"),
                 "tau_at_max_n": sens.get("n_4000000_tau"),
+            },
+            "per_call_reciprocal_ablation": {
+                "note": "the ablation: the identical per-call two-class design with the "
+                        "divider replaced by the upstream fix's reciprocal multiply, "
+                        "forced through inline asm as the idiv is. An effect that "
+                        "survives here belongs to the surroundings, not the divider.",
+                "by_n": {k: v for k, v in recip.items() if k.startswith("recip_n_")},
+            },
+            "per_polynomial_two_class": {
+                "note": "the granularity the attack consumes: one 256-coefficient "
+                        "polynomial per timed region, low against high class, division "
+                        "forced to idiv, with a reciprocal twin in the same run and the "
+                        "minimum detectable effect beside every mean.",
+                "by_n": {k: v for k, v in poly.items() if k.startswith("poly_")},
             },
             "tsc_ghz": ghz,
         },

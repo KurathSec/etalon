@@ -6,8 +6,11 @@
 # scored and not to systematise anything.
 #
 # This file is the OVERLAY: the cells no inventory publishes. Every one of them carries a
-# source. A cell with no source is not an opinion we are entitled to, so it stays unstated
-# and is counted as unstated, which is itself the finding for the variable-latency column.
+# source and a citation key that refs.bib resolves. A cell with no source is not an opinion
+# we are entitled to, so it would stay unstated and be counted; as of revision A6 every
+# row is filled from the tool's own paper or documentation, each `source` quoting the
+# passage it rests on with the date it was read, and the finding for the variable-latency
+# column is how few of the thirty-seven declare it rather than how many say nothing.
 
 schema = "analysers/1"
 
@@ -56,37 +59,279 @@ added_because = "postdates the pinned inventory commit"
 # Does the tool's own description state that it reports a secret-dependent BRANCH, a
 # secret-dependent ADDRESS, or a VARIABLE-LATENCY instruction on secret operands? Geimer's
 # definition of the constant-time policy contains all three, and most tools labelled with
-# that policy say nothing about the third. Where we have a source we record it; where we do
-# not, the cell is unstated and counted.
+# that policy say nothing about the third. The reading rule, stated once: "yes" is a
+# mechanism the tool's description says it reports; "no" is a mechanism its stated leakage
+# model excludes, whether by naming what it does report (a tool whose model is "branches
+# and memory accesses" declares the third not covered) or by saying so outright (timecop);
+# "unstated" is reserved for a description that fixes no leakage model at all, and no row
+# currently needs it. Each row's `cite` is the refs.bib key of the document the three cells
+# were read from; a cell that rests on a second document names it in `<cell>_cite`.
+#
+# The scored rows (dudect, timecop, varlat, binsec) must agree with detects_mechanisms in
+# data/tools.toml, which bin/analyser_table.py --check enforces. For the two timing tests
+# and the patched Valgrind the address cell is therefore "no" in the sense above: dudect
+# and RTLF report a class timing difference and never an address, so an address leak
+# reaches them only through the cache's timing and is not reported as such; varlat's
+# address reports are memcheck's and are scored here as a different mechanism.
 
 [mech.dudect]
+cite = "dudect"
 branch = "yes"
-address = "unstated"
+address = "no"
 varlat = "yes"
-source = "data/tools.toml, from the tool's own description: it times the target under two input classes and tests the difference, so any mechanism that changes time is in range and address effects are not separately reported"
+source = "Reparaz, Balasch, Verbauwhede, DATE 2017: a Welch t-test over two input classes on execution time, so any mechanism that changes time is in range; no address is reported, and data/tools.toml declares latency only"
 
 [mech.timecop]
+cite = "timecop"
 branch = "yes"
 address = "yes"
 varlat = "no"
 source = "https://www.post-apocalyptic-crypto.org/timecop/ (2026-08-26): \"Valgrind cannot spot cases where variable-time code is caused by variable-time CPU instructions.\""
 
 [mech.ctgrind]
+cite = "ctgrind"
 branch = "yes"
 address = "yes"
 varlat = "no"
-source = "same memcheck substrate as timecop, whose page states the limitation; ctgrind is the tool timecop descends from"
+source = "Langley 2010: memcheck reports a conditional branch or a memory address that depends on uninitialised (poisoned) data; the same substrate timecop's page states the variable-time limitation for"
 
 [mech.varlat]
+cite = "kyberslash"
 branch = "yes"
-address = "unstated"
+address = "no"
 varlat = "yes"
-source = "data/tools.toml; the patch exists precisely to report variable-latency instructions on defined data"
+source = "data/tools.toml; the patch exists precisely to report variable-latency instructions on defined data, and the memcheck branch reports it inherits are scored; its memcheck address reports are not scored here as address detection"
 
 [mech.binsec]
+cite = "binsecrel"
 branch = "yes"
 address = "yes"
 varlat = "yes"
-source = "probed from the pinned image 2026-08-26: binsec -checkct-help lists -checkct-features control-flow, memory-access, multiplication, dividend and divisor"
+varlat_cite = "binsecchanges"
+source = "probed from the pinned image 2026-08-26: binsec -checkct-help lists -checkct-features control-flow, memory-access, multiplication, dividend and divisor; the option enters at release 0.10.0 (CHANGES.md) and the pinned image is release 0.11.2 (data/tools.toml image_version)"
 budget_corroborated = true
 budget_source = "BINSEC relse.md: a verdict is secure only when no leak was found AND all paths were explored, under -sse-timeout, -sse-depth, -sse-jump-enum and -smt-timeout"
+
+[mech.scoutct]
+cite = "scoutct"
+branch = "yes"
+address = "yes"
+varlat = "yes"
+source = "ePrint 2026/776, read 2026-08-27, section 4.3: \"Whenever an attacker-observable (condition of a jump instruction, address of a memory access, or operand of a variable-time instruction) is red- or orange-tainted, the analysis reports a CT violation\"; the variable-time operand is in its stated model, so the cell is yes, and it cites KyberSlash as the instance"
+
+[mech.absynthe]
+cite = "absynthe"
+branch = "yes"
+address = "no"
+varlat = "no"
+source = "NDSS 2020 abstract: the target is analysed as a black box \"to find secret-dependent branches\", leaked through on-core contention; addresses and operand latency are outside the stated model"
+
+[mech.anableps]
+cite = "anableps"
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "RAID 2019 abstract: side channels at the level of pages, caches and branches, from the order and timing of memory access patterns in an extended dynamic control-flow graph"
+
+[mech.abacus]
+cite = "abacus"
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "ICSE 2021 and the README: an address-based side-channel detector reporting secret-dependent control flow (type CF) and data access (type DF) with a leakage estimate per site"
+
+[mech.bpt17]
+cite = "bpt17"
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "ESORICS 2017, read 2026-08-27 from the HAL copy (hal-01588444), Definition 1: \"the value of branching conditions is considered as leaked ... the address of a store access is also considered as leaked. Additionally, all locations of read accesses are also considered as leaked\"; the leakage model names those two observations and no operand"
+
+[mech.canal]
+cite = "canal"
+branch = "no"
+address = "yes"
+varlat = "no"
+source = "ASE 2018 abstract and repository README, read 2026-08-27: \"models the cache behaviors of a program by transforming its intermediate representation\" and \"makes C code cache-verifiable\"; the model is of cache behaviour, so a memory access is what it exposes, and neither a branch condition nor an operand is in the stated model"
+
+[mech.chalice]
+cite = "chalice"
+branch = "no"
+address = "yes"
+varlat = "no"
+source = "ACM TECS 2019, abstract read 2026-08-27 from arXiv 1611.04426: \"Cache timing attacks allow attackers to infer the properties of a secret execution by observing cache hits and misses ... our CHALICE framework leverages symbolic execution to compute the amount of information that can possibly leak through cache attacks\"; the observation is the cache hit or miss of an access, nothing else"
+
+[mech.ct-prover]
+cite = "ctprover"
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "PACMSE/FSE 2024, read 2026-08-27 from arXiv 2402.13506, section 2.2: five forms of timing side channel are listed, of which \"we consider the first three\", unbalanced branching, non-constant loops and memory access patterns; \"time-variant instructions (e.g., integer divisions)\" are the fourth and \"not considered because they are architecture-dependent\", the clearest no in the table"
+
+[mech.cacheaudit]
+cite = "cacheaudit"
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "USENIX Security 2013 and the repository README: abstract interpretation of cache states over data and, with --instruction-cache, instruction addresses; timing is a hit-or-miss count, not an operand latency"
+
+[mech.cacheaudit2]
+cite = "cacheaudit2"
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "PLDI 2017, abstract read 2026-08-27 from arXiv 1603.02187, and the fine-trace README: \"bit-level and arithmetic reasoning about memory accesses in the presence of dynamic memory allocation\" for \"cache adversaries, namely those based on observing cache states, traces of hits and misses, and execution times\", over data and, with --instruction-cache, instruction addresses; timing is a hit-or-miss count and no operand latency is modelled"
+
+[mech.cachefix]
+cite = "cachefix"
+branch = "no"
+address = "yes"
+varlat = "no"
+source = "IEEE TCAD 2018, abstract read 2026-08-27 from arXiv 1807.04701: \"For a given program, a cache configuration and an attack model, our CACHEFIX framework either verifies the cache side-channel freedom of the program or synthesizes a series of patches\"; the observation is cache behaviour of memory accesses, and no branch condition or operand is named"
+
+[mech.cacheql]
+cite = "cacheql"
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "USENIX Security 2023 and the README: pintools log secret-dependent control branches (SCB) and secret-dependent data accesses (SDA), which the quantifier reads"
+
+[mech.cachetemplates]
+cite = "cachetemplates"
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "USENIX Security 2015: profiles which code and data addresses a target touches per event, so both code and data addresses are in the model; latency of an instruction is not"
+
+[mech.constantine]
+cite = "constantine"
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "CCS 2021 and the README: linearises secret-dependent branches, loops and memory accesses, \"basically everything\" in its own words, with no operand-latency model"
+
+[mech.data]
+cite = "data"
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "USENIX Security 2018 and the README: differential address traces of all executed instructions and all accessed operands, reporting control-flow and data differences that relate to the secret"
+
+[mech.easywalk-ci]
+cite = "easywalkci,microwalk"
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "CANS 2024, abstract read 2026-08-27 through the HAL API (hal-04652991): \"We extend Microwalk in several directions\", an AST-level tracer for JavaScript on Microwalk's analysis; its own abstract names no mechanism, so the three cells are Microwalk's and the row cites both documents; the repository README (2026-08-27) is Microwalk's"
+
+[mech.lmtest]
+cite = "lmtest"
+branch = "yes"
+address = "yes"
+varlat = "yes"
+source = "CCS 2024 and src/tracers/README.md: parametric in an LMSPEC leakage model; the shipped clauses include control flow and memory addresses and also operand-dependent ones, computation simplification over multiplication and division on operand values and narrow-operand instructions, which is a variable-latency model"
+
+[mech.memsan]
+cite = "memsan"
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "clang MemorySanitizer documentation: reports an uninitialised value used in a conditional branch and an uninitialised pointer used for a memory access, the ctgrind idiom with the secret poisoned"
+
+[mech.microwalk]
+cite = "microwalk"
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "ACSAC 2018: dynamic instrumentation records control flow and memory accesses per test case and a statistical comparison localises leakage"
+
+[mech.pin-based-cec]
+cite = "pinbasedcec"
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "repository README: logs every instruction pointer and memory address a subroutine touches and compares across invocations, with taint to keep only secret-dependent differences; --branch adds tainted branch checking"
+
+[mech.triggerflow]
+cite = "triggerflow"
+branch = "yes"
+address = "no"
+varlat = "no"
+source = "DIMVA 2019: tracks whether annotated code paths execute for a given input, so only control flow is in the model"
+
+[mech.ct-fuzz]
+cite = "ctfuzz"
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "ICST 2020: fuzzes a self-composition whose monitor compares the control-flow and memory-address traces of two secret inputs"
+
+[mech.haybale-pitchfork]
+cite = "haybalepitchfork"
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "repository README, its two properties: secret values must not influence control flow, and must not influence the addresses of memory accesses"
+
+[mech.pitchfork-angr]
+cite = "pitchforkangr"
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "repository README: finds paths where secret data is used in either address calculations or branch conditions, sequentially or speculatively"
+
+[mech.encider]
+cite = "encider"
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "IEEE TDSC, abstract read 2026-08-27 (doi 10.1109/TDSC.2022.3160346): \"detecting both timing and cache side-channel vulnerabilities within SGX applications via inferring potential timing observation points\", reporting \"29 timing side channels and 73 code and data cache side channels\"; the timing channel is a path and the cache channel a code or data address, and no operand latency is in the model"
+
+[mech.manifold]
+cite = "manifold"
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "USENIX Security 2022 abstract: cache bank, cache line and page-table access traces of code and data, from which media inputs are reconstructed and leakage points localised"
+
+[mech.rtlf]
+cite = "rtlf"
+branch = "yes"
+address = "no"
+varlat = "yes"
+source = "USENIX Security 2024 abstract: a statistical timing test with a bounded type-1 error over whole-operation timings, so any mechanism that changes time is in range; no address is reported"
+
+[mech.sc-eliminator]
+cite = "sceliminator"
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "ISSTA 2018, read 2026-08-27 from arXiv 1806.02444, section 1: \"By instruction-related timing side channels, we mean the number or type of instructions executed along a path may differ depending on the values of secret variables ... By cache-related timing side channels, we mean the memory subsystem may behave differently\"; cost is a property of the instructions on a path, not of their operands"
+
+[mech.stanalyzer]
+cite = "stanalyzer"
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "Schaub's thesis, Institut Polytechnique de Paris 2020 (tel-03205242), read 2026-08-27, chapter 2 STAnalyzer: leakage of a secret-tagged value into \"memory accesses and branching operations\" is \"reported as a violation of the constant-time policy\"; section 2.5 lists \"divisions, rotations or multiplications taking a variable number of cycles\" as a source the tool could take into account and does not"
+
+[mech.sidetrail]
+cite = "sidetrail"
+branch = "yes"
+address = "no"
+varlat = "no"
+source = "VSTTE 2018 and the README: annotates every instruction with a fixed runtime cost and asks an SMT solver whether two secrets differ in total cost, so path differences are in the model and neither addresses nor operand-dependent cost are"
+
+[mech.virtualcert]
+cite = "virtualcert"
+branch = "yes"
+address = "yes"
+varlat = "no"
+source = "CCS 2014, abstract read 2026-08-27 from ePrint 2014/422: constant-time implementations \"do not branch on secrets and do not perform memory accesses that depend on secrets\"; the policy names those two and no operand"
+
+[mech.ct-verif]
+cite = "ctverif"
+branch = "yes"
+address = "yes"
+varlat = "yes"
+source = "USENIX Security 2016, read 2026-08-27 from the USENIX PDF: the formalism \"is parameterized by a flexible leakage model that captures the various constant-time policies used in practice, including path-based, address-based, and operand-based characterizations, wherein program paths, accessed memory addresses, and operand sizes, respectively, are independent of program secrets\" (Example 3 gives the division operand), and the case studies include libfixedtimefixedpoint against operand-dependent floating-point timing; section 6 notes operand-based properties are not preserved from LLVM to machine code"

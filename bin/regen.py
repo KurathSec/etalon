@@ -229,13 +229,15 @@ def verdict_section() -> dict:
         reason = r.get("reason", "")
         if reason.startswith("mechanism:"):
             mech += 1
-        elif ("no runnable harness" in reason or "no runnable program" in reason
-              or "no harness built here" in reason):
+        elif ("no runnable program" in reason or "no harness built here" in reason):
             # Both the observation-only pairs (no runnable program) and the pairs
             # that ship source but for which no harness was built for this tool
             # (an effort boundary) are counted here: neither is a mechanism
             # exclusion, and both were once split off wrongly, leaving the counts
-            # not summing to the inapplicable total.
+            # not summing to the inapplicable total. Exactly the two spellings
+            # bin/score.py emits are accepted. A retired third spelling was tolerated
+            # here once, which hid six stale rows; `bin/score.py --rescore` refreshes
+            # reasons, so a stale row now shows up as an unclassified reason.
             noharn += 1
         elif "no mechanism a code-running analyser detects" in reason:
             nullmech += 1
@@ -303,6 +305,137 @@ WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight",
          "nine", "ten", "eleven", "twelve"]
 
 
+class _Provenance:
+    """Which committed record each emitted macro was read from.
+
+    Switched on by --provenance. Every read of a file under the repository is noted
+    while the report and the macros are produced; a macro is attributed to the files
+    read since the previous macro, or, when none were, to the same files as that
+    macro. The section functions run before any macro is emitted, so their reads are
+    kept by section and replayed at the point in as_tex where the section's counts
+    are emitted. The attribution is therefore observed, not hand-maintained, and a
+    new emitter cannot be left out of the table by forgetting to register it.
+    """
+
+    def __init__(self):
+        self.active = False
+        self.section = None
+        self.by_section: dict[str, list[str]] = {}
+        self.pending: list[str] = []
+        self.last: list[str] = []
+        self.rows: list[tuple[str, str, str]] = []
+
+    def _rel(self, path) -> str | None:
+        try:
+            q = Path(path).resolve()
+        except (OSError, TypeError):
+            return None
+        try:
+            rel = str(q.relative_to(REPO))
+        except ValueError:
+            return None
+        if rel.startswith("paper/"):
+            return None
+        return rel
+
+    def note_read(self, path) -> None:
+        rel = self._rel(path)
+        if rel is None:
+            return
+        # A glob over pairs/*/pair.toml reads every manifest; the record is the set.
+        if rel.startswith("pairs/") and rel.endswith("/pair.toml"):
+            rel = "pairs/*/pair.toml"
+        bucket = self.by_section.setdefault(self.section, []) if self.section else self.pending
+        if rel not in bucket:
+            bucket.append(rel)
+
+    def use(self, section: str) -> None:
+        """Replay a section function's reads as the context for the next macros."""
+        self.pending = list(self.by_section.get(section, []))
+
+    def note_macro(self, name: str, line: int) -> None:
+        files = self.pending if self.pending else self.last
+        self.last = list(files)
+        self.pending = []
+        self.rows.append((name, f"bin/regen.py:{line}", ", ".join(files) or "(none read)"))
+
+    def install(self) -> None:
+        import builtins
+        import io
+        self.active = True
+        prov = self
+        _read_text, _read_bytes, _open = Path.read_text, Path.read_bytes, builtins.open
+
+        def read_text(self_, *a, **k):
+            prov.note_read(self_)
+            return _read_text(self_, *a, **k)
+
+        def read_bytes(self_, *a, **k):
+            prov.note_read(self_)
+            return _read_bytes(self_, *a, **k)
+
+        def open_(file, mode="r", *a, **k):
+            if "r" in str(mode) and isinstance(file, (str, Path)):
+                prov.note_read(file)
+            return _open(file, mode, *a, **k)
+
+        Path.read_text, Path.read_bytes, builtins.open = read_text, read_bytes, open_
+        io.open = open_
+
+    def table(self) -> str:
+        """The provenance table, as chunked tabulars so no float overflows a page."""
+        def esc(t: str) -> str:
+            return t.replace("\\", "\\textbackslash{}").replace("_", "\\_").replace("%", "\\%")
+        # Collapse the spelled-out variants onto their digit macro: nPairs, nPairsWord
+        # and nPairsWordCap are one number.
+        names = {n for n, _, _ in self.rows}
+        rows = []
+        for name, gen, rec in self.rows:
+            base = name
+            for suf in ("WordCap", "Word"):
+                if name.endswith(suf) and name[: -len(suf)] in names:
+                    base = None
+                    break
+            if base is None:
+                continue
+            variants = "".join(
+                f", +{suf}" for suf in ("Word", "WordCap") if name + suf in names)
+            rows.append((name + variants, gen, rec))
+        rows.sort(key=lambda r: (r[2], r[0]))
+        out = ["% GENERATED by bin/regen.py --provenance. Do not hand-edit.",
+               "% One row per macro numbers.tex defines: the macro, the emitter line that",
+               "% produced it, and the committed record(s) it was read from, observed by",
+               "% instrumenting every file read during generation.",
+               f"% {len(rows)} macros after collapsing the spelled-out variants."]
+        chunk = 44
+        for i in range(0, len(rows), chunk):
+            out.append("\\begin{center}\\scriptsize")
+            out.append("\\begin{tabular}{@{}"
+                       ">{\\raggedright\\arraybackslash}p{0.30\\linewidth}"
+                       ">{\\raggedright\\arraybackslash}p{0.15\\linewidth}"
+                       ">{\\raggedright\\arraybackslash}p{0.47\\linewidth}@{}}")
+            out.append("\\toprule\nMacro & Generator & Record \\\\\n\\midrule")
+            def brk(s):
+                # A path or an emitter line is one unbreakable token to TeX; allow a
+                # break after every separator so a cell wraps instead of overflowing.
+                # esc() has already turned _ into \_, so break after that token too.
+                out_s = esc(s)
+                for sep in ("/", ".", ":", ",", "\\_"):
+                    out_s = out_s.replace(sep, sep + "\\allowbreak{}")
+                return out_s
+            def brk_name(s):
+                # A macro name has no separators; allow a break before each capital.
+                return re.sub(r"(?<=[a-z0-9])([A-Z])", lambda m: "\\allowbreak{}" + m.group(1), esc(s))
+            for name, gen, rec in rows[i:i + chunk]:
+                out.append(f"\\texttt{{\\textbackslash{{}}{brk_name(name)}}} & "
+                           f"\\texttt{{{brk(gen)}}} & \\texttt{{{brk(rec)}}} \\\\")
+            out.append("\\bottomrule\n\\end{tabular}\n\\end{center}")
+        return "\n".join(out) + "\n"
+
+
+_prov = _Provenance()
+
+
 def tex_macro(name: str, body: str) -> str:
     # A LaTeX control sequence is letters only. \foo255 parses as \foo followed by
     # 255, so \newcommand on such a name fails with "Missing \begin{document}" at the
@@ -312,6 +445,14 @@ def tex_macro(name: str, body: str) -> str:
         raise ValueError(
             f"macro name {name!r} is not letters-only; LaTeX cannot define it. "
             f"Spell any digits out (icDelta255 -> icDeltaOneZero).")
+    if _prov.active:
+        import inspect
+        line = 0
+        for fr in inspect.stack()[1:]:
+            if fr.filename == __file__ and fr.function not in ("emit", "tex_macro"):
+                line = fr.lineno
+                break
+        _prov.note_macro(name, line)
     return "\\newcommand{\\%s}{%s}\n" % (name, body)
 
 
@@ -391,6 +532,7 @@ def as_tex(report: dict) -> str:
             emit("nInstrumentsExercised", len(_labels))
 
     c = report["corpus"]
+    _prov.use("corpus")
     emit("nPairs", c["pairs_total"])
     emit("nPairsCorpus", c["pairs_corpus"])
     emit("nPairsSentinel", c["pairs_sentinel"])
@@ -402,6 +544,7 @@ def as_tex(report: dict) -> str:
     emit("nEligibleNoAnalyser", c["eligible_no_analyser"])
 
     cen = report["census"]
+    _prov.use("census")
     emit("nCensusEntries", cen["census_entries"])
     emit("nAttestedCells", cen["attested_cells"])
     emit("coverage", cen["covered_cells"])
@@ -432,6 +575,7 @@ def as_tex(report: dict) -> str:
         emit("uncoveredCellNames", None)
 
     v = report["verdicts"]
+    _prov.use("verdicts")
     emit("nScoredRows", v["scored_rows"])
     emit("nApplicable", v["applicable"])
     emit("nInapplicable", v["inapplicable"])
@@ -447,6 +591,7 @@ def as_tex(report: dict) -> str:
     emit("nMissed", outs.get("missed", 0) if has_applicable else None)
 
     co = report["cost"]
+    _prov.use("cost")
     emit("nCostRows", co["cost_rows"])
 
     # Per-class recall, from the recorded scoring run. These are the numbers the
@@ -520,6 +665,13 @@ def as_tex(report: dict) -> str:
         codegen = g["results"]["codegen"]["udiv_in_coeff_to_bit"]
         dud = g["results"].get("dudect_on_aarch64", {})
         out.append(tex_macro("gravHost", "AWS Graviton3 (Neoverse\\,V1)"))
+        # The one aarch64 build cell, named from its committed textprint path. It is
+        # outside the digest-pinning discipline (an unpinned host compiler, a textprint
+        # of the vulnerable arm only, no .text digest), and the paper says so where it
+        # is used; the name is generated so the compiler version is never typed.
+        _tp = g["results"]["codegen"].get("textprint", "")
+        if _tp:
+            out.append(tex_macro("gravCell", Path(_tp).parent.name.replace("_", "\\_")))
         out.append(tex_macro("gravOsUdiv", str(codegen["Os"])))
         # The operand-MAGNITUDE spread across the KyberSlash range (low- vs
         # high-coefficient udiv latency), which is the leak; the single-coefficient
@@ -550,12 +702,16 @@ def as_tex(report: dict) -> str:
             if _m:
                 out.append(tex_macro("gravChainLen", f"{int(_m.group(1)):,}"))
         out.append(tex_macro("gravNoiseFloor", f"{bnd['noise_floor_ticks']:.4f}"))
+        # The whole-sweep spread of the serial-chain udiv latency, the same quantity
+        # hostIdivSpread is on x86, so the six-number table compares like with like.
+        _gl = g["results"]["udiv_latency_operand_dependent"]["ticks_per_udiv"]
+        out.append(tex_macro("gravSweepSpread", f"{max(_gl.values()) - min(_gl.values()):.3f}"))
         # The end-to-end percentage was produced by a program that generated the two
         # classes with different constant reductions inside the timed loop; correcting
         # the identical x86 twin took its delta from 1.6% to ~0, so this number is
         # confounded and pending re-measurement. Emit NA until re-run, so no confounded
         # figure can reach the paper. The serial-chain udiv latency curve above is
-        # unaffected (fixed dividend, identical code both classes) and carries F3.
+        # unaffected (fixed dividend, identical code both classes) and carries I2, the host index.
         if e2e.get("MEASUREMENT_STATUS", "").startswith("CONFOUNDED"):
             out.append(tex_macro("gravDeltaTicks", None))
             out.append(tex_macro("gravDeltaPercent", None))
@@ -752,7 +908,7 @@ def as_tex(report: dict) -> str:
             out.append(tex_macro("hostTscGHz", f"{xr['tsc_ghz']:.2f}"))
             out.append(tex_macro("hostTickPs", f"{1000.0 / xr['tsc_ghz']:.0f}"))
         # The x86 end-to-end pipelined figures, so the three per-operation quantities in
-        # sec/microarch can be told apart: a serial-chain latency that is flat, a
+        # sec/microarch can be told apart: a serial-chain latency with no resolvable step, a
         # per-call two-class step that is resolvable, and a pipelined end-to-end
         # difference that is absorbed. dudect measures the third.
         _xe = xr.get("end_to_end_coeff_to_bit_Os", {})
@@ -762,8 +918,8 @@ def as_tex(report: dict) -> str:
             out.append(tex_macro("hostPipelinedDelta",
                                  f"{abs(_xe['secret_dependent_delta_ticks']):.3f}"))
         # x86 end-to-end two-class delta: the x86 rung of the host-magnitude ladder
-        # (F3), against gravDeltaPercent on Neoverse-V1. Distinct from the single-bit
-        # step above, which is what F1 rests on.
+        # (I2, the host), against gravDeltaPercent on Neoverse-V1. Distinct from the single-bit
+        # step above, which is what I3, the analyser index, rests on.
         e2x = xr.get("end_to_end_coeff_to_bit_Os")
         if e2x and e2x.get("delta_percent_of_call") is not None:
             out.append(tex_macro("hostDeltaTicks", f"{e2x['secret_dependent_delta_ticks']:.3f}"))
@@ -783,6 +939,38 @@ def as_tex(report: dict) -> str:
         ns = sorted({r["measurements"] for r in pmd.get("rows", [])})
         if ns:
             out.append(tex_macro("dudectBudget", f"{ns[-1]:,}"))
+        # Where that budget comes from. Every corpus acquisition runs BATCHES batches of
+        # MEASUREMENTS measurements (src/corpus/score/adapters/dudect.py), and
+        # dudect_run.h writes each batch minus its warm-up records and the last, unfilled
+        # slot, dropping any non-positive delta. All three constants are read from the
+        # code, and the product is checked against the committed dumps' record count so
+        # the paper's explanation of the number cannot drift from the number.
+        _ad = (REPO / "src" / "corpus" / "score" / "adapters" / "dudect.py").read_text()
+        _rh = (REPO / "src" / "corpus" / "score" / "adapters" / "dudect_run.h").read_text()
+        _mb = re.search(r"^BATCHES\s*=\s*(\d+)", _ad, re.M)
+        _mm = re.search(r"^MEASUREMENTS\s*=\s*(\d+)", _ad, re.M)
+        _mw = re.search(r"for \(size_t i = (\d+); i \+ 1 < M", _rh)
+        if _mb and _mm and _mw:
+            _b, _m, _w = int(_mb.group(1)), int(_mm.group(1)), int(_mw.group(1))
+            _per = _m - _w - 1
+            emit("dudectBatches", _b)
+            out.append(tex_macro("dudectMeasPerBatch", f"{_m:,}"))
+            emit("dudectWarmup", _w)
+            # NA rather than a number if the derivation does not reproduce the budget.
+            out.append(tex_macro("dudectPerBatch",
+                                 f"{_per:,}" if ns and _b * _per == ns[-1] else "\\NA"))
+        # The bootstrap behind every class-difference interval, read from
+        # bin/dudect_ci.py's defaults: a percentile interval (np.percentile at 2.5 and
+        # 97.5 on the resampled differences, no bias correction) over this many draws,
+        # each class subsampled to this many per draw, after this upper-tail crop.
+        _ci = (REPO / "bin" / "dudect_ci.py").read_text()
+        _mboot = re.search(r"boot: int = (\d+), boot_n: int = (\d+)", _ci)
+        _mcrop = re.search(r"crop_pct: float = ([\d.]+)", _ci)
+        if _mboot:
+            out.append(tex_macro("dudectBootDraws", f"{int(_mboot.group(1)):,}"))
+            out.append(tex_macro("dudectBootSub", f"{int(_mboot.group(2)):,}"))
+        if _mcrop:
+            out.append(tex_macro("dudectEffectCrop", f"{float(_mcrop.group(1)):g}"))
         det = [r["p_value"] for r in pmd.get("rows", []) if r.get("bh_significant")]
         if det:
             out.append(tex_macro("pDetected", f"{max(det):.4f}"))
@@ -881,6 +1069,13 @@ def as_tex(report: dict) -> str:
             if sc.get(key):
                 out.append(tex_macro(macro, sc[key]))
 
+        # The site-closure row each case meets (Definition 4), read from the record so
+        # tab:fixes and results/fix_verification.json cannot disagree about it.
+        for lib, macro in (("libgcrypt", "fixClosureLibgcrypt"),
+                           ("matrixssl", "fixClosureMatrixssl"),
+                           ("wolfssl", "fixClosureWolfssl")):
+            if fvd["libraries"].get(lib, {}).get("site_closure"):
+                out.append(tex_macro(macro, fvd["libraries"][lib]["site_closure"]))
         wolf = fvd["libraries"]["wolfssl"]
         out.append(tex_macro("wolfResidualPercent", "0.03\\%"))
         if wolf.get("recovery_attempt_budget_sigs"):
@@ -895,6 +1090,13 @@ def as_tex(report: dict) -> str:
             out.append(tex_macro("nSurveyTriagedOnly",
                                  str(sum(1 for v in st.values()
                                          if not v.get("measured")))))
+            # Built and measured is not the same as retained: wolfSSL's arms were
+            # built and timed, and no tree, binary or sample survives (retained =
+            # false in the record), so the paper says so beside the measured count.
+            out.append(tex_macro("nSurveyRetained",
+                                 str(sum(1 for v in st.values()
+                                         if v.get("measured")
+                                         and v.get("retained", True) is not False))))
     # The corpus's provenance split, counted from the manifests. The abstract, the
     # introduction and the conclusion all described the corpus in terms the roster
     # contradicted ("each item is a deployed leak reproduced as two builds differing by
@@ -946,7 +1148,7 @@ def as_tex(report: dict) -> str:
             out.append(tex_macro("icPerTickSignature", f"{_instr / _sig:.0f}"))
     # BIN-1's on-demand result. The control is declared rather than enforced because a
     # full rebuild is minutes of container work, so without this the paper could only
-    # assert that its pinned cells reproduce, in a paper whose F2 thesis is that the
+    # assert that its pinned cells reproduce, in a paper whose I1 thesis is that the
     # constant-time label belongs to the emitted binary.
     b1 = REPO / "results" / "bin1_check.json"
     if b1.exists():
@@ -958,7 +1160,15 @@ def as_tex(report: dict) -> str:
     # CI half-width is that floor at this budget.
     ppp = REPO / "results" / "patched_power.json"
     if ppp.exists():
-        pw = json.loads(ppp.read_text()).get("arms", {})
+        _ppdoc = json.loads(ppp.read_text())
+        pw = _ppdoc.get("arms", {})
+        # Definition 1's constants: size, power and CI level, read from the record the
+        # patched-arm power is computed under, so the definition cannot drift from the run.
+        _dsg = _ppdoc.get("design")
+        if _dsg:
+            out.append(tex_macro("mdeAlpha", f"{_dsg['alpha']:g}"))
+            out.append(tex_macro("mdePower", f"{_dsg['power']:g}"))
+            out.append(tex_macro("ciLevelPct", f"{round(_dsg['ci_level'] * 100):d}\\%"))
         camel = {"ecdsa-nonce": "NonceLatency", "ecdsa-address": "NonceAddress",
                  "hmac-timing": "Hmac", "kyberslash": "Division", "hqc-reject": "Rejection"}
         for pair, suffix in camel.items():
@@ -968,6 +1178,79 @@ def as_tex(report: dict) -> str:
             out.append(tex_macro("effPatched" + suffix, f"{r['effect_ticks']:,.3f}"))
             out.append(tex_macro("ciHalfPatched" + suffix,
                                  f"{r['ci_half_width_ticks']:,.3f}"))
+        # The MDE of every patched arm, per Definition 1, read from the committed dump
+        # through bin/dudect_ci.mde at the size and power the design block records, so
+        # the table's MDE column and the definition's constants cannot drift apart.
+        _alpha = (_dsg or {}).get("alpha", 0.05)
+        _power = (_dsg or {}).get("power", 0.8)
+        try:
+            import importlib.util as _ilu
+            _spec = _ilu.spec_from_file_location("dudect_ci", REPO / "bin" / "dudect_ci.py")
+            _dci = _ilu.module_from_spec(_spec)
+            _spec.loader.exec_module(_dci)
+        except Exception:      # numpy absent: the macros stay undefined, never 0
+            _dci = None
+        if _dci is not None:
+            for pair, suffix in camel.items():
+                dump = REPO / "results" / "raw" / f"{pair}_patched.dudect.bin.gz"
+                if not dump.exists():
+                    continue
+                _m = _dci.mde_path(dump, alpha=_alpha, power=_power)
+                if _m.get("mde_ticks") is not None:
+                    out.append(tex_macro("mdePatched" + suffix, f"{_m['mde_ticks']:,.3f}"))
+                    # The division row's MDE against the operand step the x86 micro-
+                    # benchmark estimates at the divisor boundary: the ratio the body
+                    # quotes when it says this host resolves neither the step nor its
+                    # absence. Emitted here so the prose cannot retype it.
+                    if pair == "kyberslash" and xp.exists():
+                        _st = json.loads(xp.read_text())["results"]
+                        _step = abs(_st["kyberslash_operand_range_step"]["step_ticks"])
+                        if _step > 0:
+                            out.append(tex_macro("mdeStepRatioDivision",
+                                                 f"{_m['mde_ticks'] / _step:,.0f}"))
+            # The same quantity for the MatrixSSL designs tab:fixes and fig:mxladder
+            # draw on, from the committed first-acquisition dumps.
+            for macro, dump in (("mxMdeFixed", "mx430_bit255v256"),
+                                ("mxMdeControl", "mx430_same"),
+                                ("mxMdeSameDigit", "mx430_samedigit"),
+                                ("mxMdeDiffDigit", "mx430_diffdigit"),
+                                ("mxMdePrefix", "mx4-2-1_bit255v256"),
+                                ("mxMdeLatest", "mx4-6-0_bit255v256")):
+                path = REPO / "results" / "raw" / "matrixssl" / f"{dump}.bin.gz"
+                if not path.exists():
+                    continue
+                _m = _dci.mde_path(path, alpha=_alpha, power=_power)
+                if _m.get("mde_ticks") is not None:
+                    out.append(tex_macro(macro, f"{_m['mde_ticks']:,.0f}"))
+    # The budget each analyser's clean verdict is conditional on, per tool, for the
+    # budget column of tab:blindspot. dudect's is its measurement count (dudectBudget,
+    # above). binsec's is the path depth and solver timeout the adapter passed: the
+    # per-pair harness value where pairs/<pair>/harness/binsec.toml sets one, else the
+    # adapter's own default, read from the adapter source rather than retyped. timecop
+    # and varlat record neither a coverage nor an instruction count, so no macro is
+    # emitted for them and the table prints "not recorded".
+    _ad = REPO / "src" / "corpus" / "score" / "adapters" / "binsec.py"
+    if _ad.exists():
+        _src = _ad.read_text()
+        _dd = re.search(r'cfg\.get\("depth",\s*(\d+)\)', _src)
+        _dt = re.search(r'cfg\.get\("sse_timeout",\s*(\d+)\)', _src)
+        if _dd and _dt:
+            for pair, suffix in (("hmac-timing", "Hmac"), ("kyberslash", "Division"),
+                                 ("hqc-reject", "Rejection")):
+                hp = REPO / "pairs" / pair / "harness" / "binsec.toml"
+                if not hp.exists():
+                    continue
+                hc = tomllib.loads(hp.read_text())
+                out.append(tex_macro("binsecDepth" + suffix,
+                                     f"{int(hc.get('depth', _dd.group(1))):,}"))
+                out.append(tex_macro("binsecSolver" + suffix,
+                                     f"{int(hc.get('sse_timeout', _dt.group(1)))}"))
+    # The pinned binsec image's own version string, probed and recorded in
+    # data/tools.toml, so the analyser table can cite the release its varlat tick rests on.
+    _tt = tomllib.loads((REPO / "data" / "tools.toml").read_text())
+    _bv = _tt.get("tool", {}).get("binsec", {}).get("image_version")
+    if _bv:
+        out.append(tex_macro("binsecImageVersion", str(_bv)))
     # The committed signing trace and the key that labels it. The paper used to mark
     # this group as not recomputable because neither survived the acquisition; both are
     # in the repository now, so the count comes from the file rather than from memory.
@@ -1026,6 +1309,12 @@ def as_tex(report: dict) -> str:
             out.append(tex_macro("mxRepHi", f"{d['max_effect_ticks']:,.0f}"))
             out.append(tex_macro("mxRepExcl",
                                  str(d["reps_with_interval_excluding_zero"])))
+        # The record count the repeat acquisitions carry: below the corpus budget because
+        # dudect_run.h drops a non-positive delta, and the count of those varies per run.
+        _rn = [r["measurements"] for g in rj.values() for r in g.get("per_rep", [])]
+        if _rn:
+            out.append(tex_macro("mxRepNLo", f"{min(_rn):,}"))
+            out.append(tex_macro("mxRepNHi", f"{max(_rn):,}"))
         # The pre-fix arm on the same footing. mxEffectPrefix is the committed single
         # dump (the first of these three acquisitions); a mean beside a single dump
         # reads as a fall the artifact does not support, so the pre-fix mean and its
@@ -1075,6 +1364,10 @@ def as_tex(report: dict) -> str:
                              else str(am["added_by_us"])))
         out.append(tex_macro("nFieldVarlatStated", str(am["varlat_stated"])))
         out.append(tex_macro("nFieldVarlatUnstated", str(am["varlat_unstated"])))
+        for key, macro in (("varlat_yes", "nFieldVarlatYes"), ("varlat_no", "nFieldVarlatNo"),
+                           ("branch_yes", "nFieldBranchYes"), ("address_yes", "nFieldAddressYes")):
+            if key in am:
+                out.append(tex_macro(macro, str(am[key])))
         out.append(tex_macro("nFieldScored", str(am["scored"])))
 
     # Between-acquisition agreement. Every per-arm interval bounds sampling within one
@@ -1352,8 +1645,10 @@ def as_tex(report: dict) -> str:
             out.append(tex_macro("recRobustWall", f"{max(r['median_wall_s'] for r in rrd):.1f}"))
     for t in ("A", "B", "C"):
         emit(f"nTier{t}", report["corpus"]["by_tier"].get(t, 0))
+    _prov.use("census")
     emit("nCensusIncluded", cen["census_included"])
     emit("nCensusExcluded", cen["census_excluded"])
+    _prov.use("cost")
     for macro, key in (("portableHours", "portable_hours_mean"),
                        ("acquisitionHours", "acquisition_hours_mean")):
         m = report["cost"][key]
@@ -1410,13 +1705,28 @@ def main() -> int:
                     help="print the recall figure; refuses unless coverage prints with it")
     ap.add_argument("--tex", metavar="PATH",
                     help="write every quotable number as a LaTeX macro")
+    ap.add_argument("--provenance", metavar="PATH", nargs="?",
+                    const=str(REPO / "paper" / "tches" / "gen" / "provenance-table.tex"),
+                    help="write the table mapping every macro to the emitter line and "
+                         "the committed record it was read from (default: the eprint's "
+                         "gen/provenance-table.tex); pass - to print it")
     args = ap.parse_args()
 
+    if args.provenance:
+        _prov.install()
+
+    def _section(name, fn):
+        _prov.section = name
+        try:
+            return fn()
+        finally:
+            _prov.section = None
+
     report = {
-        "corpus": corpus_section(),
-        "census": census_section(),
-        "verdicts": verdict_section(),
-        "cost": cost_section(),
+        "corpus": _section("corpus", corpus_section),
+        "census": _section("census", census_section),
+        "verdicts": _section("verdicts", verdict_section),
+        "cost": _section("cost", cost_section),
     }
 
     if args.json:
@@ -1436,6 +1746,18 @@ def main() -> int:
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(as_tex(report), encoding="utf-8")
         print(f"regen: wrote {out}")
+
+    if args.provenance:
+        if not args.tex:
+            as_tex(report)   # emit every macro so each is attributed; nothing is written
+        table = _prov.table()
+        if args.provenance == "-":
+            sys.stdout.write(table)
+        else:
+            out = Path(args.provenance)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(table, encoding="utf-8")
+            print(f"regen: wrote {out} ({len(_prov.rows)} macros attributed)")
 
     if args.headline:
         print()

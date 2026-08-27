@@ -106,7 +106,7 @@ def render(cards: list[dict]) -> str:
          r" \emph{release} is two upstream release tarballs, \emph{vendored} is upstream"
          r" code excised verbatim, \emph{synthetic} is arms written here to reproduce the"
          r" mechanism, \emph{observed} is a recorded dataset whose patched arm is modelled.}",
-         r"\label{tab:recovery}", r"\footnotesize", r"\setlength{\tabcolsep}{3pt}",
+         r"\label{tab:recovery}", r"\scriptsize", r"\setlength{\tabcolsep}{2.5pt}",
          r"\begin{tabular}{@{}lllllrrl@{}}", r"\toprule",
          r"Pair & Tier & Prov. & Advisory & Recovery & $n_{\mathrm{sig}}$ & Amp. & Oracle \\",
          r"\midrule"]
@@ -123,8 +123,8 @@ def render(cards: list[dict]) -> str:
           r"\caption{Divergence of each reproduction from its deployed original, per pair"
           r" and axis, so the ``reproduced leaks are not wild leaks'' caveat is tabulated"
           r" rather than asserted once.}",
-          r"\label{tab:divergence}", r"\small", r"\setlength{\tabcolsep}{4pt}",
-          r"\begin{tabular}{@{}lp{0.18\linewidth}p{0.28\linewidth}p{0.30\linewidth}@{}}",
+          r"\label{tab:divergence}", r"\small", r"\setlength{\tabcolsep}{3pt}",
+          r"\begin{tabular}{@{}lp{0.16\linewidth}p{0.27\linewidth}p{0.29\linewidth}@{}}",
           r"\toprule", r"Pair & Axis & Reproduced & Effect \\", r"\midrule"]
     any_div = False
     for c in cards:

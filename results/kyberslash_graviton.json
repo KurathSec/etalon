@@ -20,7 +20,7 @@
       "textprint": "locks/textprints/kyberslash/gcc-15.2.0-Os-aarch64-linux-gnu/vulnerable.asm"
     },
     "udiv_latency_operand_dependent": {
-      "note": "Serial dependency chain. Unlike the flat x86 divider, the Neoverse-V1 udiv latency RISES with dividend magnitude (more significant quotient bits cost more): this is the leak.",
+      "note": "Serial dependency chain. Unlike the x86 divider, which resolves no operand-dependent step in the same serial chain, the Neoverse-V1 udiv latency RISES with dividend magnitude (more significant quotient bits cost more): this is the leak.",
       "ticks_per_udiv": {
         "dividend_1": 2.42946,
         "dividend_3000": 2.42956,

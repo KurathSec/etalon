@@ -56,7 +56,7 @@ def main() -> int:
         "the mechanism fits and nothing was built. The two sum to %d mechanism and %d harness.}"
         % (len(excluded), len(rows), n_mech, n_harn),
         "\\label{tab:applicability}",
-        "\\begin{tabular}{@{}llp{0.52\\linewidth}@{}}",
+        "\\setlength{\\tabcolsep}{4pt}\\begin{tabular}{@{}llp{0.47\\linewidth}@{}}",
         "\\toprule",
         "Analyser & Excluded by & Pairs \\\\",
         "\\midrule",

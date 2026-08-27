@@ -73,7 +73,7 @@ def call_cost(cl: np.ndarray, t: np.ndarray) -> tuple[float, float]:
 
 
 def design(path: pathlib.Path) -> dict:
-    p = _perm.permute(path, perms=PERMS)
+    p = _perm.permute(path, perms=PERMS, n_batches=_perm.DECLARED_BATCHES)
     if "error" in p:
         raise SystemExit(f"{path.name}: {p['error']}")
     cl, t = _ci.load(path)

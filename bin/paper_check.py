@@ -302,6 +302,48 @@ def _consistency(texts: dict[str, str], paper: Path) -> list[str]:
                     f"ratio: {entry['num']}={n:g} over {entry['den']}={d:g} is {got:.3f}%, "
                     f"but {entry['pct']} prints {pc:g}% "
                     f"(tolerance {entry.get('tol', 0.05)}). {entry.get('why', '')}")
+
+    # Sentence length. A reviewer asked for a 35-word cap, one claim per sentence, and a
+    # cap that is remembered is not a cap. Sentences are split on terminal punctuation in
+    # the flattened text (so a macro or an \emph does not count as words), and a
+    # sentence is measured in words. The rule reports the count and the worst offender
+    # per file; it fails the check only when the table sets fail = true, so the cap can
+    # be watched while the prose is brought under it and then made hard.
+    cap_cfg = spec.get("sentence_cap")
+    if cap_cfg:
+        cap = int(cap_cfg.get("max_words", 35))
+        hard = bool(cap_cfg.get("fail", False))
+        cap_exempt = set(cap_cfg.get("exempt_files", []))
+        over_total = 0
+        worst = []
+        for name, text in texts.items():
+            if name in cap_exempt or name.startswith("gen/") or name == "numbers.tex":
+                continue
+            # Comments are not prose, an environment's opening is not a sentence, and a
+            # table row or cell boundary ends whatever it was in: without these three,
+            # a tabular's rows and its comment lines fused into one 60-word "sentence"
+            # no edit to the prose could shorten.
+            plain = re.sub(r"(?<!\\)%.*", " ", text)
+            plain = re.sub(r"\\(newcolumntype|begin\{tabular\*?\})"
+                           r"(\{(?:[^{}]|\{[^{}]*\})*\}|\[[^\]]*\])*", " ", plain)
+            plain = re.sub(r"\\(begin|end)\{[^{}]*\}(\[[^\]]*\])?", " ", plain)
+            plain = re.sub(r"\\[A-Za-z]+\*?(=-?\d+)?(\[[^\]]*\])?(\{[^{}]*\})*", " ", plain)
+            plain = re.sub(r"[{}$%_^~]", " ", plain)
+            sents = [s.strip() for part in re.split(r"\\\\|&", plain)
+                     for s in re.split(r"(?<=[.!?])\s+(?=[A-Z\\])", part) if s.strip()]
+            over = [(len(s.split()), s) for s in sents if len(s.split()) > cap]
+            if over:
+                over_total += len(over)
+                n, s = max(over)
+                worst.append(f"{name}: {len(over)} over {cap} words, longest {n}: "
+                             f"'{' '.join(s.split()[:9])} ...'")
+        if over_total:
+            msg = f"sentence cap {cap}: {over_total} sentence(s) over it. " + "; ".join(worst[:6])
+            if hard:
+                bad.append(msg)
+            else:
+                print(f"  sentences  WARN  {msg[:220]}")
+
     return bad
 
 
@@ -428,6 +470,48 @@ def _pages(paper: Path) -> list[str]:
     return bad
 
 
+
+def _overfull(paper: Path, limit_pt: float = 5.0) -> list[str]:
+    """Overfull horizontal boxes wider than limit_pt, from both builds' logs.
+
+    Twice now a layout defect reached the author (a table past the margin, a
+    listing crossing its column) with every gate green, because no gate read the
+    one line LaTeX prints about it. An overfull box under a few points is the
+    class's own tolerance; over that it is text or a rule off the page.
+    """
+    bad = []
+    seen = set()
+    for job in ("main", "main-eprint"):
+        log = paper / f"{job}.log"
+        if not log.exists():
+            continue
+        text = log.read_text(errors="replace")
+        # LaTeX prints the box, then the input line: "Overfull \hbox (17.4pt too wide) in
+        # paragraph at lines 164--170" and, a few lines later, the file it was reading.
+        for mm in re.finditer(r"Overfull \\hbox \(([0-9.]+)pt too wide\) in (?:paragraph|alignment) at lines? (\d+)", text):
+            width = float(mm.group(1))
+            if width > limit_pt:
+                # The file is the innermost .tex still open: walk the parentheses LaTeX
+                # prints for file opens and closes up to this point.
+                # LaTeX's log parenthesises file opens, but it also prints parentheses
+                # for other things, so a faithful stack is not recoverable. The nearest
+                # preceding .tex open is right except for a paragraph broken after the
+                # next \input began, so the one before it is named as well.
+                head = text[:mm.start()]
+                opened = re.findall(r"\((\./[^\s()]+\.tex)", head)
+                where = " or ".join(dict.fromkeys(reversed(opened[-2:]))) if opened else "?"
+                key = (job, where, mm.group(2))
+                if key in seen:
+                    continue           # a wide table prints one box per row; one defect
+                seen.add(key)
+                # The next log line is the box's own text, which locates the defect
+                # better than the file guess does.
+                tail = text[mm.end():mm.end() + 400].split("\n")
+                snippet = re.sub(r"\\[A-Za-z0-9/]+ ", "", tail[1] if len(tail) > 1 else "")
+                snippet = re.sub(r"\s+", " ", snippet).strip()[:70]
+                bad.append(f"{job}: {width:.1f}pt overfull at {where} line {mm.group(2)}: '{snippet}'")
+    return bad
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--paper", default=str(REPO / "paper" / "tches"))
@@ -482,6 +566,12 @@ def main() -> int:
           f"{'within the page cap, no dangling references' if not pg else '; '.join(pg)}")
     if pg:
         fails.append("page budget or dangling reference")
+
+    ov = _overfull(paper)
+    print(f"  layout     {'PASS' if not ov else 'FAIL'}  "
+          f"{'no overfull box wider than 5pt in either build' if not ov else '; '.join(ov[:4])}")
+    if ov:
+        fails.append(f"{len(ov)} overfull box(es)")
 
     pdf = paper / "main.pdf"
     if pdf.exists() and shutil.which("pdftotext"):

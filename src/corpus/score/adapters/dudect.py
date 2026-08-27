@@ -70,7 +70,7 @@ def _permutation_p(dump: pathlib.Path) -> dict | None:
     if not dump.exists():
         return None
     try:
-        r = _perm.permute(dump, perms=PERMS)
+        r = _perm.permute(dump, perms=PERMS, n_batches=BATCHES)
     except Exception as exc:                      # a failed null must not pass as clean
         return {"error": str(exc)}
     return None if "error" in r else r
@@ -126,6 +126,18 @@ def score(pair_dir: pathlib.Path, arm: str, opt: str | None = None,
         dump = outdir / "raw.bin"
         eff = _ci.analyse_path(dump) if dump.exists() else {"effect_ticks": None}
 
+        # The per-batch record counts the harness prints, kept beside the dump so
+        # the permutation null shuffles within the batches that were actually run
+        # rather than within equal splits of the file (exact only when no delta
+        # was dropped). Committed with the dump under the same stem.
+        m = re.search(r"DUDECT_BATCH_RECORDS((?:\s+\d+)+)", out)
+        meta = None
+        if m and dump.exists():
+            meta = {"batches": nb, "measurements_per_batch": nm,
+                    "records_per_batch": [int(x) for x in m.group(1).split()],
+                    "source": "DUDECT_BATCH_RECORDS line printed by dudect_run.h"}
+            (outdir / "raw.meta.json").write_text(json.dumps(meta) + "\n")
+
         perm = _permutation_p(dump)
         if "BUILD_FAILED" in result.stdout or result.returncode == 3:
             status, detail = "error", "driver build failed"
@@ -164,6 +176,9 @@ def score(pair_dir: pathlib.Path, arm: str, opt: str | None = None,
             dest = rawdir / f"{pair_dir.name}_{arm}.dudect.bin.gz"
             with open(dump, "rb") as fi, gzip.open(dest, "wb") as fo:
                 shutil.copyfileobj(fi, fo)
+            if meta:
+                (rawdir / f"{pair_dir.name}_{arm}.dudect.meta.json").write_text(
+                    json.dumps(meta) + "\n")
             raw_committed = str(dest.relative_to(REPO))
         return {
             "adapter": "dudect", "tool": "dudect", "arm": arm, "opt": opt,

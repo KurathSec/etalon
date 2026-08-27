@@ -55,7 +55,15 @@ static int dudect_run_and_dump(dudect_config_t *config) {
   const char *bs = getenv("DUDECT_BATCHES");
   if (bs) { int v = atoi(bs); if (v > 0) batches = v; }
   dudect_state_t state = DUDECT_NO_LEAKAGE_EVIDENCE_YET;
+  /* Records written per batch. The dump has no header, and the permutation null
+   * shuffles labels WITHIN each batch, so the block boundaries must be known
+   * exactly: equal splits are right only when no delta was dropped, and a
+   * dropped delta is what makes 56,968 out of 3 x 19,989. The adapter writes
+   * these counts to a sidecar beside the dump. */
+  size_t per_batch[64];
+  dudect_state_t last = state;
   for (int b = 0; b < batches; b++) {
+    size_t before = written;
     state = dudect_main(&ctx);           /* prints "max t: ..." each batch */
     if (f && written < (size_t)DUDECT_RAW_CAP) {
       for (size_t i = 10; i + 1 < M && written < (size_t)DUDECT_RAW_CAP; i++) {
@@ -67,8 +75,14 @@ static int dudect_run_and_dump(dudect_config_t *config) {
         written++;
       }
     }
+    if (b < 64) per_batch[b] = written - before;
+    last = state;
   }
   if (f) fclose(f);
+  (void)last;
+  printf("DUDECT_BATCH_RECORDS");
+  for (int b = 0; b < batches && b < 64; b++) printf(" %zu", per_batch[b]);
+  printf("\n");
   dudect_free(&ctx);
   /* Exit code is never the verdict; the adapter keys on this line and on the
    * committed samples. */

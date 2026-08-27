@@ -26,7 +26,7 @@
       }
     },
     "idiv_latency_operand_dependent": {
-      "note": "serial dependency chain. On this Arrow Lake out-of-order divider the per-div TSC latency is flat across the operand range: all five dividends lie within 0.034 ticks (9.29106 at dividend 1, the smallest, to 9.32504). An earlier revision of this note called the dividend-1 sample 'higher, a warm-up artifact'; it is in fact the lowest of the five, and the spread is in any case below the run's noise floor. This is flatter than the Graviton Neoverse-V1 udiv, which rises across the same range.",
+      "note": "serial dependency chain. On this Arrow Lake out-of-order divider the per-div TSC latency shows no operand-dependent step across the operand range: all five dividends lie within 0.034 ticks (9.29106 at dividend 1, the smallest, to 9.32504). An earlier revision of this note called the dividend-1 sample 'higher, a warm-up artifact'; it is in fact the lowest of the five, and the spread is in any case below the run's noise floor. This is unlike the Graviton Neoverse-V1 udiv, which rises across the same range.",
       "ticks_per_udiv": {
         "dividend_1": 9.29106,
         "dividend_3000": 9.32504,

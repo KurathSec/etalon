@@ -13,6 +13,7 @@ REPO="$(cd "$(dirname "$0")/.." && pwd)"
 TCHES="$REPO/paper/tches"
 
 python3 "$REPO/bin/regen.py" --tex "$TCHES/numbers.tex"
+python3 "$REPO/bin/regen.py" --provenance "$TCHES/gen/provenance-table.tex"
 python3 "$REPO/bin/figures.py"
 python3 "$REPO/bin/recovery_cards.py"
 python3 "$REPO/bin/listing.py"

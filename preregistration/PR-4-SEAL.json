@@ -4,13 +4,15 @@
   "_gates": "Sealed before the corpus-wide re-decision under the permutation rule is reported as final. The deviations recorded here are past events, disclosed, not new observations: PR-3's band was applied before being retired, its prediction C7 was falsified by a harness fix, and PR-2's registered five-pair detection curve remains unrun. Predictions C8, C9 and C10 govern observations that are fixed here regardless of outcome.",
   "_gates_note": "_gates is kept as sealed. Its statement that PR-2's registered five-pair detection curve remains unrun described the file at seal time and is superseded: the curve has since been run and discharged, as _amended and the rewritten entry in PR-4-permutation-verdict.md record.",
   "PR-4-permutation-verdict.md": {
-    "bytes": 8881,
-    "sha256": "5cb7ada8b9aa6106b7abec104e2981c8de036404608050d96c46b8f630618437"
+    "bytes": 9971,
+    "sha256": "483695e43a9a4b0fe418f44c30846387130e781d75cfb438ccdcd489a8900754"
   },
   "_amended": "2026-08-25: the PR-2 detection-curve deviation is discharged and the entry rewritten to record the result, including one falsified registered expectation. The digest below covers the amended text; the pre-amendment digest is kept beside it so the change is visible rather than silent.",
   "_digest_before_amendment": "febc55634b38c0df0c17c5b5eb9b6d8992779fe050431285b8506597f7ec7040",
   "_amended_2": "2026-08-26: a second amendment, recording a deviation discovered after the seal. One committed outcome, binsec on hqc-reject, had been scored a detection while its patched arm was budget-exhausted, folding an unresolved arm into a clean one. The outcome rule is now applied to both arms and every row re-derived; one row of sixty changed. The digest below covers the twice-amended text and the previous digest is kept beside it.",
   "_digest_before_amendment_2": "254d732a3b22b8460c83abd51378ffb7f6286d1bb862adbbea6ea611e70bd3bd",
   "_amended_3": "2026-08-26, same day, third amendment: the audit found C9 fixed over 18 committed arms while the paper corrects over 22, the row count of results/dudect_permutation.json, because two pairs gained committed dumps after this file was written. The prediction is unchanged in substance; the denominator is recorded as a deviation so a reader comparing the two finds the reason rather than a discrepancy.",
-  "_digest_before_amendment_3": "3501f5a43ed590bd0bf615f2b4d1454302f2d284a12cbc1f428f73a50a901be0"
+  "_digest_before_amendment_3": "3501f5a43ed590bd0bf615f2b4d1454302f2d284a12cbc1f428f73a50a901be0",
+  "_amended_4": "2026-08-27, fourth amendment: the permutation null's batch structure was inferred (nine blocks) where three were run; re-decided within the declared three, no verdict moved. Digest chained; previous under _digest_before_amendment_4.",
+  "_digest_before_amendment_4": "5cb7ada8b9aa6106b7abec104e2981c8de036404608050d96c46b8f630618437"
 }

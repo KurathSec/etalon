@@ -7,12 +7,12 @@ submission time and rewrite them; this repository forbids the name from entering
 in the first place (control ANON-1), so the anonymous profile has only the five
 declared files to rewrite.
 
-The refusal is the point. Stripping is easy, and stripping incompletely is the
+The refusal is deliberate. Stripping is easy, and stripping incompletely is the
 failure that matters, because an archive that looks anonymised gets submitted
 without a second look. So this is a scanner that happens to strip first, and it
 exits non-zero on any residue it cannot explain.
 
-Two properties worth stating because they are easy to get wrong:
+Two properties that are easy to get wrong:
 
   * The export never includes `.git`. Every commit carries an author name and
     email in its object metadata, and no edit to a tracked file removes them. An

@@ -48,21 +48,27 @@ def main() -> int:
         else:
             outcome = "not triaged"
         why = c.get("not_built_reason") or c.get("triage", "")
+        # Built and measured are what happened; retained is what survives. wolfSSL's
+        # arms were built and timed and nothing of them was kept, and the record says
+        # so (retained = false), so the table prints it rather than implying otherwise.
+        retained = measured and c.get("retained", True) is not False
         rows.append((esc(lib), esc(cve), outcome,
-                     "yes" if built else "no", "yes" if measured else "no", why))
+                     "yes" if built else "no", "yes" if measured else "no",
+                     "yes" if retained else "no", why))
 
     n_measured = sum(1 for r in rows if r[4] == "yes")
     if n_measured != 3:
         sys.exit(f"survey_table: {n_measured} measured candidates, the paper says three")
 
     body = "\n".join(
-        f"{lib} & {cve or '--'} & {outcome} & {b} & {m} \\\\" for lib, cve, outcome, b, m, _ in rows)
+        f"{lib} & {cve or '--'} & {outcome} & {b} & {m} & {r} \\\\"
+        for lib, cve, outcome, b, m, r, _ in rows)
 
     # The two unmeasured rows carry the coverage argument, so their reasons are printed
     # rather than left in the results file. Compressed to one clause each by hand would
     # be prose; taken from the record they cannot drift from it.
     notes = []
-    for lib, _cve, _o, b, _m, why in rows:
+    for lib, _cve, _o, b, _m, _r, why in rows:
         if b == "no" and why:
             first = why.split(". ")[0].rstrip(".")
             notes.append(f"\\emph{{{lib}}}: {esc(first)}.")
@@ -78,10 +84,12 @@ def main() -> int:
         + " ".join(notes) +
         " The Crypto++ fix is a fourth strategy, branch-free selection by multiplication on a "
         "bignum layer that is itself variable time in operand size, which is the same "
-        "substrate trap the MatrixSSL case identifies; it is classified and not measured.}\n"
+        "substrate trap the MatrixSSL case identifies; it is classified and not measured. "
+        "Retained means a tree, binary or sample survives: the wolfSSL arms were built and "
+        "measured and none was kept.}\n"
         "\\label{tab:survey}\n"
-        "\\begin{tabular}{@{}llllc@{}}\n\\toprule\n"
-        "Library & Advisory & Triage outcome & Built & Measured \\\\\n\\midrule\n"
+        "\\begin{tabular}{@{}llllcc@{}}\n\\toprule\n"
+        "Library & Advisory & Triage outcome & Built & Measured & Retained \\\\\n\\midrule\n"
         + body + "\n\\bottomrule\n\\end{tabular}\n\\end{table}\n")
     print(f"survey_table: wrote {OUT} ({len(rows)} candidates, {n_measured} measured)")
     return 0

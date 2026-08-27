@@ -7,9 +7,11 @@ difference of means in ticks (the effect size an attacker actually consumes) and
 a bootstrap 95% confidence interval for it, after cropping the pooled upper tail
 to shed scheduler outliers the way dudect's own percentile step does.
 
-The verdict itself is decided elsewhere (bin/score.py) against a null band
-calibrated on the constant-time negative sentinel, so this file computes a
-magnitude, never a pass/fail.
+The verdict itself is decided elsewhere, by the permutation rule: a null built
+from the run's own samples, labels shuffled within its declared batches
+(bin/dudect_permute.py, registered in PR-4), with Benjamini-Hochberg control
+across the committed arms applied in bin/score.py. No calibrated null band
+decides anything, so this file computes a magnitude, never a pass/fail.
 """
 from __future__ import annotations
 

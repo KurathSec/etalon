@@ -166,3 +166,13 @@ budget-invariant `tau`. The raw samples are committed under `results/raw/`. A ne
 `certified-negative` role (`pairs/certified-fiat*`) scores vendored formally-verified
 constant-time code for a general false-positive rate; it is scored on the adapter
 builds, carries no oracle, and `bin/verify.py` skips it.
+
+Corrected 2026-08-27 (UTC). The calibrated tau band in the paragraph above is
+retired; it was not a valid rule, because tau is not budget-invariant under the
+null, so one constant cannot serve runs at different measurement counts. The
+adapter now decides each arm against a permutation null built from that run's
+own committed samples, labels shuffled within its declared batches
+(`bin/dudect_permute.py`, registered in `preregistration/PR-4-permutation-verdict.md`),
+with Benjamini-Hochberg control across the committed arms in `bin/score.py`.
+The calibration files (`bin/dudect_calibrate.py`, `results/dudect_calibration.json`)
+remain committed as the record of the retired rule and are read by no verdict.

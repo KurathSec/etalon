@@ -54,12 +54,12 @@
       "_spread_note": "spread_ticks is max minus min over ticks_per_udiv, derived from the values above rather than measured again; the sweep itself was acquired in the run this record came from."
     },
     "kyberslash_operand_range_step": {
-      "note": "the step at dividend=divisor=3329, quotient 0 -> 1, over the KyberSlash range [1664,8320]. Over this range the quotient never exceeds 2 bits, so the operand-dependent latency the wide sweep shows barely moves.",
-      "coeff_below_833_ticks": 9.30467,
-      "coeff_at_or_above_833_ticks": 9.26406,
+      "note": "the step at dividend=divisor=3329, quotient 0 -> 1, over the KyberSlash range [1664,8320]. Over this range the quotient never exceeds 2 bits, so the operand-dependent latency the wide sweep shows barely moves. step_ticks is the median of the interleaved paired differences of ks_range_x86.c; the two chain-min fields below are best-of-9 minima of a serial chain, a different estimator, so their difference is not the step.",
       "step_ticks": 0.00434,
       "noise_floor_ticks": 0.01691,
-      "signal_to_noise": 0
+      "signal_to_noise": 0,
+      "best_of_9_chain_min_ticks_below_833": 9.30467,
+      "best_of_9_chain_min_ticks_at_or_above_833": 9.26406
     },
     "end_to_end_coeff_to_bit_Os": {
       "note": "two-class low-vs-high magnitude over the real coeff_to_bit with the division forced to a hardware idiv, min-of-11 batches of M each. Low class = coeff in [0,833), high class = coeff in [1664,3329). Operands are generated outside the timed region, from the same seed, and both classes are timed by the same loop over a precomputed array, so the two classes execute identical instructions and differ only in the values fed to the divider. An earlier revision generated each class inside the timed loop with a different constant modulus and a different seed, which conflated the divider's operand dependence with the cost of the operand generation; the delta below is the corrected measurement. This is the x86 rung of the host-magnitude ladder; the single-bit recovery step (above) stays sub-noise.",
@@ -69,7 +69,7 @@
       "delta_percent_of_call": -0.0507
     },
     "per_call_magnitude_sensitivity": {
-      "note": "low-vs-high magnitude as a per-call two-class test, operands precomputed, order within each pair randomised (timing the two classes in a fixed order makes the second systematically cheaper and shows up as a ~1-tick offset carrying the sign of the ordering, not of the operand). tau = |t|/sqrt(n) is comparable to the scored dudect verdicts and to the calibrated null band. The per-call step is resolvable while the pipelined end-to-end difference above is not: out-of-order execution absorbs it in a realistic loop, which is why the scored fixed-vs-random verdict reads clean.",
+      "note": "low-vs-high magnitude as a per-call two-class test, operands precomputed, order within each pair randomised (timing the two classes in a fixed order makes the second systematically cheaper and shows up as a ~1-tick offset carrying the sign of the ordering, not of the operand). tau = |t|/sqrt(n) is the same effect size reported beside the scored dudect verdicts; the calibrated null band it was once compared against is retired, the scored verdicts being permutation decisions (PR-4, results/dudect_permutation.json). The per-call step is resolvable while the pipelined end-to-end difference above is not: out-of-order execution absorbs it in a realistic loop, which is why the scored fixed-vs-random verdict reads clean.",
       "design": "low [0,833) vs high [1664,3329), paired, order randomised",
       "by_n": {
         "n_50000_t": 2.098,

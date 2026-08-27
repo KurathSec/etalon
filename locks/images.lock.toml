@@ -9,8 +9,8 @@ valgrind = "3.22.0+varlat, GPL patch vendored"
 [image.binsec]
 id = "sha256:2a51e455f055874d71cbf030a778e8be19455876bcd57c1845c163fed6fc482f"
 source = "docker.io/binsec/binsec (official), pinned by digest"
-status = "pulled; adapter harness outstanding"
-note = "checkct works via: binsec -sse -checkct -checkct-features memory-access,control-flow,divisor,dividend -sse-script SCRIPT -sse-depth D -sse-timeout T CORE. Needs a per-pair gdb core snapshot with secret buffers marked symbolic (starting from core with @[addr] := nondet as secret). The image has gdb but not gcc, so the core is generated in a build cell. This per-pair harness is the outstanding work."
+status = "pulled; per-pair driver harness built and scoring"
+note = "checkct works via: binsec -sse -checkct -checkct-features memory-access,control-flow,divisor,dividend -sse-script check.cfg -sse-depth D -sse-timeout T ELF. Secrets are marked by symbol name in the SSE script (secret global s), not by address in a core snapshot, so no gdb core is generated: each pair ships a binsec driver that exposes its secret and public inputs as named globals. The image has no gcc, so the ELF is built in the gcc cell and analysed in the binsec cell over a shared work dir. Depth and timeout come from each pair's harness/binsec.toml (adapter defaults otherwise); verdicts land in results/verdicts.jsonl. Mechanism documented in docs/adapter-reach.md."
 
 [image.microwalk]
 id = "sha256:4c516c906c96ea76e68ac97ddd8ce41477c42547606351920fb8011c824cbcd2"

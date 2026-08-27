@@ -39,8 +39,28 @@ def load_adapter(name: str):
     return m
 
 
+# The four rows the threat appendix singles out: varlat and binsec on the two
+# OpenSSL-linked ECDSA pairs. Both tools declare the secret-branch mechanism those
+# pairs exhibit, so the missing harness is not an effort boundary of this artifact:
+# the reason was measured rather than assumed, and it is that neither pinned image
+# can build an OpenSSL-linked arm, varlat's carrying libcrypto but no development
+# headers and binsec's shipping no toolchain at all. The probe is recorded in
+# results/tool_reach_limits.json. Keying the reason here keeps --rescore
+# reproducing the committed wording for these rows instead of reverting them to
+# the generic effort-boundary string.
+MEASURED_NO_BUILD = {
+    ("varlat", "ecdsa-nonce"), ("varlat", "ecdsa-address"),
+    ("binsec", "ecdsa-nonce"), ("binsec", "ecdsa-address"),
+}
+MEASURED_NO_BUILD_REASON = (
+    "no harness built here because the tool's pinned image cannot build the pair's "
+    "OpenSSL-linked arm (a measured incapacity of the pinned image, recorded in "
+    "results/tool_reach_limits.json, not an effort boundary)")
+
+
 def applicable(tool: dict, pair_mechanisms: list, has_harness: bool,
-               has_source: bool = False) -> tuple[bool, str]:
+               has_source: bool = False, tool_name: str = "",
+               pair_name: str = "") -> tuple[bool, str]:
     """Compute applicability from mechanism, not from the attacker's channel.
 
     A pair's `observable` is what an attacker measures; it is not what an
@@ -61,7 +81,11 @@ def applicable(tool: dict, pair_mechanisms: list, has_harness: bool,
         # Distinguish "there is no program to run" from "there is a program but we
         # built no harness for this tool". The first is a property of the pair, the
         # second is an effort boundary of ours, and reporting the second as the first
-        # misattributes our own gap to the corpus.
+        # misattributes our own gap to the corpus. A third case is neither: for the
+        # (tool, pair) rows in MEASURED_NO_BUILD the gap was probed rather than
+        # assumed, and the reason says so instead of calling it an effort boundary.
+        if (tool_name, pair_name) in MEASURED_NO_BUILD:
+            return False, MEASURED_NO_BUILD_REASON
         if has_source:
             return False, ("no harness built here for this tool, though the pair ships "
                            "runnable source (an effort boundary, not a property of the pair)")
@@ -85,7 +109,7 @@ def _reason_for(tools: dict, tool_name: str, pair_name: str) -> str | None:
     harness_cfg = pair / "harness" / f"{tool_name}.toml"
     has_source = any((pair / "src").glob("*.c"))
     has_harness = harness_cfg.exists() and has_source
-    ok, reason = applicable(tool, mech, has_harness, has_source)
+    ok, reason = applicable(tool, mech, has_harness, has_source, tool_name, pair_name)
     return None if ok else reason
 
 
@@ -258,7 +282,8 @@ def main() -> int:
             has_source = any((pair / "src").glob("*.c"))
             has_harness = harness_cfg.exists() and has_source
 
-            ok, reason = applicable(tool, mech, has_harness, has_source)
+            ok, reason = applicable(tool, mech, has_harness, has_source,
+                                    tool_name, pair.name)
             row = {"tool": tool_name, "pair": pair.name, "role": role,
                    "tier": tier, "class": cls}
             if not ok:

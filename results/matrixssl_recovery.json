@@ -1,14 +1,26 @@
 {
   "finding": "the deployed MatrixSSL fix's residual is orderable but the published attack does not convert it at any budget or lattice dimension tried",
   "why": "The paper graded the MatrixSSL fix at its site and reported the residual's\ninformation content, but for several revisions it made no recovery ATTEMPT on\nthe fixed build: the one lattice run on record was key-ordered, on the pre-fix\ntrace, and shows information content rather than a recovery. A reviewer asked\nfor the missing experiment. Every attempt summarised here orders the signatures\nby their own timing, hands the fastest to the published lattice, and reports the\noutcome as a bounded observation under the attack, the budget and the host.",
-  "accounting": "The attack models the i-th fastest signature as having geom_bound(i) leading\nzeros, a rank model that assumes a MULTI-BIT bias: out of 25,000 signatures it\ncredits the fastest with about fourteen leading zeros. It then needs the summed\nbounds to exceed the key size. The deployed MatrixSSL fix leaves a ONE-BIT\nresidual, so the ordering it produces is real (the selection purity beside each\nattempt says how real) while the per-signature bound the attack assumes is not.\nThat is why no budget in this sweep converts the residual, and it is a\nstatement about the attack's information model rather than about the number of\nsignatures: an attack fitted to a one-bit bias would need a different lattice,\nand this paper does not build one.",
+  "accounting": "The residual is not one bit. The fixed build's own leading-zero ladder is\nmonotone, median signing time falling about 2,300 ticks per additional leading\nzero through at least six, so the leak carries the full leading-zero count and\nnot a single bit. What the recovery lacks is DEPTH OF ORDERING. The attack\nmodels the i-th fastest signature as having geom_bound(i) leading zeros: over\n100,000 signatures it credits its fastest ninety with a mean of about eleven\nleading zeros, and needs the summed bounds to exceed the key size. The timing\norder on this residual supplies a mean of about six leading zeros in that same\nfastest ninety (about five and a half at 50,000). The selection is pure in kind,\nabout ninety-four per cent of the fastest ninety carry at least one leading\nzero, but shallow in depth, so the per-signature bound the lattice assumes is\nnot met. That is why no budget in this sweep converts the residual, and it is a\nstatement about how deeply the timing orders this leak rather than about the\nnumber of signatures: an attack whose per-rank bound matched the depth the order\nsupplies would need a different lattice, and this paper does not build one.",
   "generator": "bin/matrixssl_recovery.py --write",
   "attack": "pairs/minerva/vendor/attack/attack.py, the upstream Minerva attack pinned by commit, run inside localhost/ct-toolchain/minerva-recover:1 by pairs/matrixssl-minerva/recover/recover.py. It sorts every signature by elapsed time and assigns each rank a leading-zero bound, so it is timing-ordered and error-tolerant by construction.",
   "host": "the acquisition host; every trace was taken with nothing else running, which matters: a trace taken under load selects far worse",
   "key_bits": 256,
   "attempts_total": 9,
   "recovered": 0,
-  "reading": "No attempt recovered the key. The selection is not the reason: on the quiet 50,000 and 100,000 signature traces the fastest ninety are 94.4 per cent genuinely short. The reason is the per-signature bound. The attack credits its top-ranked signatures with a multi-bit bias, so it builds a lattice on assumed_information_bits of information against a key of key_bits, while the deployed fix leaves one bit of nonce length. The result is therefore a bounded observation about this attack and this residual, not about the number of signatures, and it is reported as one.",
+  "depth": {
+    "50000": {
+      "observed_mean_leading_zeros_top90": 5.667,
+      "credited_mean_leading_zeros_top90": 10.0,
+      "frac_short_top90": 0.9444
+    },
+    "100000": {
+      "observed_mean_leading_zeros_top90": 6.356,
+      "credited_mean_leading_zeros_top90": 11.0,
+      "frac_short_top90": 0.9444
+    }
+  },
+  "reading": "No attempt recovered the key. The residual is not one bit: the fixed build's leading-zero ladder is monotone, about 2,300 ticks per additional leading zero, so the leak carries the full count. The selection is pure in kind, on the quiet 50,000 and 100,000 signature traces the fastest ninety are 94.4 per cent genuinely short, but shallow in depth: the attack's rank model credits those ninety with a mean of about eleven leading zeros at 100,000 signatures while the timing order supplies about six, so the per-signature bound the lattice assumes is not met. The result is a bounded observation about how deeply the timing orders this leak, not about the number of signatures, and is reported as one.",
   "attempts": [
     {
       "record": "results/raw/matrixssl/lattice/mx-lattice-25000-d90.json",

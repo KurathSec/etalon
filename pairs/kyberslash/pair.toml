@@ -90,7 +90,9 @@ cells_required = ["gcc-12.2.0-Os-x86_64-linux-gnu", "clang-14.0.6-O0-x86_64-linu
 # survives as a hardware division instruction in gcc 12.2.0 only at -Os, and in
 # clang 14.0.6 only at -O0. Everywhere else each compiler replaces it with a
 # constant-time reciprocal multiply on its own. The two vendors disagree on
-# which cells are safe, so no single build choice is universally safe. The
+# which cells are safe: neither compiler is safe at every optimisation level,
+# no level is unsafe under both, and which of the size and zero levels emits
+# the division depends on the vendor. The
 # declared ground-truth cells are the two where the leak is emitted; the other
 # six are recorded by BIN-2 as the toolchain-pinning finding, the same source
 # compiling to constant-time code under a different build. This is the corpus's
@@ -105,8 +107,9 @@ reason = """
 The central sweep for this pair. Whether a compiler emits a hardware division or
 replaces it with a reciprocal multiply determines whether the leak exists in the
 built binary. MEASURED result: gcc 12.2.0 emits the division only at -Os; clang
-14.0.6 emits it only at -O0. The two disagree, so no single build choice is
-universally safe. This is the strongest available demonstration that a
+14.0.6 emits it only at -O0. The two disagree: neither vendor is safe at every
+level and no level is unsafe under both, only the size and zero levels emit at
+all. This is the strongest available demonstration that a
 source-only benchmark measures the compiler, and it is a measurement rather than
 a citation. See results/kyberslash_emission.json.
 """

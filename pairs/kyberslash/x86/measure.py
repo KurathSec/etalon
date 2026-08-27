@@ -124,9 +124,12 @@ def main():
                 "note": "the step at dividend=divisor=3329, quotient 0 -> 1, over the "
                         "KyberSlash range [1664,8320]. Over this range the quotient never "
                         "exceeds 2 bits, so the operand-dependent latency the wide sweep "
-                        "shows barely moves.",
-                "coeff_below_833_ticks": rng.get("step_below"),
-                "coeff_at_or_above_833_ticks": rng.get("step_above"),
+                        "shows barely moves. step_ticks is the median of the interleaved "
+                        "paired differences of ks_range_x86.c; the two chain-min fields "
+                        "below are best-of-9 minima of a serial chain, a different "
+                        "estimator, so their difference is not the step.",
+                "best_of_9_chain_min_ticks_below_833": rng.get("step_below"),
+                "best_of_9_chain_min_ticks_at_or_above_833": rng.get("step_above"),
                 "step_ticks": step,
                 "noise_floor_ticks": noise,
                 "signal_to_noise": snr,

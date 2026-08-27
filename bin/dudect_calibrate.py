@@ -5,8 +5,14 @@ The negative sentinel is a constant-time comparison: any tau it produces is null
 the effect of measurement noise on a program with no leak. Running it many times
 at the scoring budget gives the null distribution of tau; the clean threshold is
 its upper edge with a margin, so a real arm counts as a leak only when its tau
-exceeds what a genuinely constant-time program produces on this host. Replaces the
-arbitrary |t| in {10, 500} band with an empirically justified number, per PR-3.
+exceeds what a genuinely constant-time program produces on this host. It once
+replaced the arbitrary |t| in {10, 500} band with an empirically justified number,
+per PR-3.
+
+RETIRED as a decision rule by PR-4: verdicts are now decided against a permutation
+null built from each run's own samples (bin/dudect_permute.py). No verdict reads
+null_threshold_tau; this script and its record stay committed as the record of the
+retired rule.
 
 Writes results/dudect_calibration.json.
 """
@@ -53,7 +59,11 @@ def main() -> int:
                     "size, so this transfers across pairs run at the same budget. The "
                     "sentinel is a tag comparison, so the null it characterises is this "
                     "host's noise on constant-time code, not the specific noise of every "
-                    "operation scored.",
+                    "operation scored. RETIRED: PR-4 replaced this band as the decision "
+                    "rule, verdicts now being decided against a permutation null built from "
+                    "each run's own samples (bin/dudect_permute.py, "
+                    "results/dudect_permutation.json); no verdict reads null_threshold_tau, "
+                    "and the file stays committed as the record of the retired rule.",
         "budget": {"measurements_per_batch": _ad.MEASUREMENTS, "batches": _ad.BATCHES,
                    "total_measurements": _ad.MEASUREMENTS * _ad.BATCHES},
         "runs": len(taus),

@@ -22,9 +22,10 @@
  *     attacker sees: with a 10-bit scalar every operation touching it is cheaper,
  *     including the conversion and the BIGNUM's own footprint, so a constant-time
  *     implementation was reported as leaking. Under the one-bit design the patched
- *     arm reads clean (tau 0.0075, inside the calibrated null band) and the
- *     vulnerable arm leaks (tau 0.596), which is the discrimination the pair exists
- *     to measure.
+ *     arm reads clean and the vulnerable arm leaks (tau 0.0075 against 0.596 when
+ *     redesigned; the committed verdicts are the permutation p-values in
+ *     results/dudect_permutation.json, the calibrated null band being retired),
+ *     which is the discrimination the pair exists to measure.
  */
 #define DUDECT_IMPLEMENTATION
 #include <dudect.h>

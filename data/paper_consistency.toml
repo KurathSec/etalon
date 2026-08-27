@@ -49,9 +49,11 @@ phrase = "every label here is settled by arithmetic"
 retired_in = "shared/front.tex, sec/intro.tex, revision A1"
 why = """The universal covered the fix-site results too, which are statistical propositions
 about one host at one budget and are not settled by any arithmetic. The restricted form is
-now the only one: every corpus pair label is settled by a key recovery that verifies under
-the published public key; fix-site labels are statistical and carry their host and budget.
-The two kinds are defined once in sec/method.tex and tabulated in sec/index.tex."""
+now the only one, and it is itself tier-scoped: every recall-eligible (tier A/B) corpus pair
+label is settled by a key recovery that verifies under the published public key, while the
+three tier-C pairs carry a published recovery not rerun here and enter no recall
+denominator; fix-site labels are statistical and carry their host and budget. The two kinds
+are defined once in sec/method.tex and tabulated in sec/index.tex."""
 
 [[retired]]
 phrase = "positive label here is settled by arithmetic"
@@ -62,6 +64,139 @@ why = "The introduction's copy of the same universal, with 'positive' in it."
 phrase = "certifies each label by arithmetic"
 retired_in = "sec/method.tex, revision A1"
 why = "The apparatus section's copy of the same universal; it now says corpus pair label."
+
+[[retired]]
+phrase = "Every corpus label is settled by arithmetic"
+retired_in = "shared/front.tex, revision A8"
+why = """The abstract's universal covered the three tier-C pairs, whose labels rest on a
+published recovery not rerun in this artifact. The scoped form says recall-eligible."""
+
+[[retired]]
+phrase = "every corpus pair label is settled by a key recovery"
+retired_in = "sec/intro.tex, revision A8"
+why = """The Method paragraph's copy of the same universal: three of the nine corpus pairs
+are tier C, no recovery ran here for them, and they enter no recall denominator. The
+sentence now scopes the recovery claim to the recall-eligible pairs."""
+
+[[retired]]
+phrase = "each carrying a key recovery certified by arithmetic"
+retired_in = "README.md, revision A8 retry"
+why = """The README's opening framing quantified the recovery certificate over every
+corpus pair; the three tier-C pairs carry a published recovery not rerun here, so the
+sentence now names the recall-eligible pairs as the ones certified by arithmetic."""
+
+[[retired]]
+phrase = "with a single recall fraction"
+retired_in = "sec/app-threats.tex, revision A8"
+why = """tab:blindspot prints verdict words and its caption says recall fractions are
+absent, a fraction over n=1 being a Bernoulli outcome dressed as a rate; the appendix
+described the table's previous form."""
+
+[[retired]]
+phrase = "carry one recall row each"
+retired_in = "sec/app-threats.tex, revision A8"
+why = """varlat has two scored rows in tab:blindspot and binsec three; only the
+recall-eligible row is single, and the heading now says so."""
+
+[[retired]]
+phrase = "carry a single row each"
+retired_in = "sec/f1-blindspots.tex, revision A8"
+why = """True only of recall-eligible rows: the two instruction-class tools also hold
+tier-C rows, including the division detection that is the section's own headline."""
+
+[[retired]]
+phrase = "Every timing figure here is acquired"
+retired_in = "sec/method.tex, revision A8"
+why = """The paper's own Graviton figures are acquired on a rented aarch64 instance, so
+the one-shared-host universal holds for the corpus dumps and fix cases only and now
+names the exception."""
+
+[[retired]]
+phrase = "Every timing figure is acquired same-process"
+retired_in = "sec/app-stats.tex, revision A8"
+why = "The appendix copy of the same universal, scoped the same way."
+
+[[retired]]
+phrase = "and aarch64 only"
+retired_in = "sec/intro.tex, revision A8"
+why = """The emission map is the eight pinned x86_64 cells; the one aarch64 build sits
+outside its discipline, unpinned and undigested, so the remit must not fold it in."""
+
+[[retired]]
+phrase = "Each committed arm is a single acquisition"
+retired_in = "sec/method.tex, revision A8"
+why = """The fix-case designs are committed three acquisitions per design with the
+between-acquisition range printed, so the single-acquisition statement holds for the
+corpus arms only and now says so."""
+
+[[retired]]
+phrase = "the committed dump in parentheses"
+retired_in = "sec/fixes.tex, revision A8"
+why = """'The committed dump', singular, predates the committed repeat acquisitions;
+three dumps per design are committed and the parenthesised figure is the first
+acquisition, which is what the caption now calls it."""
+
+[[retired]]
+phrase = "zero (the committed dump"
+retired_in = "sec/app-measure.tex, revision A8"
+why = "The appendix copy of the same singular, replaced by 'the first of the committed acquisitions'."
+
+[[retired]]
+phrase = "Each answer is a fix-site label"
+retired_in = "sec/fixes.tex, revision A8"
+why = """By the paper's own definition a fix-site label is the outcome of a statistical
+test carrying an MDE; libgcrypt's row carries neither, its closure being decided by
+source inspection, so only MatrixSSL's answer is a fix-site label."""
+
+[[retired]]
+phrase = "libgcrypt, carries both"
+retired_in = "sec/method.tex, revision A8"
+why = """libgcrypt carries a site-closure row settled by inspection plus a corpus pair
+label settled by recovery, not a fix-site label, which needs a statistical test."""
+
+[[retired]]
+phrase = "division pair's on a synthetic amplified"
+retired_in = "sec/intro.tex, revision A8"
+why = """The ladder pair is a second exception: synthetic, scored, and carrying no
+amplification, so the universal now excepts the division and ladder pairs."""
+
+[[retired]]
+phrase = "names the quantities it cannot"
+retired_in = "shared/front.tex, revision A8"
+why = """The body says twice that no printed quantity is unregenerable any longer, only
+two claims; the abstract's promise pointed at an empty set and now names the claims."""
+
+[[retired]]
+phrase = "is byte-identical between"
+retired_in = "sec/fixes.tex, revision A8"
+why = """The evidence normalises addresses and relocation offsets before comparing, which
+is instruction identity, not byte identity; no raw-byte digest was recorded, so the paper
+must not name a check that was not run."""
+
+[[retired]]
+phrase = "in half of them from about"
+retired_in = "sec/app-defs.tex, revision A8"
+why = """'From about 3,000' implies at least half from 3,000 upward, but the committed
+sweep recovers 3 of 8 at 4,000: the curve is not monotone at that resolution, so the
+sentence now reports it pointwise."""
+
+[[retired]]
+phrase = "four verdict statuses"
+retired_in = "sec/app-defs.tex, revision A8"
+why = """The specification and bin/score.py carry five adapter verdict statuses;
+'four' predates the separation of budget_exhausted from error."""
+
+[[retired]]
+phrase = "the test suite and the manuscript checks"
+retired_in = "sec/app-defs.tex, revision A8"
+why = """The four-gate enumeration of bin/verify_all.sh predates the fifth gate, the
+headline-recall refusal, which the introduction singles out; the appendix now lists all
+five."""
+
+[[retired]]
+phrase = "plus the five appendices"
+retired_in = "main.tex and main-eprint.tex, revision A8"
+why = "The eprint build inputs six appendices, A to F, since ep-related.tex was split out."
 
 [[retired]]
 phrase = "flat divider"
@@ -140,6 +275,54 @@ retired_in = "sec/index.tex, revision A2"
 why = """The third form of the same claim: it read the in-process vantage as dominating the
 remote one, which is the direction Lemma 1 refuses. The vantage is now one element of the
 attack-model four-tuple, and the licence between vantages is stated by the lemma alone."""
+
+[[retired]]
+phrase = "is an effort boundary of this artifact, not a property of the tool"
+retired_in = "bin/applicability_table.py caption, revision A8"
+why = """The applicability caption filed all eight no-harness rows as an effort boundary,
+but the four varlat and binsec rows on the ECDSA pairs are a measured incapacity of the
+pinned images (results/tool_reach_limits.json): neither image can build an OpenSSL-linked
+arm. The caption and those four reason strings in results/verdicts.jsonl now say so."""
+
+[[retired]]
+phrase = "an effort boundary, not a property of the pair"
+retired_in = "results/verdicts.jsonl (varlat/binsec ECDSA rows), revision A8"
+why = """As a description of the varlat and binsec rows on the ECDSA pairs this spelling
+was refiled as a measured incapacity of the pinned images. It survives in the record only
+for the ladderleak and hqc-reject rows, where it remains true; the paper must not quote it
+for the measured rows, so any paper occurrence is a survivor to inspect."""
+
+[[retired]]
+phrase = "There are currently 55 tools in the table"
+retired_in = "data/facts.toml, revision A8"
+why = """The hand-typed ct-tools count retrieved from a web page was retired in favour of
+nFieldIndexed, counted by bin/regen.py from results/analyser_matrix.json at the pinned
+inventory commit; background.tex prints that macro and facts.toml no longer carries the
+entry, so the retirement the regen.py comment records is now true."""
+
+[[retired]]
+phrase = "universally safe and none that is universally unsafe"
+retired_in = "sec/f2-toolchain.tex, revision A8"
+why = """False at the optimisation-level reading: within the measured cells the higher
+optimisation levels are division-free under both compilers. The claim was narrowed to the
+vendor-versus-level form, neither compiler safe at every level and no level unsafe under
+both, only the size and zero levels emitting and which one depending on the compiler."""
+
+[[retired]]
+phrase = "no single build choice is universally safe"
+retired_in = "pairs/kyberslash/pair.toml, revision A8"
+why = """The manifest and emission-record spelling of the same universal, narrowed to the
+same vendor-versus-level form in pairs/kyberslash/pair.toml and the finding field of
+results/kyberslash_emission.json."""
+
+[[retired]]
+phrase = "null band calibrated on the constant-time negative sentinel"
+retired_in = "docs/adapter-reach.md, revision A8"
+why = """As a live decision rule this is PR-3, retired by PR-4: verdicts are decided
+against a permutation null built from each run's own samples within its declared batches
+(bin/dudect_permute.py), with Benjamini-Hochberg across the committed arms in
+bin/score.py. The calibration files stay committed as the record of the retired rule and
+are read by no verdict, so the paper must not present the band in the present tense."""
 
 # ---------------------------------------------------------------- printed ratios
 # num / den must equal pct. Macros are read from the generated numbers.tex, so this
@@ -544,8 +727,9 @@ why = "this described the same paper already cited in the preceding clause under
 
 # The implementer recommendation once prescribed a retired-instruction count over two secret
 # classes as a sufficient check. By the paper's own data that check passes the residual it
-# found: the count moves by about one percent across the leading-zero range while the clock
-# moves by nearly two orders of magnitude. Count balance is necessary, not sufficient.
+# found: the instructions saved per leading zero are the same to within about one percent
+# whether one or sixty-three are skipped, while the clock over that range moves by nearly two
+# orders of magnitude. Count balance is necessary, not sufficient.
 [[retired]]
 phrase = "count retired instructions over two secret classes"
 retired_in = "sec/conclusion.tex, revision A8"

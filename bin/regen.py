@@ -230,14 +230,16 @@ def verdict_section() -> dict:
         if reason.startswith("mechanism:"):
             mech += 1
         elif ("no runnable program" in reason or "no harness built here" in reason):
-            # Both the observation-only pairs (no runnable program) and the pairs
-            # that ship source but for which no harness was built for this tool
-            # (an effort boundary) are counted here: neither is a mechanism
-            # exclusion, and both were once split off wrongly, leaving the counts
-            # not summing to the inapplicable total. Exactly the two spellings
-            # bin/score.py emits are accepted. A retired third spelling was tolerated
-            # here once, which hid six stale rows; `bin/score.py --rescore` refreshes
-            # reasons, so a stale row now shows up as an unclassified reason.
+            # The observation-only pairs (no runnable program), the pairs that ship
+            # source but for which no harness was built for this tool (an effort
+            # boundary), and the four varlat/binsec ECDSA rows whose pinned images
+            # cannot build the OpenSSL-linked arm (a measured incapacity, not an
+            # effort boundary) are counted here: none is a mechanism exclusion, and
+            # the first two were once split off wrongly, leaving the counts not
+            # summing to the inapplicable total. All three spellings bin/score.py
+            # emits carry one of the two accepted substrings. A retired spelling was
+            # tolerated here once, which hid six stale rows; `bin/score.py --rescore`
+            # refreshes reasons, so a stale row now shows up as an unclassified reason.
             noharn += 1
         elif "no mechanism a code-running analyser detects" in reason:
             nullmech += 1
@@ -678,7 +680,7 @@ def as_tex(report: dict) -> str:
         # boundary step (gravBoundaryStep) is sub-noise, measured directly on aarch64.
         out.append(tex_macro("gravStepTicks",
                              f"{mag['high_coeff_ticks_per_udiv'] - mag['low_coeff_ticks_per_udiv']:.2f}"))
-        out.append(tex_macro("gravBoundaryStep", f"{abs(bnd['step_ticks']):.4f}"))
+        out.append(tex_macro("gravBoundaryStep", f"{abs(bnd['step_ticks']):.5f}"))
         # The denominator behind gravDeltaPercent, printed so a reader can see the
         # percentage is of a 2-tick call rather than of a whole decapsulation.
         _e2e = g["results"].get("end_to_end_coeff_to_bit_Os", {})
@@ -783,10 +785,12 @@ def as_tex(report: dict) -> str:
                 # Two decimals: these are small values and rounding to an integer would
                 # hide how far inside its null the arm actually sits.
                 out.append(tex_macro(patched_named[r["pair"]], f"{v:.2f}"))
-    # PR-3 dudect: the null-tau band calibrated on the constant-time negative
-    # sentinel (replacing the arbitrary [10,500] band), and the effect size in ticks
-    # with its bootstrap CI for the key arms, so the paper quotes a magnitude and an
-    # interval rather than a threshold crossing.
+    # PR-3 dudect, kept as the record of a retired rule: the null-tau band was
+    # calibrated on the constant-time negative sentinel (replacing the arbitrary
+    # [10,500] band) and then retired by PR-4's permutation verdict, so these
+    # macros document what the retired band was and no verdict reads them. The
+    # effect size in ticks with its bootstrap CI for the key arms still stands, so
+    # the paper quotes a magnitude and an interval rather than a threshold crossing.
     calp = REPO / "results" / "dudect_calibration.json"
     if calp.exists():
         cal = json.loads(calp.read_text())
@@ -935,10 +939,12 @@ def as_tex(report: dict) -> str:
                                  f"{abs(poly['poly_div_n_400000_mean_ticks']):.2f}"))
             out.append(tex_macro("polyMdeTicks", f"{poly['poly_div_n_400000_mde_ticks']:.2f}"))
             out.append(tex_macro("polyCallTicks", f"{poly['poly_div_mean_ticks_low']:,.0f}"))
-            out.append(tex_macro("polyPairs", "400,000"))
-            # The two constants the polynomial and boundary designs are built on, read
-            # from the sources that define them rather than typed beside them.
+            # The pair count and coefficient count, read from poly_granularity.c's own
+            # #defines rather than typed beside them.
             _pg = (REPO / "pairs" / "kyberslash" / "x86" / "poly_granularity.c").read_text()
+            _pm = re.search(r"#define PAIRS (\d+)", _pg)
+            if _pm:
+                out.append(tex_macro("polyPairs", f"{int(_pm.group(1)):,}"))
             _m = re.search(r"#define N (\d+)", _pg)
             if _m:
                 out.append(tex_macro("ksPolyCoeffs", _m.group(1)))
@@ -949,10 +955,12 @@ def as_tex(report: dict) -> str:
         out.append(tex_macro("hostNoiseFloor", f"{st['noise_floor_ticks']:.2f}"))
         # The two coefficients the paired boundary design compares, from the record's
         # own key names, so the prose cannot name a different pair than the measurement.
-        out.append(tex_macro("ksBoundaryLo", "832"))
-        out.append(tex_macro("ksBoundaryHi", "833"))
-        out.append(tex_macro("hostStepBelow", f"{st['coeff_below_833_ticks']:.2f}"))
-        out.append(tex_macro("hostStepAbove", f"{st['coeff_at_or_above_833_ticks']:.2f}"))
+        # The boundary coefficient, parsed from the record's own key name so the prose
+        # cannot name a different one than the measurement.
+        _bk = re.search(r"coeff_below_(\d+)_ticks", json.dumps(st))
+        _blo = int(_bk.group(1)) if _bk else 833
+        out.append(tex_macro("ksBoundaryLo", str(_blo - 1)))
+        out.append(tex_macro("ksBoundaryHi", str(_blo)))
         cg = xr["codegen"]["idiv_in_coeff_to_bit"]
         out.append(tex_macro("hostIdivOs", str(cg["Os"])))
         out.append(tex_macro("hostIdivReciprocal", str(cg["O2"])))
@@ -1129,7 +1137,6 @@ def as_tex(report: dict) -> str:
             if fvd["libraries"].get(lib, {}).get("site_closure"):
                 out.append(tex_macro(macro, fvd["libraries"][lib]["site_closure"]))
         wolf = fvd["libraries"]["wolfssl"]
-        out.append(tex_macro("wolfResidualPercent", "0.03\\%"))
         if wolf.get("recovery_attempt_budget_sigs"):
             out.append(tex_macro("wolfSigs", f"{wolf['recovery_attempt_budget_sigs']:,}"))
         # The survey's coverage, counted from the triage record rather than typed,
@@ -1312,6 +1319,19 @@ def as_tex(report: dict) -> str:
         import zlib as _zlib
         _n = _zlib.decompress(tr.read_bytes()).count(b"\n") - 1   # minus the header line
         out.append(tex_macro("mxTraceN", f"{_n:,}"))
+    # The two larger 4-3-0 traces and their labelling keys, committed beside the first;
+    # counted from the committed files for the same reason as mxTraceN, so the
+    # not-recomputable inventory lists every trace the repository actually holds.
+    for _macro, _stem in (("mxTraceNFifty", "4-3-0-50000"),
+                          ("mxTraceNHundred", "4-3-0-100000")):
+        _trp = (REPO / "pairs" / "matrixssl-minerva" / "evidence"
+                / f"trace-{_stem}.csv.z")
+        _kfp = (REPO / "pairs" / "matrixssl-minerva" / "evidence"
+                / f"signing-key-{_stem}.hex")
+        if _trp.exists() and _kfp.exists():
+            import zlib as _zlib
+            _nn = _zlib.decompress(_trp.read_bytes()).count(b"\n") - 1
+            out.append(tex_macro(_macro, f"{_nn:,}"))
 
     # How many fix-verification designs share a decision. Printed as a word in the
     # statistical appendix, where it drifted the moment the corpus gained two dumps.
@@ -1504,8 +1524,11 @@ def as_tex(report: dict) -> str:
         out.append(tex_macro("icResidualOfCall",
                              f"{abs(pc['255']['percent_vs_256']):.2f}\\%"))
 
-    # eccMulmodCt is byte-identical across the two fixed releases, which is a stronger
-    # statement than the statistical "indistinguishable" the paper had been making.
+    # eccMulmodCt is instruction-identical across the two fixed releases (an identical
+    # normalised disassembly), a stronger statement than the statistical
+    # "indistinguishable" the paper had been making. The evidence file's byte_identity
+    # key holds that normalised-disassembly identity and keeps its name, because this
+    # block reads it to emit mxCtInsns.
     bcp = REPO / "pairs" / "matrixssl-minerva" / "evidence" / "binary_confirmation.json"
     if bcp.exists():
         _bi = json.loads(bcp.read_text()).get("byte_identity", "")
@@ -1530,6 +1553,15 @@ def as_tex(report: dict) -> str:
         out.append(tex_macro("mxLatticeInfoLo", str(min(_i))))
         out.append(tex_macro("mxLatticeInfoHi", str(max(_i))))
         out.append(tex_macro("mxKeyBits", str(_mr["key_bits"])))
+        # The depth accounting that actually decides the sweep: credited against
+        # observed leading-zero depth in the fastest ninety, at the headline budget.
+        _dep = _mr.get("depth", {}).get("100000") or {}
+        if _dep.get("observed_mean_leading_zeros_top90") is not None:
+            out.append(tex_macro("mxCreditedLz",
+                                 f"{_dep['credited_mean_leading_zeros_top90']:.0f}"))
+            out.append(tex_macro("mxObservedLz",
+                                 f"{_dep['observed_mean_leading_zeros_top90']:.1f}"))
+            out.append(tex_macro("mxLzTicksPerZero", "2,300"))
         # The selection purity on the quiet traces, from the same estimator the paper
         # already uses for the committed trace.
         for n, word in ((50000, "Fifty"), (100000, "Hundred")):
@@ -1561,8 +1593,35 @@ def as_tex(report: dict) -> str:
         if _g.get("n_star_p1.0"):
             out.append(tex_macro("oursSigsLibgcryptFull", f"{_g['n_star_p1.0']:,}"))
             out.append(tex_macro("oursSigsLibgcryptHalf", f"{_g['n_star_p0.5']:,}"))
+            # Against the prior work's library-data budget, minervaSigsLibrary,
+            # from the same record rather than a literal.
             out.append(tex_macro("libgcryptVsPriorFactor",
-                                 f"{_g['n_star_p1.0'] / 1200:.0f}"))
+                                 f"{_g['n_star_p1.0'] / rc['real cryptographic library data']:.0f}"))
+
+    # The libgcrypt robustness curve is not monotone at the tested resolution: the
+    # half-success rate is met at one subset size and not at the next tested one, so the
+    # paper reports the curve pointwise rather than as a "from" threshold, every count
+    # and size read from the committed sweep.
+    lrp = REPO / "results" / "recovery_robustness_libgcrypt-minerva.json"
+    if lrp.exists():
+        _lr = sorted(json.loads(lrp.read_text())["results"],
+                     key=lambda r: r["num_signatures"])
+        _half = [i for i, r in enumerate(_lr)
+                 if 2 * r["recovered"] >= r["seeds"] and r["recovered"] < r["seeds"]]
+        if _half:
+            _i = _half[0]
+            out.append(tex_macro("lgRobustHalfRate",
+                                 f"{_lr[_i]['recovered']} of {_lr[_i]['seeds']}"))
+            out.append(tex_macro("lgRobustHalfSigs",
+                                 f"{_lr[_i]['num_signatures']:,}"))
+            if _i + 1 < len(_lr):
+                out.append(tex_macro("lgRobustNextRate",
+                                     f"{_lr[_i + 1]['recovered']} of {_lr[_i + 1]['seeds']}"))
+                out.append(tex_macro("lgRobustNextSigs",
+                                     f"{_lr[_i + 1]['num_signatures']:,}"))
+        _fails = [r["num_signatures"] for r in _lr if r["recovered"] == 0]
+        if _fails:
+            out.append(tex_macro("lgRobustNoneSigs", f"{max(_fails):,}"))
 
     # The deterministic cross-check: retired instructions per nonce class. Reported as
     # the per-call delta against the 256-bit class, which is what separates an
@@ -1704,6 +1763,30 @@ def as_tex(report: dict) -> str:
             if pair == "hmac-timing" and (pair, 8) in by:
                 out.append(tex_macro("dudectOwnMaxHmac",
                                      f"{by[(pair, 8)]['dudect_max_t']:.0f}"))
+        # The one disclosed row where a patched arm's own null rejects at a single
+        # factor: its p, effect and CI, printed rather than characterised, and the
+        # run count so the reader can see it is one draw of many.
+        import re as _re
+        out.append(tex_macro("nCurveRuns", str(len(dca["rows"]))))
+        _pat = [r for r in dca["rows"] if r["pair"] == "hqc-reject"
+                and r["arm"] == "patched"]
+        _leak = [r for r in _pat if r["status"] == "leak_reported"]
+        if len(_leak) == 1:
+            _r = _leak[0]
+            out.append(tex_macro("hqcPatchedLeakFactor", str(_r["amp"])))
+            out.append(tex_macro("hqcPatchedLeakP", f"{_r['permutation_p']:.4f}"))
+            _m = _re.search(r"effect ([\d.]+) ticks, 95% CI \[([\d.]+), ([\d.]+)\]",
+                            str(_r.get("detail", "")))
+            if _m:
+                out.append(tex_macro("hqcPatchedLeakEffect", f"{float(_m.group(1)):.1f}"))
+                out.append(tex_macro("hqcPatchedLeakCILo", f"{float(_m.group(2)):.1f}"))
+                out.append(tex_macro("hqcPatchedLeakCIHi", f"{float(_m.group(3)):.1f}"))
+            _clean = sorted(r["amp"] for r in _pat if r["status"] == "clean")
+            _cleanp = {r["amp"]: r["permutation_p"] for r in _pat if r["status"] == "clean"}
+            out.append(tex_macro("hqcPatchedCleanFactors",
+                                 ", ".join(str(a) for a in _clean[:-1]) + f" and {_clean[-1]}"))
+            out.append(tex_macro("hqcPatchedCleanPs",
+                                 ", ".join(f"{_cleanp[a]:.2f}" for a in _clean)))
     # The count of deployed remediations the paper grades was typed as a literal 3,
     # which is the one thing this file exists to prevent. It is the number of candidates
     # in the committed triage that were actually built and measured.

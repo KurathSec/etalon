@@ -6,10 +6,6 @@
 # Each entry travels into the paper as a macro, and the comment beside it in the
 # generated file carries the source.
 
-[fact.nToolsIndexed]
-value = 55
-source = "crocs-muni.github.io/ct-tools, which states: There are currently 55 tools in the table. Retrieved 2026-08-23."
-
 [fact.nScoutLeaks]
 value = 98
 source = "ePrint 2026/776 abstract: detected all 98 timing leaks in the benchmark and automatically classified 97 as confirmed findings."

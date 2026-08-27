@@ -76,9 +76,11 @@ def _permutation_p(dump: pathlib.Path) -> dict | None:
     return None if "error" in r else r
 
 
-# A uniform budget across every pair, so the null-tau threshold calibrated on the
-# negative sentinel transfers: MEASUREMENTS per batch times BATCHES is the same
-# total everywhere. Sized so the slow EC pairs finish in a couple of minutes;
+# A uniform budget across every pair: MEASUREMENTS per batch times BATCHES is the
+# same total everywhere, so readings are comparable across pairs. The verdict does
+# not depend on that uniformity: it is decided against the permutation null built
+# from each run's own samples (PR-4, _permutation_p above), matched to the run's
+# budget by construction. Sized so the slow EC pairs finish in a couple of minutes;
 # tau is the effect size, so a real leak is resolved well within this budget.
 MEASUREMENTS = 20000
 BATCHES = 3

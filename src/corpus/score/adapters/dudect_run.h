@@ -18,7 +18,9 @@
  *
  * dudect still does the measurement and computes its own t (one "max t:" line
  * per batch, so the whole t-trajectory reaches the adapter). Only the decision
- * rule moves out, into the calibrated effect-size test in bin/dudect_ci.py.
+ * rule moves out: since PR-4 the verdict is a permutation test over the dumped
+ * samples (bin/dudect_permute.py), with bin/dudect_ci.py reporting the effect
+ * size beside it, not the verdict; the calibrated tau band is retired.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,9 +39,11 @@
 
 static int dudect_run_and_dump(dudect_config_t *config) {
   /* A uniform per-batch measurement count across pairs, set from the environment,
-   * so batches x measurements is the same total budget everywhere and a null
-   * t-threshold calibrated on the negative sentinel transfers to every pair
-   * (dudect's t grows as sqrt of the sample count). */
+   * so batches x measurements is the same total budget everywhere and readings
+   * are comparable across pairs. The verdict needs no cross-pair transfer: it is
+   * decided against the PR-4 permutation null built from this run's own samples
+   * within its batches (bin/dudect_permute.py), matched to the budget by
+   * construction. */
   const char *ms = getenv("DUDECT_MEASUREMENTS");
   if (ms) { long v = atol(ms); if (v > 0) config->number_measurements = (size_t)v; }
   dudect_ctx_t ctx;

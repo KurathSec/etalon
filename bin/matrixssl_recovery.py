@@ -19,16 +19,21 @@ the one thing the attempts do not carry, the attack's own information
 accounting.
 
 THE ACCOUNTING, AND WHY IT DECIDES THE RESULT
-The attack models the i-th fastest signature as having geom_bound(i) leading
-zeros, a rank model that assumes a MULTI-BIT bias: out of 25,000 signatures it
-credits the fastest with about fourteen leading zeros. It then needs the summed
-bounds to exceed the key size. The deployed MatrixSSL fix leaves a ONE-BIT
-residual, so the ordering it produces is real (the selection purity beside each
-attempt says how real) while the per-signature bound the attack assumes is not.
-That is why no budget in this sweep converts the residual, and it is a
-statement about the attack's information model rather than about the number of
-signatures: an attack fitted to a one-bit bias would need a different lattice,
-and this paper does not build one.
+The residual is not one bit. The fixed build's own leading-zero ladder is
+monotone, median signing time falling about 2,300 ticks per additional leading
+zero through at least six, so the leak carries the full leading-zero count and
+not a single bit. What the recovery lacks is DEPTH OF ORDERING. The attack
+models the i-th fastest signature as having geom_bound(i) leading zeros: over
+100,000 signatures it credits its fastest ninety with a mean of about eleven
+leading zeros, and needs the summed bounds to exceed the key size. The timing
+order on this residual supplies a mean of about six leading zeros in that same
+fastest ninety (about five and a half at 50,000). The selection is pure in kind,
+about ninety-four per cent of the fastest ninety carry at least one leading
+zero, but shallow in depth, so the per-signature bound the lattice assumes is
+not met. That is why no budget in this sweep converts the residual, and it is a
+statement about how deeply the timing orders this leak rather than about the
+number of signatures: an attack whose per-rank bound matched the depth the order
+supplies would need a different lattice, and this paper does not build one.
 
 Usage: matrixssl_recovery.py [--write] [--check]
 """
@@ -76,6 +81,22 @@ def build() -> dict:
             "elapsed_s": d["elapsed_s"],
             "outcome": d["outcome"],
         })
+    # The depth accounting: what the rank model credits the fastest ninety with,
+    # against what the timing order actually supplies. Credited from geom_bound over
+    # ranks 0..89 at each budget; observed from the quiet-host exploit-budget records'
+    # top-90 mean leading-zero count. This is what decides the sweep, and it is derived
+    # here rather than asserted in prose.
+    depth = {}
+    for n in (50000, 100000):
+        f = REPO / "results" / f"exploit_budget_matrixssl_{n}.json"
+        if f.exists():
+            sq = json.loads(f.read_text()).get("selection_quality", {}).get("top_90", {})
+            credited = sum(geom_bound(i, n) for i in range(90)) / 90.0
+            depth[str(n)] = {
+                "observed_mean_leading_zeros_top90": sq.get("mean_leading_zeros"),
+                "credited_mean_leading_zeros_top90": round(credited, 1),
+                "frac_short_top90": sq.get("frac_short"),
+            }
     attempts.sort(key=lambda a: (a["budget_signatures"], a["lattice_dimension"] or 0))
     recovered = [a for a in attempts if a["outcome"] == "recovered"]
     return {
@@ -95,15 +116,18 @@ def build() -> dict:
         "key_bits": KEY_BITS,
         "attempts_total": len(attempts),
         "recovered": len(recovered),
-        "reading": ("No attempt recovered the key. The selection is not the reason: on the "
-                    "quiet 50,000 and 100,000 signature traces the fastest ninety are 94.4 "
-                    "per cent genuinely short. The reason is the per-signature bound. The "
-                    "attack credits its top-ranked signatures with a multi-bit bias, so it "
-                    "builds a lattice on assumed_information_bits of information against a "
-                    "key of key_bits, while the deployed fix leaves one bit of nonce length. "
-                    "The result is therefore a bounded observation about this attack and "
-                    "this residual, not about the number of signatures, and it is reported "
-                    "as one."),
+        "depth": depth,
+        "reading": ("No attempt recovered the key. The residual is not one bit: the fixed "
+                    "build's leading-zero ladder is monotone, about 2,300 ticks per "
+                    "additional leading zero, so the leak carries the full count. The "
+                    "selection is pure in kind, on the quiet 50,000 and 100,000 signature "
+                    "traces the fastest ninety are 94.4 per cent genuinely short, but "
+                    "shallow in depth: the attack's rank model credits those ninety with a "
+                    "mean of about eleven leading zeros at 100,000 signatures while the "
+                    "timing order supplies about six, so the per-signature bound the lattice "
+                    "assumes is not met. The result is a bounded observation about how deeply "
+                    "the timing orders this leak, not about the number of signatures, and is "
+                    "reported as one."),
         "attempts": attempts,
     }
 

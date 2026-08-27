@@ -6,10 +6,11 @@ A constant-time fix is a timing claim: that after the patch, the running time no
 longer depends on the secret. That claim is rarely checked against the shipped code,
 and a tool that prints leak or clean on one build cannot tell a fix that holds from
 one that only looks like it. etalon is the instrument that can: deployed leaks
-reproduced as matched vulnerable and patched builds, each carrying a key recovery
-certified by arithmetic, with the patched build established constant-time at the leak
-site. Its headline use, pointed at three real Minerva remediations, finds one shipped
-fix (MatrixSSL's, on by default) that does not hold. It doubles as a known-answer
+reproduced as matched vulnerable and patched builds, the recall-eligible pairs
+each carrying a key recovery certified by arithmetic and the three tier-C pairs a
+published recovery not rerun here, with the patched build established constant-time
+at the leak site. Its headline use, pointed at three real Minerva remediations,
+finds one shipped fix (MatrixSSL's, on by default) that does not hold. It doubles as a known-answer
 recall corpus for the analysers themselves, the role most of the dated history below
 describes.
 
@@ -18,11 +19,13 @@ above supersedes the "denominator" framing they open with (see the 2026-08-25 en
 
 ## What it is
 
-Deployed timing leaks, reproduced as a vulnerable and a patched build, each
-carrying a key recovery whose output verifies under the published public key.
-The label on every positive item is therefore certified by arithmetic. No
-analyser participates in grading itself, no expert adjudicates, and no cost
-model is involved.
+Deployed timing leaks, reproduced as a vulnerable and a patched build. Every
+recall-eligible (tier A/B) pair carries a key recovery whose output verifies
+under the published public key, so the label on those positive items is
+certified by arithmetic; the three tier-C pairs carry a published recovery that
+was not rerun here, and they enter no recall denominator. No analyser
+participates in grading itself, no expert adjudicates, and no cost model is
+involved.
 
 Against that, each installed analyser gets a measured recall per leak class,
 with its `n`.
@@ -372,10 +375,11 @@ now sits below 0.05 (the lowest is 0.11, `results/dudect_permutation.json`).
 lattice run was fed nonces labelled with the key it was meant to recover. MatrixSSL is now
 leak-presence certified and not recovered by the published attack: nine timing-ordered
 lattice attempts on the fixed build, 25,000 to 100,000 signatures at lattice dimensions 90
-to 130, recover no key (`results/matrixssl_recovery.json`), and the reason is the attack's
-rank model, which assumes a multi-bit bias where the fix leaves one bit, not the selection:
-on traces taken with the host otherwise idle the fastest 90 are 5.6% contaminated
-(`results/exploit_budget_matrixssl_50000.json`, `_100000.json`). The "fast host" excuse was also wrong, and
+to 130, recover no key (`results/matrixssl_recovery.json`), and the reason is depth of
+ordering, not the selection: the leak is monotone in the leading-zero count (about 2,300
+ticks per zero), the fastest 90 are 5.6% contaminated on idle-host traces
+(`results/exploit_budget_matrixssl_50000.json`, `_100000.json`), but the attack's rank model
+credits those 90 with a mean of ~11 leading zeros where the timing order supplies ~6. The "fast host" excuse was also wrong, and
 measurement refuted it: on the same host, AUC between timing and nonce shortness is 0.63
 for MatrixSSL against 0.80 for libgcrypt, with the fastest 90 signatures 28.9% contaminated
 against 3.3%, both from committed traces and keys
@@ -625,7 +629,7 @@ without being rewritten. The recall corpus section became Appendix C, and the ta
 section folded into the conclusion. (None of those counts describes the tree now: the body
 has nine sections including the indexing section, the three index sections are back at
 section level under the same labels and titled I1 to I3 in reading order (the earlier letter labels
-were never defined and ran against that order), the corpus section sits in Appendix A, the eprint build carries five
+were never defined and ran against that order), the corpus section sits in Appendix A, the eprint build carries six
 appendices, and the body ends on page 20; see the house-form entry below.)
 
 At that date six appendices, lettered A to F, carried what a reader consults rather than
@@ -634,8 +638,9 @@ semantics (A), the statistical rule in full with the retired bands, the registra
 deviations and both amplification sweeps (B), the corpus inventory, census, recovery cards
 and cost (C), the emission control, flag sweep, in-context check and the three
 per-operation quantities per host (D), the remaining limits including the harness artifact
-this work had to correct (E), and the control table (F). The eprint build now carries five
-(`paper/tches/main-eprint.tex`: app-defs, app-stats, app-measure, app-threats, ep-limits),
+this work had to correct (E), and the control table (F). The eprint build now carries six
+(`paper/tches/main-eprint.tex`: app-defs, app-stats, app-measure, app-threats, ep-limits,
+ep-related),
 with the corpus inventory folded into Appendix A beside the glossary and the control table
 folded into the further-limits appendix. Four floats moved with them: the blind-spot figure, which
 duplicated the outcome table it sat beside, the detection-curve figure, the glossary and

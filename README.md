@@ -1014,7 +1014,7 @@ absorbs the line-break shifts prose edits cause.
 
 **State on 2026-09-02.** `paper_check` clean with the content inside the twenty-page cap,
 `selfcheck` 21 of 21, the tests 19 of 19, `namecheck` clean. Seven commits ahead of
-`origin/main`, unpushed. Open: the blind panel has not been re-run on the rebuilt paper
+`origin/main`, unpushed (pushed 2026-09-02, 83431d7..7f05e7b, thirteen commits). Open: the blind panel has not been re-run on the rebuilt paper
 since round 14; and `paper/` is gitignored, so every prose change since 2026-08-25 exists
 only in the working tree, with snapshots under `cache/revision/`, which is a decision
 still to take.

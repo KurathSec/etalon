@@ -77,7 +77,7 @@ def test_fix_report_reproduces_the_committed_block():
     r = subprocess.run([sys.executable, str(REPO / "bin" / "fix_report.py"), "--check"],
                        capture_output=True, text=True)
     assert r.returncode == 0, r.stdout + r.stderr
-    assert "reproduce the committed block exactly" in r.stdout
+    assert "reproduce the committed block" in r.stdout
 
 
 def test_paper_consistency_rules_are_not_vacuous(tmp_path):

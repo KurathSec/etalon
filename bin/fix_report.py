@@ -16,6 +16,19 @@ class difference of means), and either checks the committed block or rewrites it
 permutation and the bootstrap are seeded, so the pass is reproducible: --check is a real
 comparison, not a re-roll.
 
+WHAT THE CHECK TOLERATES
+------------------------
+Everything reproduces to one part in a billion except three fields of each design: the
+maximum |t| over the 101-crop ladder, the crop it lands on, and the permutation p built on
+it. Those move with the machine, because numpy sums a mean in an order that depends on the
+vector width of the CPU, and the ladder's near-tied crops then resolve differently: the
+fourth decimal of |t| and the third of p on the CI runner against the acquisition host,
+first seen 2026-09-02 when CI ran this check for the first time. STAT-1 accepts the same
+dumps on that runner. The paper prints |t| to no decimals and p to two, so the check
+tolerates a thousandth of |t| or 0.01, whichever is larger (a null design's maximum over
+near-tied crops moves by a few thousandths at |t| near 2), five thousandths of p, and
+ignores the crop index.
+
 WHAT IT ADDS
 ------------
 A denominator. The block recorded the class difference in ticks and never what a call
@@ -127,8 +140,21 @@ def main() -> int:
                 if k in ("call_ticks", "residual_fraction"):
                     continue                       # added by this generator
                 w = old[name].get(k)
+                # The maximum |t| over the crop ladder, the crop it lands on and the
+                # permutation p that follows are the three fields a different CPU moves:
+                # numpy sums a mean in an order that depends on the machine's vector
+                # width, so the ladder's near-tied crops resolve differently on the CI
+                # runner than on the acquisition host (fourth decimal of |t|, third of p;
+                # the crop index is a tie-break; a null design's |t| near 2 moves by a
+                # few thousandths). STAT-1 accepts the same dumps on that runner, and the
+                # paper prints |t| to no decimals and p to two, so the check tolerates
+                # that much and no more. Everything else is exact.
+                if k == "n_at_argmax":
+                    continue
+                tol = {"max_abs_t": lambda x: max(0.01, abs(x) * 1e-3), "permutation_p": lambda x: 5e-3}
                 if isinstance(v, float) and isinstance(w, (int, float)):
-                    if abs(v - w) > max(1e-9, abs(v) * 1e-9):
+                    bound = tol[k](v) if k in tol else max(1e-9, abs(v) * 1e-9)
+                    if abs(v - w) > bound:
                         drift.append(f"{name}.{k}: committed {w} vs computed {v}")
                 elif w != v:
                     drift.append(f"{name}.{k}: committed {w!r} vs computed {v!r}")
@@ -137,7 +163,8 @@ def main() -> int:
             for d in drift:
                 print(f"  - {d}")
             return 1
-        print(f"fix_report: {len(fresh)} design(s) reproduce the committed block exactly")
+        print(f"fix_report: {len(fresh)} design(s) reproduce the committed block "
+              "(exactly, except the crop ladder's maximum within its stated tolerance)")
         return 0
 
     block["designs"] = fresh

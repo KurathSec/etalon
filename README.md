@@ -1187,3 +1187,8 @@ and printed. To hold the twenty-page cap with the corpus table in, the analyser 
 kept in the body, and fourteen paragraphs were tightened; Figure 4 sits at 0.44 of the line
 width and Figure 3's panels are sized to their printed width with their titles in the
 caption. Two items stay with the author: the anonymised artifact link, and the turbo-off run.
+The push that followed was CI's first full run of the tests job in weeks: the firewall job
+passed in full, STAT-1 included, and one test failed, `fix_report --check` demanding the
+crop ladder's maximum |t| to one part in a billion where the runner's CPU sums in a
+different order (fourth decimal of |t|, third of p, the crop index as a tie-break). The
+check now states and tolerates exactly that much; nothing the paper prints moves.

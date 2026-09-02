@@ -1,7 +1,9 @@
 # MatrixSSL leak: mechanism recoverability
 
-Status: LEAK-PRESENCE CERTIFIED, RECOVERY PENDING (results/fix_verification.json,
-`exploitability`). An earlier revision of this file opened by claiming that the
+Status: LEAK-PRESENCE CERTIFIED, NOT RECOVERED BY THE PUBLISHED ATTACK
+(results/matrixssl_recovery.json: 9 timing-ordered attempts on the fixed build, 25,000 to
+100,000 signatures, lattice dimensions 90 to 130, 0 recovered). Corrected 2026-09-02: this
+line used to read RECOVERY PENDING (results/fix_verification.json, `exploitability`). An earlier revision of this file opened by claiming that the
 nonce-bit-length residual in MatrixSSL's default constant-time `eccMulmodCt` feeds a
 recoverable hidden-number problem. That claim is withdrawn. The lattice demonstration behind
 it replaced the noisy timing column of an uncommitted 250,000-signature trace from the 4.2.1
@@ -20,6 +22,12 @@ run in the record, so "recovery pending" means no timing-ordered lattice attempt
 paper's fix table described a lattice attempt at a larger budget, which conflated this run
 with the fixed build; `recovered` on both MatrixSSL arms of results/exploit_budget.json now
 reads "not attempted").
+
+CORRECTED 2026-09-02: the paragraph above describes the record before 2026-08-27. Nine
+timing-ordered lattice attempts on the fixed build have since been made and all failed, for
+depth of ordering rather than for lack of signatures (results/matrixssl_recovery.json), and
+`recovered` on the MatrixSSL arm of results/exploit_budget.json now reads false with that
+pointer. The sentences above are kept as the history they record.
 
 CORRECTED: an earlier revision of this file called the selection barrier host-conditional
 and predicted a quieter core would recover. That excuse does not survive measurement. On

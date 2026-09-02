@@ -52,7 +52,7 @@
     },
     "dudect_on_aarch64": {
       "note": "CORRECTED 2026-08-25, and the correction changes the reason rather than the verdict. An earlier revision reported this control as clean because its budget-invariant tau 'converged downward with measurement count, the signature of a null effect'. That inference was invalid: E[tau^2] ~ d^2/4 + 1/n falls with n for EVERY effect size, so a downward tau proves nothing, and only the asymptote separates a null (slope -1/2 on log-log) from a fixed effect (slope 0). Worse, the statistic it was computed from is not meaningful on this counter.",
-      "counter_resolution_finding": "cntvct_el0 quantises the measurement far too coarsely for a per-call test of this function: a coeff_to_bit call is 7 or 8 ticks. Over 400000 committed measurements there are only 99 distinct tick values and 86% of them are exactly 7. dudect's crop ladder therefore contains crops holding a single repeated value, on which Welch's t is 0/0; the earlier |t| trajectory was dominated by that artifact, not by a timing difference.",
+      "counter_resolution_finding": "cntvct_el0 quantises the measurement far too coarsely for a per-call test of this function: a coeff_to_bit call is 7 or 8 ticks. Over the 400000 measurements of that run (summarised here; the raw dump is not committed and regenerates only on an aarch64 host) there are only 99 distinct tick values and 86% of them are exactly 7. dudect's crop ladder therefore contains crops holding a single repeated value, on which Welch's t is 0/0; the earlier |t| trajectory was dominated by that artifact, not by a timing difference.",
       "verdict_permutation": {
         "statistic": "max |Welch t| over dudect's first-order crop ladder, crops with zero within-class variance excluded",
         "measurements": 400000,
@@ -62,7 +62,8 @@
         "tool": "bin/dudect_permute.py, 2000 label shuffles stratified within batch"
       },
       "verdict": "not detected: the per-call statistical test does not resolve the division on this host. This is a RESOLUTION limit, not evidence of absence. The serial-chain measurement resolves the operand-magnitude effect at 0.41 ticks per udiv, which is below one tick of this counter, so no per-call test on cntvct_el0 can see it at any budget. The cycle-accurate PMU is privileged on a virtualised instance, which is why the coarse counter is the one available.",
-      "reproduce": "patch dudect.h cpucycles to read cntvct_el0 and _mm_mfence to __sync_synchronize, drop the x86 headers, gcc -Os dudect_coeff_driver.c + pairs/kyberslash/src/vulnerable.c -lm, DUDECT_RAW_DUMP set, taskset -c 2; then bin/dudect_permute.py on the dump."
+      "reproduce": "patch dudect.h cpucycles to read cntvct_el0 and _mm_mfence to __sync_synchronize, drop the x86 headers, gcc -Os dudect_coeff_driver.c + pairs/kyberslash/src/vulnerable.c -lm, DUDECT_RAW_DUMP set, taskset -c 2; then bin/dudect_permute.py on the dump.",
+      "_counter_resolution_note": "Corrected 2026-09-02: the finding used to say 'Over 400000 committed measurements'; the dump behind the per-call verdict was never committed, and the paper now says so."
     },
     "recovery_assessment": {
       "note": "Attempted per the tier-A goal; not feasible cheaply on Graviton3. The one-bit-per-coefficient recovery needs the adjacent-coefficient (single-bit boundary) step, which is sub-noise here; the resolvable signal is operand magnitude (batch estimator only), and a per-call timing test reads clean on the virtual counter. The published recovery used the Cortex-A7 software-division routine (tens of cycles, sharply operand-dependent), a different and louder mechanism. KyberSlash therefore stays tier C, now with a measured reason rather than an assumed one."

@@ -1460,6 +1460,14 @@ def as_tex(report: dict) -> str:
             out.append(tex_macro("mxRepHi", f"{d['max_effect_ticks']:,.0f}"))
             out.append(tex_macro("mxRepExcl",
                                  str(d["reps_with_interval_excluding_zero"])))
+        # The same-digit design's between-acquisition figures, so the body can print the
+        # mean beside the first acquisition as it does for the one-bit design (audit,
+        # 2026-09-02: the two were printed as one unlabelled figure 387 ticks apart).
+        if "4-3-0.samedigit" in rj:
+            _sd = rj["4-3-0.samedigit"]
+            out.append(tex_macro("mxRepSameDigitMeanEffect", f"{_sd['mean_effect_ticks']:,.0f}"))
+            out.append(tex_macro("mxRepSameDigitLo", f"{_sd['min_effect_ticks']:,.0f}"))
+            out.append(tex_macro("mxRepSameDigitHi", f"{_sd['max_effect_ticks']:,.0f}"))
         # The effect estimator's post-crop sample size, NOT a record count: the repeat
         # dumps each hold the full corpus budget and matrixssl_report.py crops to its top
         # 95 per cent before the bootstrap, so this is smaller than the acquisition.
@@ -1840,6 +1848,14 @@ def as_tex(report: dict) -> str:
                              ", ".join(str(a) for a in neg) or "none"))
         out.append(tex_macro("curvePosAmps",
                              ", ".join(str(a) for a in pos) or "none"))
+        # The factors where the sign scatters, named rather than left to the legend: the
+        # prose used to describe the sweep as if only the four stable factors were run.
+        _runs = dc.get("runs", 0)
+        scat = [c["amp"] for c in dc["curve"] if 0 < c["mean_sign_positive_runs"] < _runs]
+        out.append(tex_macro("curveScatterAmps",
+                             " and ".join(str(a) for a in scat) or "none"))
+        emit("nCurveStableAmps", len(pos) + len(neg))
+        emit("nCurveAmps", len(dc["curve"]))
     # N*(p): the budget at which recovery succeeds with probability at least p, from
     # the committed sweep. A budget, not a yes/no, which is what an attacker faces.
     rrp = REPO / "results" / "recovery_robustness.json"

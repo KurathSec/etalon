@@ -57,7 +57,7 @@
     },
     {
       "record": "results/raw/matrixssl/lattice/mx-lattice-50000-d90.json",
-      "trace": "cache/revision/mx-traces/trace-4-3-0-50000.csv.z",
+      "trace": "pairs/matrixssl-minerva/evidence/trace-4-3-0-50000.csv.z",
       "trace_sha256": "15aa5721f7e9ec168f99d428516edb8aae09d84736c2c5d94d845bac1c6d0485",
       "budget_signatures": 50000,
       "lattice_dimension": 90,
@@ -68,7 +68,7 @@
     },
     {
       "record": "results/raw/matrixssl/lattice/mx-lattice-50000-d110.json",
-      "trace": "cache/revision/mx-traces/trace-4-3-0-50000.csv.z",
+      "trace": "pairs/matrixssl-minerva/evidence/trace-4-3-0-50000.csv.z",
       "trace_sha256": "15aa5721f7e9ec168f99d428516edb8aae09d84736c2c5d94d845bac1c6d0485",
       "budget_signatures": 50000,
       "lattice_dimension": 110,
@@ -79,7 +79,7 @@
     },
     {
       "record": "results/raw/matrixssl/lattice/mx-lattice-50000-d130.json",
-      "trace": "cache/revision/mx-traces/trace-4-3-0-50000.csv.z",
+      "trace": "pairs/matrixssl-minerva/evidence/trace-4-3-0-50000.csv.z",
       "trace_sha256": "15aa5721f7e9ec168f99d428516edb8aae09d84736c2c5d94d845bac1c6d0485",
       "budget_signatures": 50000,
       "lattice_dimension": 130,
@@ -90,7 +90,7 @@
     },
     {
       "record": "results/raw/matrixssl/lattice/mx-lattice-100000-d90.json",
-      "trace": "cache/revision/mx-traces/trace-4-3-0-100000.csv.z",
+      "trace": "pairs/matrixssl-minerva/evidence/trace-4-3-0-100000.csv.z",
       "trace_sha256": "31b5b7ec65dc5900673d3341b55ab6919f59af632b5718fad44c52db012230f6",
       "budget_signatures": 100000,
       "lattice_dimension": 90,
@@ -101,7 +101,7 @@
     },
     {
       "record": "results/raw/matrixssl/lattice/mx-lattice-100000-d110.json",
-      "trace": "cache/revision/mx-traces/trace-4-3-0-100000.csv.z",
+      "trace": "pairs/matrixssl-minerva/evidence/trace-4-3-0-100000.csv.z",
       "trace_sha256": "31b5b7ec65dc5900673d3341b55ab6919f59af632b5718fad44c52db012230f6",
       "budget_signatures": 100000,
       "lattice_dimension": 110,
@@ -112,7 +112,7 @@
     },
     {
       "record": "results/raw/matrixssl/lattice/mx-lattice-100000-d130.json",
-      "trace": "cache/revision/mx-traces/trace-4-3-0-100000.csv.z",
+      "trace": "pairs/matrixssl-minerva/evidence/trace-4-3-0-100000.csv.z",
       "trace_sha256": "31b5b7ec65dc5900673d3341b55ab6919f59af632b5718fad44c52db012230f6",
       "budget_signatures": 100000,
       "lattice_dimension": 130,

@@ -1113,5 +1113,28 @@ both were restored rather than argued with. Body words by `pdftotext` before the
 related-work summary, the site-local adjudication sentence, the census sentence and the
 label-kinds recap; the page gate holds at twenty pages with `paper_check` clean.
 
-**In flight.** The turbo-off run (X1) waits on the author. Then the closing audit round,
-blind panel, memory and run sheet (Phase E).
+**The closing audit round (Phase E).** One grounded `paperaudit` round was run, seeded with
+the 57 findings of the previous cycle and ten keys for this one, and returned 24 confirmed
+findings (8 important, 16 minor) and one refuted. The author then asked that no workflow be
+used, so the `paperfix` workflow was stopped before it changed any file (the tree was
+diffed against the snapshot `cache/revision/audit3-baseline` to confirm) and every finding
+was applied by hand. The important ones: the section-4 sentence stating what the KyberSlash
+pair asserts still named two emitting cells under a four-cell headline; the eprint's
+"every not recovered is one attack at dimension 90" was true of the corpus pairs and false
+of the MatrixSSL row, and now scopes itself and carries the budget bound; "no end-to-end
+residual measurement" contradicted the whole-signature traces the eprint reports, and the
+body now cites their AUC; the section-5 opener counted the acquisition host as a third
+leaking target when its own result is no resolvable step; the background's "none can score a
+miss" was wrong for Geimer et al.; and the "only two claims are not recomputable" universal
+missed a printed one, the Graviton per-call dudect verdict, whose 400,000-measurement dump
+was never committed (the record said "committed"; it now says not). Record repairs: the six
+50,000- and 100,000-signature lattice attempts named a working-tree trace path, now the
+committed evidence path with the same digests; `results/exploit_budget.json` and the pair's
+`mechanism_recovery.md` still said no attempt on the fixed build existed, corrected with
+the earlier text kept; the retired PR-1 bands in `data/tools.toml` are marked retired. Two
+new macros print the same-digit design's mean beside its first acquisition, and the
+detection-curve sweep now names the two factors where the sign scatters instead of
+listing only the four where it holds. Gates after the pass: `paper_check` clean at twenty
+pages, `namecheck` clean. The blind panel is a workflow too and was not run.
+
+**In flight.** The turbo-off run (X1) waits on the author, as does the push.

@@ -23,8 +23,9 @@ level     = "binary"
 observes  = ["latency"]
 detects_mechanisms = ["secret-branch", "variable-latency-op"]
 secret_model = "two_class_sampling"
-# dudect's pre-registered decision bands (PR-1): a leak above band_leak,
-# clean below band_clean, inconclusive between.
+# Retired: the PR-1 |t| bands (a leak above band_leak, clean below band_clean,
+# inconclusive between). No verdict has read them since PR-4 replaced the band with
+# the permutation null (bin/dudect_permute.py); kept as the record of the pilot rule.
 band_leak = 500
 band_clean = 10
 architectures = ["x86_64"]

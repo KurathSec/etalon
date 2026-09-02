@@ -85,17 +85,20 @@ mechanism = "division of a secret-dependent value by KYBER_Q, a non-power-of-two
 instruction_class = ["div", "idiv", "divl", "divw", "udiv", "sdiv", "__udivsi3", "__divsi3", "__aeabi_idiv", "__aeabi_uidiv"]
 
 [toolchain]
-cells_required = ["gcc-12.2.0-Os-x86_64-linux-gnu", "clang-14.0.6-O0-x86_64-linux-gnu"]
+cells_required = ["gcc-12.2.0-Os-x86_64-linux-gnu", "gcc-12.2.0-Oz-x86_64-linux-gnu",
+                  "clang-14.0.6-O0-x86_64-linux-gnu", "clang-14.0.6-Oz-x86_64-linux-gnu"]
 # MEASURED across two vendors, not assumed. The secret-dependent division
-# survives as a hardware division instruction in gcc 12.2.0 only at -Os, and in
-# clang 14.0.6 only at -O0. Everywhere else each compiler replaces it with a
-# constant-time reciprocal multiply on its own. The two vendors disagree on
+# survives as a hardware division instruction in gcc 12.2.0 at -Os and -Oz, and
+# in clang 14.0.6 at -O0 and -Oz. Everywhere else each compiler replaces it with
+# a constant-time reciprocal multiply on its own. The two vendors disagree on
 # which cells are safe: neither compiler is safe at every optimisation level,
-# no level is unsafe under both, and which of the size and zero levels emits
-# the division depends on the vendor. The
-# declared ground-truth cells are the two where the leak is emitted; the other
-# six are recorded by BIN-2 as the toolchain-pinning finding, the same source
-# compiling to constant-time code under a different build. This is the corpus's
+# one level, -Oz, is unsafe under both, and apart from it which of the size and
+# zero levels emits the division depends on the vendor (2026-09-02: the locked
+# map grew from eight cells to fourteen, adding -O1, -Oz and -O3 -march=x86-64-v3;
+# this comment used to say only -Os and only -O0). The declared ground-truth
+# cells are the four where the leak is emitted; the other ten are recorded by
+# BIN-2 as the toolchain-pinning finding, the same source compiling to
+# constant-time code under a different build. This is the corpus's
 # central claim, produced as a measurement. See results/kyberslash_emission.json.
 [toolchain.axes.vendor]
 values = ["gcc-12.2.0", "clang-14.0.6"]

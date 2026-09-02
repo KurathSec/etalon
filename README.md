@@ -1018,3 +1018,64 @@ absorbs the line-break shifts prose edits cause.
 since round 14; and `paper/` is gitignored, so every prose change since 2026-08-25 exists
 only in the working tree, with snapshots under `cache/revision/`, which is a decision
 still to take.
+
+## The sixteenth review, and the revision against it
+
+A third-party review arrived on 2026-09-02, written from the paper alone. Its weaknesses
+were checked against the artifact before any of them was acted on, because a reader of the
+paper cannot see the records: of about thirty specific claims, about twenty-two were real
+and cheap to fix, three were wrong as stated, and four were structural facts the paper
+should state once rather than defend (the plan under `cache/revision/` lists them). Two things the reviewer could not see were defects in our own
+records: the recovery generator and its nine attempt records called the vendored Minerva
+attack "error-tolerant by construction" when it tolerates no misclassification at all, and
+the Graviton record said "min-of-11 batches" while the harness loops nine.
+
+**Decisions taken with the author.** The residual gets a committed signature-budget
+bound, not an error-tolerant attack: `bin/matrixssl_budget_bound.py` prints, from the
+measured per-bit signal and noise under the site estimator's crop, what a
+Bleichenbacher-style attack would need (SNR 0.145, an oracle error of 0.471, about 5e5
+signatures at one round of reduction and 3e11 at two), and the row stays "incomplete with a
+quantified bound", because Definition 5 decides residual exploitability by a recovery and a
+bound is not one. wolfSSL moves to the eprint as an attempted reproduction whose samples
+were not retained; the body keeps one row and one sentence saying it is not graded.
+Disclosure stays held; the provenance is corroborated instead (the three tag commits in
+full, their Software Heritage revisions of 2019-06-20, 2020-07-31 and 2022-12-29, the origin
+snapshot of 2025-05-30), Rambus is named, and ETHICS.md gains a clause for a withdrawn
+upstream. The pinned core type, cpu, part kind and free clock range are printed beside the
+turbo state; a turbo-off companion run of the divider figures is prepared for the author to
+run from `cache/revision/turbo-off.sh`, since it needs root for the platform switch. No
+Graviton re-rent: the record holds no per-batch values, so its figure is printed as a point
+estimate with no null. The prose gets a heavy polish in place rather than a rebuild.
+
+**Phase A and B, committed as `efb4a53`.** The records and generators above; fifteen
+retired wordings, two forbidden in the front matter and eleven once-only claims added to
+`data/paper_consistency.toml`, each plant-tested; Table 1 with one denominator per row and
+Table 5 with a key; the bibliography with page ranges added, the `lmtest` author list from
+Crossref, and the VERIFY notes stripped. The build then reported what the strip had done:
+BibTeX skipped two entries whose `note` field had lost its opening (`matrixsslrel`,
+`binsecchanges`, "I was expecting an =") and three whose closing brace had gone with the
+note (`kybercommit`, `libgcryptnews`, `wolfsslrel`, which parsed but printed no note). The
+five were restored from the pre-polish snapshot, minus the VERIFY marker, and a first
+attempt at the last three put two notes on the wrong entries, caught by diffing every
+entry against the snapshot. The eprint PDF had been stale since the strip, because the build
+stops after a BibTeX error, and DOC-1 said so.
+
+**Locked cells (X3).** `bin/build.py` gains `-O1`, `-Oz` and `-O3 -march=x86-64-v3` for both
+compilers, fourteen cells in all. The plan said `-march=native`; a locked cell must rebuild
+to its digest on any host, so the portable x86-64-v3 level stands in and native stays in
+the unlocked flag sweep. The map is now derived from the lock by
+`bin/kyberslash_emission.py`, registered in GEN-2 and plant-tested, and its finding is
+composed from the data: gcc emits the division at `-Os` and `-Oz`, clang at `-O0` and
+`-Oz`, so one level is unsafe under both, which the record used to deny ("no level is
+unsafe under both") because that sentence was kept by hand. The four emitting cells are
+the pair's declared ground truth. BIN-1 rebuilds all 140 binaries to their digests. Figure
+2 draws whatever levels the lock holds and labels each emitting cell with the divide its
+textprint carries (`div` for clang at `-Oz`, `idiv` elsewhere), where it used to print
+`idiv` for every one.
+
+**In flight.** The mechanism ablation (X2): five builds of 4.3.0 from the verified tree,
+differing only in eccMulmodCt's dummy blocks (shipped; no dummy operations; the dummy
+double in place; evolving operands with the double out of place; both), built and
+distinct by digest, awaiting a quiet host for the timing runs. The turbo-off run (X1) waits
+on the author. Then the presentation polish (Phase D) and the closing audit round, blind
+panel, memory and run sheet (Phase E).

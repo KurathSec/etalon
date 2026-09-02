@@ -53,6 +53,16 @@ CELLS = {
     "clang-14.0.6-O2-x86_64-linux-gnu": ("localhost/ct-toolchain/clang-bookworm:1", "O2"),
     "clang-14.0.6-O3-x86_64-linux-gnu": ("localhost/ct-toolchain/clang-bookworm:1", "O3"),
     "clang-14.0.6-Os-x86_64-linux-gnu": ("localhost/ct-toolchain/clang-bookworm:1", "Os"),
+    # Added 2026-09-02 after the sixteenth review: the two remaining standard levels
+    # and one vectorising target. A locked cell must rebuild to its digest on any
+    # host, so the target is the portable x86-64-v3 level, not -march=native (the
+    # flag sweep in results/emission_flag_axis.json carries native, unlocked).
+    "gcc-12.2.0-O1-x86_64-linux-gnu": ("localhost/ct-toolchain/gcc-bookworm:1", "O1"),
+    "gcc-12.2.0-Oz-x86_64-linux-gnu": ("localhost/ct-toolchain/gcc-bookworm:1", "Oz"),
+    "gcc-12.2.0-O3v3-x86_64-linux-gnu": ("localhost/ct-toolchain/gcc-bookworm:1", "O3 -march=x86-64-v3"),
+    "clang-14.0.6-O1-x86_64-linux-gnu": ("localhost/ct-toolchain/clang-bookworm:1", "O1"),
+    "clang-14.0.6-Oz-x86_64-linux-gnu": ("localhost/ct-toolchain/clang-bookworm:1", "Oz"),
+    "clang-14.0.6-O3v3-x86_64-linux-gnu": ("localhost/ct-toolchain/clang-bookworm:1", "O3 -march=x86-64-v3"),
 }
 
 

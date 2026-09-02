@@ -37,6 +37,14 @@ occasionally finds something nobody has reported. If it does:
 3. The pair records the disclosure timeline alongside its provenance, so a reader
    can check that the order was respected.
 
+4. If the maintainer's channel no longer exists, because the vendor withdrew the
+   repository after the tree was acquired, the finding is held rather than
+   published: the tree it was found on is recorded by digest and by an archived
+   location, disclosure is attempted through the successor organisation, and the
+   finding is described only by its measurement until rule 2 is met or the
+   successor confirms that no maintained release remains to fix. (Added
+   2026-09-02: rule 1 assumed a maintainer who can be reached.)
+
 A corpus entry is not a disclosure channel and must never become one.
 
 ## Why this is defensive work

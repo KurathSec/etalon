@@ -1,18 +1,56 @@
 {
   "pair": "kyberslash",
-  "finding": "The secret-dependent division in the Kyber reference code is emitted as a hardware division instruction in some (vendor, optimisation) cells and replaced by a constant-time reciprocal multiply in others. The two compilers disagree on which cells are safe: neither compiler is safe at every optimisation level, no level is unsafe under both, and which of the size and zero levels emits the division depends on the compiler, which is why a corpus item's label must be bound to a pinned toolchain.",
-  "measured_on": "gcc 12.2.0 and clang 14.0.6, x86-64, debian bookworm base",
+  "finding": "The secret-dependent division in the Kyber reference code is emitted as a hardware division instruction in some (vendor, optimisation) cells and replaced by a constant-time reciprocal multiply in others. The two compilers disagree on which cells are safe: gcc emits it at -Os and -Oz, clang emits it at -O0 and -Oz. Neither compiler is safe at every optimisation level, one level, -Oz, is unsafe under both, and apart from it which levels emit depends on the compiler, which is why a corpus item's label must be bound to a pinned toolchain.",
+  "why": "results/kyberslash_emission.json used to be assembled by hand from the lock: the\nsame counts, copied. A copied number is one that can drift from its source when\na cell is added, and the sixteenth-review cycle added six. This script reads the\nlock the build wrote, one entry per (cell, arm), and derives the map and its\nfinding from those counts alone, so the sentence the paper prints about which\nlevels emit is chosen by the data rather than kept by hand.",
+  "method": "For every locked cell of the kyberslash pair: the vendor and the optimisation\nlabel from the cell name, the flags from bin/build.py's cell table, the\nleak-class instruction count of each arm, and whether the division is emitted\n(the vulnerable arm carries at least one leak-class instruction). From the map:\nwhich levels emit under each compiler, whether the compilers disagree, whether\neither is safe at every level, and which levels are unsafe under both. The\nfinding is composed from those predicates; every clause it makes is one the map\nsupports, and the clause about levels unsafe under both is rewritten when the\nintersection is non-empty.",
+  "generator": "bin/kyberslash_emission.py --write",
+  "measured_on": "gcc 12.2.0 and clang 14.0.6, x86-64, debian bookworm images pinned by digest (localhost/ct-toolchain/{gcc,clang}-bookworm:1); counts read from objdump of the entry symbol by bin/build.py, recorded in locks/binaries.lock.json",
+  "levels": [
+    "O0",
+    "O1",
+    "O2",
+    "O3",
+    "O3v3",
+    "Os",
+    "Oz"
+  ],
+  "emitting_by_vendor": {
+    "clang": [
+      "O0",
+      "Oz"
+    ],
+    "gcc": [
+      "Os",
+      "Oz"
+    ]
+  },
+  "levels_unsafe_under_both": [
+    "Oz"
+  ],
   "emission_map": [
     {
       "vendor": "clang",
       "opt": "O0",
+      "flags": "-O0",
+      "cell": "clang-14.0.6-O0-x86_64-linux-gnu",
       "leak_emitted": true,
       "vuln_div_count": 1,
       "patch_div_count": 0
     },
     {
       "vendor": "clang",
+      "opt": "O1",
+      "flags": "-O1",
+      "cell": "clang-14.0.6-O1-x86_64-linux-gnu",
+      "leak_emitted": false,
+      "vuln_div_count": 0,
+      "patch_div_count": 0
+    },
+    {
+      "vendor": "clang",
       "opt": "O2",
+      "flags": "-O2",
+      "cell": "clang-14.0.6-O2-x86_64-linux-gnu",
       "leak_emitted": false,
       "vuln_div_count": 0,
       "patch_div_count": 0
@@ -20,6 +58,17 @@
     {
       "vendor": "clang",
       "opt": "O3",
+      "flags": "-O3",
+      "cell": "clang-14.0.6-O3-x86_64-linux-gnu",
+      "leak_emitted": false,
+      "vuln_div_count": 0,
+      "patch_div_count": 0
+    },
+    {
+      "vendor": "clang",
+      "opt": "O3v3",
+      "flags": "-O3 -march=x86-64-v3",
+      "cell": "clang-14.0.6-O3v3-x86_64-linux-gnu",
       "leak_emitted": false,
       "vuln_div_count": 0,
       "patch_div_count": 0
@@ -27,13 +76,35 @@
     {
       "vendor": "clang",
       "opt": "Os",
+      "flags": "-Os",
+      "cell": "clang-14.0.6-Os-x86_64-linux-gnu",
       "leak_emitted": false,
       "vuln_div_count": 0,
+      "patch_div_count": 0
+    },
+    {
+      "vendor": "clang",
+      "opt": "Oz",
+      "flags": "-Oz",
+      "cell": "clang-14.0.6-Oz-x86_64-linux-gnu",
+      "leak_emitted": true,
+      "vuln_div_count": 1,
       "patch_div_count": 0
     },
     {
       "vendor": "gcc",
       "opt": "O0",
+      "flags": "-O0",
+      "cell": "gcc-12.2.0-O0-x86_64-linux-gnu",
+      "leak_emitted": false,
+      "vuln_div_count": 0,
+      "patch_div_count": 0
+    },
+    {
+      "vendor": "gcc",
+      "opt": "O1",
+      "flags": "-O1",
+      "cell": "gcc-12.2.0-O1-x86_64-linux-gnu",
       "leak_emitted": false,
       "vuln_div_count": 0,
       "patch_div_count": 0
@@ -41,6 +112,8 @@
     {
       "vendor": "gcc",
       "opt": "O2",
+      "flags": "-O2",
+      "cell": "gcc-12.2.0-O2-x86_64-linux-gnu",
       "leak_emitted": false,
       "vuln_div_count": 0,
       "patch_div_count": 0
@@ -48,6 +121,17 @@
     {
       "vendor": "gcc",
       "opt": "O3",
+      "flags": "-O3",
+      "cell": "gcc-12.2.0-O3-x86_64-linux-gnu",
+      "leak_emitted": false,
+      "vuln_div_count": 0,
+      "patch_div_count": 0
+    },
+    {
+      "vendor": "gcc",
+      "opt": "O3v3",
+      "flags": "-O3 -march=x86-64-v3",
+      "cell": "gcc-12.2.0-O3v3-x86_64-linux-gnu",
       "leak_emitted": false,
       "vuln_div_count": 0,
       "patch_div_count": 0
@@ -55,6 +139,17 @@
     {
       "vendor": "gcc",
       "opt": "Os",
+      "flags": "-Os",
+      "cell": "gcc-12.2.0-Os-x86_64-linux-gnu",
+      "leak_emitted": true,
+      "vuln_div_count": 1,
+      "patch_div_count": 0
+    },
+    {
+      "vendor": "gcc",
+      "opt": "Oz",
+      "flags": "-Oz",
+      "cell": "gcc-12.2.0-Oz-x86_64-linux-gnu",
       "leak_emitted": true,
       "vuln_div_count": 1,
       "patch_div_count": 0

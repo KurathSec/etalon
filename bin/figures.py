@@ -105,24 +105,40 @@ def fig_emission():
     cells = json.loads((REPO / "results" / "kyberslash_emission.json")
                        .read_text())["emission_map"]
     vendors = ["gcc", "clang"]
-    opts = ["O0", "O2", "O3", "Os"]
+    # The levels the record carries, in the order its generator sorted them; a
+    # cell the lock does not hold is not drawn, and the axis grows with the lock.
+    opts = list(dict.fromkeys(c["opt"] for c in cells))
+    labels = {"O3v3": "O3\n+v3"}
     grid = {(c["vendor"], c["opt"]): c for c in cells}
 
-    fig, ax = plt.subplots(figsize=(4.2, 1.15))
+    def mnemonic(c):
+        """The divide the cell emits, read from its locked textprint: gcc and clang
+        at -O0 emit idiv, clang at -Oz emits div, and a figure that labels every
+        emitting cell idiv would print an instruction one of them does not carry."""
+        tp = REPO / "locks" / "textprints" / "kyberslash" / c.get("cell", "") / "vulnerable.asm"
+        if tp.exists():
+            for line in tp.read_text().splitlines():
+                parts = line.split("\t")
+                op = parts[2].split()[0] if len(parts) >= 3 and parts[2].split() else ""
+                if op in ("div", "idiv", "divl", "divw"):
+                    return op
+        return "div"
+
+    fig, ax = plt.subplots(figsize=(0.6 * len(opts) + 1.8, 1.15))
     for r, v in enumerate(vendors):
         for col, o in enumerate(opts):
             c = grid[(v, o)]
             leaks = c["leak_emitted"]
             ax.add_patch(plt.Rectangle((col, r), 1, 1, facecolor=(WARM if leaks else LIGHT),
                                        edgecolor="white", lw=2))
-            ax.text(col + 0.5, r + 0.5, ("idiv" if leaks else "reciprocal"),
+            ax.text(col + 0.5, r + 0.5, (mnemonic(c) if leaks else "reciprocal"),
                     ha="center", va="center", fontsize=(8.5 if leaks else 7),
                     color=("white" if leaks else MUTE),
                     fontweight=("bold" if leaks else "normal"))
-    ax.set_xlim(0, 4)
+    ax.set_xlim(0, len(opts))
     ax.set_ylim(0, 2)
-    ax.set_xticks([i + 0.5 for i in range(4)])
-    ax.set_xticklabels(opts)
+    ax.set_xticks([i + 0.5 for i in range(len(opts))])
+    ax.set_xticklabels([labels.get(o, o) for o in opts])
     ax.set_yticks([0.5, 1.5])
     ax.set_yticklabels(vendors)
     ax.set_xlabel("optimisation level")

@@ -1955,11 +1955,18 @@ def as_tex(report: dict) -> str:
     # KyberSlash emission map: cells built, and how many emit the division.
     ep = REPO / "results" / "kyberslash_emission.json"
     if ep.exists():
-        cells = json.loads(ep.read_text()).get("emission_map", [])
+        erec = json.loads(ep.read_text())
+        cells = erec.get("emission_map", [])
         leaking = sum(1 for c in cells if c.get("leak_emitted"))
         emit("nEmissionCells", len(cells))
         emit("nLeakingCells", leaking)
         emit("nConstantTimeCells", len(cells) - leaking)
+        # The optimisation settings the locked map spans, from the generator's own
+        # level list; falls back to the distinct labels for a record written before
+        # the generator existed.
+        levels = erec.get("levels") or sorted({c.get("opt") for c in cells})
+        emit("nEmissionLevels", len(levels))
+        emit("nLevelsUnsafeUnderBoth", len(erec.get("levels_unsafe_under_both", [])))
 
     # Facts about the field, not about this corpus. They are still generated,
     # because a hand-typed 55 is a number nobody can re-derive either.

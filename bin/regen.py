@@ -1650,6 +1650,7 @@ def as_tex(report: dict) -> str:
         out.append(tex_macro("mxBudgetSigsOneRound", _sci(_b["rounds"]["1"]["signatures"])))
         out.append(tex_macro("mxBudgetSigsTwoRounds", _sci(_b["rounds"]["2"]["signatures"])))
         out.append(tex_macro("mxBudgetRawUsable", _sci(_b["raw_signatures_for_ladderleak_low"])))
+
         _la = _mb["ladderleak_anchor"]
         out.append(tex_macro("mxBudgetLadderleakLo", "2^{" + str(_la["signatures_log2_low"]) + "}"))
         out.append(tex_macro("mxBudgetLadderleakHi", "2^{" + str(_la["signatures_log2_high"]) + "}"))
@@ -1674,6 +1675,57 @@ def as_tex(report: dict) -> str:
                     f"{_e['selection_quality']['top_90']['frac_contaminated_full_length'] * 100:.1f}\\%"))
                 out.append(tex_macro(f"aucMatrix{word}K",
                                      f"{_e['auc_time_vs_short_nonce']:.2f}"))
+
+    # The mechanism ablation (results/matrixssl_ablation.json): the two candidate terms
+    # for the residual, built out one at a time and measured. Every macro is NA until
+    # the record exists; a signed term is printed as a magnitude and a direction word,
+    # so the prose never carries a bare minus sign that TeX would set as a hyphen.
+    abp = REPO / "results" / "matrixssl_ablation.json"
+    _abl_names = ("mxAblRealStepTicks", "mxAblShippedGapTicks", "mxAblShippedGapPercent",
+                  "mxAblCopyTermTicks", "mxAblCopyTermSign", "mxAblOperandTermTicks",
+                  "mxAblOperandTermSign", "mxAblBothRemovedTicks", "mxAblUnexplainedPercent",
+                  "mxAblShippedGapBitTicks", "mxAblBothRemovedBitTicks",
+                  "mxAblOrigSameDigitTicks", "mxAblCommittedSameDigitTicks", "mxAblSameDigitZeros",
+                  "mxAblStepOrigTicks", "mxAblStepNopTicks", "mxAblStepInplaceTicks",
+                  "mxAblStepEvolvingOopTicks", "mxAblStepEvolvingTicks", "mxAblStepOrigBitTicks",
+                  "mxAblStepNopBitTicks", "mxAblStepInplaceBitTicks", "mxAblStepEvolvingOopBitTicks",
+                  "mxAblStepEvolvingBitTicks")
+    if abp.exists():
+        _ab = json.loads(abp.read_text())
+        _at = _ab["attribution"]["samedigit"]
+        _bt = _ab["attribution"].get("bit255", {})
+        _sm = _ab["summary"]
+        def _tk(x):
+            return f"{abs(x):,.0f}"
+        def _sign(x):
+            # A positive term means removing that feature WIDENS the gap between a real
+            # step and a dummy step, i.e. the dummy step gets cheaper still.
+            return "widens" if x > 0 else "narrows"
+        out.append(tex_macro("mxAblRealStepTicks", _tk(_at["real_step_ticks"])))
+        out.append(tex_macro("mxAblShippedGapTicks", _tk(_at["shipped_gap_ticks"])))
+        out.append(tex_macro("mxAblShippedGapPercent", f"{100 * _at['shipped_gap_fraction_of_step']:.0f}"))
+        out.append(tex_macro("mxAblCopyTermTicks", _tk(_at["copy_term_ticks"])))
+        out.append(tex_macro("mxAblCopyTermSign", _sign(_at["copy_term_ticks"])))
+        out.append(tex_macro("mxAblOperandTermTicks", _tk(_at["operand_term_ticks"])))
+        out.append(tex_macro("mxAblOperandTermSign", _sign(_at["operand_term_ticks"])))
+        out.append(tex_macro("mxAblBothRemovedTicks", _tk(_at["both_removed_gap_ticks"])))
+        out.append(tex_macro("mxAblUnexplainedPercent", f"{100 * _at['unexplained_fraction_of_shipped_gap']:.0f}"))
+        out.append(tex_macro("mxAblShippedGapBitTicks", _tk(_bt["shipped_gap_ticks"]) if _bt else chr(92) + "NA"))
+        out.append(tex_macro("mxAblBothRemovedBitTicks", _tk(_bt["both_removed_gap_ticks"]) if _bt else chr(92) + "NA"))
+        out.append(tex_macro("mxAblOrigSameDigitTicks", _tk(_sm["orig"]["samedigit"]["mean_delta_ticks"])))
+        out.append(tex_macro("mxAblCommittedSameDigitTicks", _tk(_sm["committed"]["samedigit"]["mean_delta_ticks"])))
+        out.append(tex_macro("mxAblSameDigitZeros", str(_ab["converted_iterations"]["samedigit"])))
+        for _v, _m in (("orig", "Orig"), ("nop", "Nop"), ("inplace", "Inplace"),
+                       ("evolvingoop", "EvolvingOop"), ("evolving", "Evolving")):
+            out.append(tex_macro(f"mxAblStep{_m}Ticks", _tk(_sm[_v]["samedigit"]["per_iteration_ticks"])))
+            out.append(tex_macro(f"mxAblStep{_m}BitTicks", _tk(_sm[_v]["bit255"]["per_iteration_ticks"])))
+        emit("mxAblRepeats", _sm["orig"]["samedigit"]["repeats"])
+        emit("mxAblVariants", len(_ab["variants"]))
+    else:
+        for _n in _abl_names:
+            out.append(tex_macro(_n, chr(92) + "NA"))
+        emit("mxAblRepeats", None)
+        emit("mxAblVariants", None)
 
     # What the original authors report their recovery needs, beside ours (S8). Read
     # from the committed record so the comparison cannot drift from its source.

@@ -1073,9 +1073,23 @@ the pair's declared ground truth. BIN-1 rebuilds all 140 binaries to their diges
 textprint carries (`div` for clang at `-Oz`, `idiv` elsewhere), where it used to print
 `idiv` for every one.
 
-**In flight.** The mechanism ablation (X2): five builds of 4.3.0 from the verified tree,
-differing only in eccMulmodCt's dummy blocks (shipped; no dummy operations; the dummy
-double in place; evolving operands with the double out of place; both), built and
-distinct by digest, awaiting a quiet host for the timing runs. The turbo-off run (X1) waits
-on the author. Then the presentation polish (Phase D) and the closing audit round, blind
-panel, memory and run sheet (Phase E).
+**The mechanism ablation (X2).** Five builds of 4.3.0 from the verified tree, differing only
+inside eccMulmodCt's two dummy blocks and distinct by digest: the shipped code rebuilt the
+same day; no dummy operations; the dummy double in place; evolving operands with the double
+still out of place; both. `bin/matrixssl_ablate.sh` builds and times them with the site
+harness under the four designs, three repeats each, pinned to the same core;
+`bin/matrixssl_ablation.py` patches the source (refusing a tree without its anchors),
+imports the dumps with their digests and diffs, and writes `results/matrixssl_ablation.json`
+with a `--check`. The answer to the hedge the paper carried ("an ablation build that makes
+the doubling in place would settle it"): a real ladder step costs 3,793 ticks and the shipped
+dummy step is cheaper by 1,132, thirty per cent of a step. Making the double in place moves
+the gap by 21 ticks; letting the dummy operands evolve as the ladder's do removes 1,076 of
+it; with both changed 78 ticks per converted iteration remain over sixty-three iterations
+and 693 over one, so the remainder is small and does not scale with the count alone. The
+fixed operands account for the gap and the scratch copies are nearly free, the opposite
+weighting from what a reading of the code suggested. The same-day rebuild of the shipped
+code gives 71,335 ticks on the sixty-three-zero design against 71,607 committed. The paper's
+hedge is replaced by the measurement and its wording retired.
+
+**In flight.** The turbo-off run (X1) waits on the author. Then the presentation polish
+(Phase D) and the closing audit round, blind panel, memory and run sheet (Phase E).

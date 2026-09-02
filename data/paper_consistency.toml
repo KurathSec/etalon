@@ -912,3 +912,11 @@ why = "the wolfSSL attempt's missing configuration is stated once"
 [[once]]
 phrase = "a tick is coarser than the core cycle"
 why = "the tick-to-cycle caveat lives in section 6 only"
+
+[[retired]]
+phrase = "would settle it"
+why = "the mechanism ablation was built and measured on 2026-09-02 (results/matrixssl_ablation.json); the hedge that an ablation build would settle which term dominates is no longer a hedge"
+
+[[retired]]
+phrase = "Which dominates is a statement about the code"
+why = "measured by ablation on 2026-09-02: the fixed operands account for the per-iteration gap and the copies are nearly free"

@@ -959,7 +959,8 @@ def check_gen2() -> Result:
                                     "results/raw/matrixssl/repeats", "--check"]),
               ("matrixssl_recovery", ["bin/matrixssl_recovery.py", "--check"]),
               ("matrixssl_budget_bound", ["bin/matrixssl_budget_bound.py", "--check"]),
-              ("kyberslash_emission", ["bin/kyberslash_emission.py", "--check"]))
+              ("kyberslash_emission", ["bin/kyberslash_emission.py", "--check"]),
+              ("matrixssl_ablation", ["bin/matrixssl_ablation.py", "--check"]))
     bad, skipped = [], []
     for name, cmd in checks:
         r = subprocess.run([sys.executable, *cmd], cwd=REPO,

@@ -1,0 +1,1199 @@
+{
+  "finding": "the MatrixSSL residual is the dummy step's fixed operands: rebuilding the dummy step with evolving operands removes about ninety-five per cent of the per-iteration gap between a real step and a dummy step, making the doubling in place moves it by about two per cent, and what remains after both is small and not proportional to the converted-iteration count",
+  "why": "The fixed eccMulmodCt converts each leading-zero iteration from the real ladder\nstep to a dummy step that is matched in operation count and not in cost, and the\npaper named two candidate terms for the cost gap: the dummy double writes to a\nscratch point, so eccProjectiveDblPoint performs three pstm_copy calls the\nin-place real double skips; and the dummy operands are the fixed pair (P, 2P)\nrather than the evolving ladder state, which feeds magnitude-sensitive\narithmetic the same values every iteration. Which term dominates was a\nstatement about the code. This script turns it into a measurement by building\neach term out and timing the result under the same designs as the site figures.",
+  "builds": "Five builds of the first fixed release from one verified source tree, differing\nonly inside eccMulmodCt's two dummy blocks. orig: the shipped code, rebuilt in\nthe same session as a same-day baseline. nop: the dummy blocks do nothing, so a\nleading-zero iteration costs nothing and the difference measures a full real\nstep. inplace: the dummy double is made in place on the scratch point, which\nremoves the three copies and keeps the fixed operands. evolvingoop: the dummy\nstep runs on a scratch pair that evolves like the real ladder, with the double\nstill out of place, which removes the fixed operands and keeps the copies.\nevolving: both removed, the real step replicated on the scratch pair. Each is\nacquired with the site harness under every design the site figures use, the\nsame repeats, batches and measurements, pinned to the same core, and the\ncommitted first-release dumps stand beside the same-day baseline.",
+  "accounting": "For a design that varies the leading-zero count alone, the class difference\ndivided by the number of converted iterations is the per-iteration cost gap\nbetween a real step and a dummy step. The copy term is the per-iteration\ndifference between inplace and orig; the operand term is the difference between\nevolvingoop and orig; evolving carries what neither term explains. The nop\nbuild supplies the denominator: a whole real step in ticks. samedigit converts\nsixty-three iterations and is the precise lever; bit255 converts one and is the\ncheck. same converts none and is the null; diffdigit changes the digit count\nand so the loop bound, and is reported but enters no per-iteration figure.",
+  "reading": "A real ladder step costs about 3,800 ticks on this host, and the shipped dummy\nstep recovers all but about 1,130 of it, so one leading zero saves about thirty\nper cent of a step. The two terms are far from equal. Making the dummy double in\nplace moves the gap by about twenty ticks: the three copies are nearly free.\nLetting the dummy operands evolve as the real ladder's do removes about 1,080\nticks of the 1,130: the fixed operands account for the gap, and the two terms\nadd within noise. With both changed, about eighty ticks per converted iteration\nremain over sixty-three iterations and about 690 over one, so the remainder is\nsmall and does not scale with the count alone; it is reported, not attributed.\nThe same-day rebuild of the shipped code reproduces the committed first-release\nfigures within their spread, so the variants are comparable to either. What the\nfix balanced was the operation count; what it left unbalanced was the\narithmetic's dependence on the operand values, which a dummy step on constant\noperands does not hide.",
+  "assumptions": [
+    "the shipped dummy step and the real step differ only in what the ablation changes: which point is doubled, whether in place, and whether the operands evolve",
+    "the site estimator (95th-percentile crop, seeded bootstrap) applies unchanged, so the figures are comparable to the site figures",
+    "the per-iteration figure divides by the converted-iteration count the design fixes (one for bit255, sixty-three for samedigit)",
+    "a same-day orig build that agrees with the committed dumps within their intervals licenses comparing the variants to either",
+    "timing figures are in TSC ticks on the acquisition host and are host-conditional like every timing figure here"
+  ],
+  "generator": "bin/matrixssl_ablation.py --write",
+  "manifest": "results/raw/matrixssl/ablation/manifest.json",
+  "variants": [
+    "orig",
+    "nop",
+    "inplace",
+    "evolvingoop",
+    "evolving"
+  ],
+  "designs": [
+    "same",
+    "bit255",
+    "samedigit",
+    "diffdigit"
+  ],
+  "converted_iterations": {
+    "same": 0,
+    "bit255": 1,
+    "samedigit": 63,
+    "diffdigit": null
+  },
+  "summary": {
+    "committed": {
+      "same": {
+        "repeats": 3,
+        "mean_delta_ticks": -68.26430055072221,
+        "min_delta_ticks": -106.43751906137913,
+        "max_delta_ticks": 2.5703385109081864,
+        "per_iteration_ticks": null,
+        "converted_iterations": 0
+      },
+      "bit255": {
+        "repeats": 3,
+        "mean_delta_ticks": 1092.538615264697,
+        "min_delta_ticks": 1030.3157868259586,
+        "max_delta_ticks": 1145.8877085184213,
+        "per_iteration_ticks": 1092.538615264697,
+        "converted_iterations": 1
+      },
+      "samedigit": {
+        "repeats": 3,
+        "mean_delta_ticks": 71607.09703269794,
+        "min_delta_ticks": 70307.85099618183,
+        "max_delta_ticks": 72519.90388080222,
+        "per_iteration_ticks": 1136.6205878206024,
+        "converted_iterations": 63
+      },
+      "diffdigit": {
+        "repeats": 3,
+        "mean_delta_ticks": 246483.71379084318,
+        "min_delta_ticks": 242941.10256724805,
+        "max_delta_ticks": 250111.02233180637,
+        "per_iteration_ticks": null,
+        "converted_iterations": null
+      }
+    },
+    "orig": {
+      "same": {
+        "repeats": 3,
+        "mean_delta_ticks": 3.588963962548102,
+        "min_delta_ticks": -106.97982930997387,
+        "max_delta_ticks": 77.54454602533951,
+        "per_iteration_ticks": null,
+        "converted_iterations": 0
+      },
+      "bit255": {
+        "repeats": 3,
+        "mean_delta_ticks": 1178.5942229374778,
+        "min_delta_ticks": 1134.8324299911037,
+        "max_delta_ticks": 1236.3061552983709,
+        "per_iteration_ticks": 1178.5942229374778,
+        "converted_iterations": 1
+      },
+      "samedigit": {
+        "repeats": 3,
+        "mean_delta_ticks": 71334.67083196172,
+        "min_delta_ticks": 70794.69702683087,
+        "max_delta_ticks": 71710.56313857785,
+        "per_iteration_ticks": 1132.2963624120907,
+        "converted_iterations": 63
+      },
+      "diffdigit": {
+        "repeats": 3,
+        "mean_delta_ticks": 248412.30627954085,
+        "min_delta_ticks": 246211.04535336932,
+        "max_delta_ticks": 252627.570563528,
+        "per_iteration_ticks": null,
+        "converted_iterations": null
+      }
+    },
+    "nop": {
+      "same": {
+        "repeats": 3,
+        "mean_delta_ticks": -22.286414727102965,
+        "min_delta_ticks": -112.31660843384452,
+        "max_delta_ticks": 73.2184728384018,
+        "per_iteration_ticks": null,
+        "converted_iterations": 0
+      },
+      "bit255": {
+        "repeats": 3,
+        "mean_delta_ticks": 3389.9570545738875,
+        "min_delta_ticks": 3210.6608720000368,
+        "max_delta_ticks": 3511.077105792938,
+        "per_iteration_ticks": 3389.9570545738875,
+        "converted_iterations": 1
+      },
+      "samedigit": {
+        "repeats": 3,
+        "mean_delta_ticks": 238954.76719627195,
+        "min_delta_ticks": 235875.1293119958,
+        "max_delta_ticks": 242974.40284809214,
+        "per_iteration_ticks": 3792.9328126392375,
+        "converted_iterations": 63
+      },
+      "diffdigit": {
+        "repeats": 3,
+        "mean_delta_ticks": 242141.81550800218,
+        "min_delta_ticks": 241584.37831352744,
+        "max_delta_ticks": 242642.0063866719,
+        "per_iteration_ticks": null,
+        "converted_iterations": null
+      }
+    },
+    "inplace": {
+      "same": {
+        "repeats": 3,
+        "mean_delta_ticks": -23.73081333756757,
+        "min_delta_ticks": -94.73083029850386,
+        "max_delta_ticks": 96.19095245259814,
+        "per_iteration_ticks": null,
+        "converted_iterations": 0
+      },
+      "bit255": {
+        "repeats": 3,
+        "mean_delta_ticks": 1101.7889209253092,
+        "min_delta_ticks": 1026.3595286824275,
+        "max_delta_ticks": 1168.2390686387662,
+        "per_iteration_ticks": 1101.7889209253092,
+        "converted_iterations": 1
+      },
+      "samedigit": {
+        "repeats": 3,
+        "mean_delta_ticks": 72687.22195579197,
+        "min_delta_ticks": 71619.38543429715,
+        "max_delta_ticks": 73361.06208312092,
+        "per_iteration_ticks": 1153.765427869714,
+        "converted_iterations": 63
+      },
+      "diffdigit": {
+        "repeats": 3,
+        "mean_delta_ticks": 244323.8901956173,
+        "min_delta_ticks": 243274.3410674252,
+        "max_delta_ticks": 245906.83651405363,
+        "per_iteration_ticks": null,
+        "converted_iterations": null
+      }
+    },
+    "evolvingoop": {
+      "same": {
+        "repeats": 3,
+        "mean_delta_ticks": 14.43686450785026,
+        "min_delta_ticks": -62.0004572046455,
+        "max_delta_ticks": 156.90243541263044,
+        "per_iteration_ticks": null,
+        "converted_iterations": 0
+      },
+      "bit255": {
+        "repeats": 3,
+        "mean_delta_ticks": 610.3680592120314,
+        "min_delta_ticks": 366.40081205265597,
+        "max_delta_ticks": 826.079617760377,
+        "per_iteration_ticks": 610.3680592120314,
+        "converted_iterations": 1
+      },
+      "samedigit": {
+        "repeats": 3,
+        "mean_delta_ticks": 3540.2443254119717,
+        "min_delta_ticks": 3082.629159159027,
+        "max_delta_ticks": 3883.739250886254,
+        "per_iteration_ticks": 56.194354371618594,
+        "converted_iterations": 63
+      },
+      "diffdigit": {
+        "repeats": 3,
+        "mean_delta_ticks": 247025.31577347647,
+        "min_delta_ticks": 244074.69212787505,
+        "max_delta_ticks": 248707.764687835,
+        "per_iteration_ticks": null,
+        "converted_iterations": null
+      }
+    },
+    "evolving": {
+      "same": {
+        "repeats": 3,
+        "mean_delta_ticks": -16.61700428960224,
+        "min_delta_ticks": -99.96507052378729,
+        "max_delta_ticks": 48.13313248916529,
+        "per_iteration_ticks": null,
+        "converted_iterations": 0
+      },
+      "bit255": {
+        "repeats": 3,
+        "mean_delta_ticks": 692.9293553098881,
+        "min_delta_ticks": 576.5786594566889,
+        "max_delta_ticks": 756.7147084937897,
+        "per_iteration_ticks": 692.9293553098881,
+        "converted_iterations": 1
+      },
+      "samedigit": {
+        "repeats": 3,
+        "mean_delta_ticks": 4943.405868176294,
+        "min_delta_ticks": 4725.282643818762,
+        "max_delta_ticks": 5365.4694669395685,
+        "per_iteration_ticks": 78.46675981232212,
+        "converted_iterations": 63
+      },
+      "diffdigit": {
+        "repeats": 3,
+        "mean_delta_ticks": 244233.3547154142,
+        "min_delta_ticks": 242891.42340322142,
+        "max_delta_ticks": 246186.84607134573,
+        "per_iteration_ticks": null,
+        "converted_iterations": null
+      }
+    }
+  },
+  "attribution": {
+    "samedigit": {
+      "real_step_ticks": 3792.9328126392375,
+      "shipped_gap_ticks": 1132.2963624120907,
+      "shipped_gap_fraction_of_step": 0.29852792505022113,
+      "copy_term_ticks": 21.469065457623174,
+      "operand_term_ticks": -1076.1020080404721,
+      "both_removed_gap_ticks": 78.46675981232212,
+      "unexplained_fraction_of_shipped_gap": 0.06929878291330652
+    },
+    "bit255": {
+      "real_step_ticks": 3389.9570545738875,
+      "shipped_gap_ticks": 1178.5942229374778,
+      "shipped_gap_fraction_of_step": 0.34767231677677557,
+      "copy_term_ticks": -76.80530201216857,
+      "operand_term_ticks": -568.2261637254463,
+      "both_removed_gap_ticks": 692.9293553098881,
+      "unexplained_fraction_of_shipped_gap": 0.5879286881135907
+    }
+  },
+  "runs": [
+    {
+      "file": "results/raw/matrixssl/ablation/evolving.bit255.r1.bin.gz",
+      "variant": "evolving",
+      "design": "bit255",
+      "repeat": 1,
+      "delta_ticks": 745.4946979791857,
+      "ci95": [
+        612.1313977930288,
+        875.0265153146231
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolving.bit255.r2.bin.gz",
+      "variant": "evolving",
+      "design": "bit255",
+      "repeat": 2,
+      "delta_ticks": 756.7147084937897,
+      "ci95": [
+        633.0877692887152,
+        882.1832190170476
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolving.bit255.r3.bin.gz",
+      "variant": "evolving",
+      "design": "bit255",
+      "repeat": 3,
+      "delta_ticks": 576.5786594566889,
+      "ci95": [
+        312.0116884729126,
+        843.0926840088388
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolving.diffdigit.r1.bin.gz",
+      "variant": "evolving",
+      "design": "diffdigit",
+      "repeat": 1,
+      "delta_ticks": 243621.79467167542,
+      "ci95": [
+        241208.79008266376,
+        245787.41468203446
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56970
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolving.diffdigit.r2.bin.gz",
+      "variant": "evolving",
+      "design": "diffdigit",
+      "repeat": 2,
+      "delta_ticks": 242891.42340322142,
+      "ci95": [
+        240565.37201555545,
+        245073.18004136573
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolving.diffdigit.r3.bin.gz",
+      "variant": "evolving",
+      "design": "diffdigit",
+      "repeat": 3,
+      "delta_ticks": 246186.84607134573,
+      "ci95": [
+        243758.07543205013,
+        248322.8865294809
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56970
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolving.same.r1.bin.gz",
+      "variant": "evolving",
+      "design": "same",
+      "repeat": 1,
+      "delta_ticks": 48.13313248916529,
+      "ci95": [
+        -110.63537284521735,
+        201.82613832429627
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolving.same.r2.bin.gz",
+      "variant": "evolving",
+      "design": "same",
+      "repeat": 2,
+      "delta_ticks": -99.96507052378729,
+      "ci95": [
+        -233.45683557167067,
+        33.56438636031231
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolving.same.r3.bin.gz",
+      "variant": "evolving",
+      "design": "same",
+      "repeat": 3,
+      "delta_ticks": 1.9809251658152789,
+      "ci95": [
+        -120.30737724989304,
+        131.59186470516119
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolving.samedigit.r1.bin.gz",
+      "variant": "evolving",
+      "design": "samedigit",
+      "repeat": 1,
+      "delta_ticks": 4739.465493770549,
+      "ci95": [
+        4599.626537066937,
+        4867.607556893677
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolving.samedigit.r2.bin.gz",
+      "variant": "evolving",
+      "design": "samedigit",
+      "repeat": 2,
+      "delta_ticks": 4725.282643818762,
+      "ci95": [
+        4531.921083267196,
+        4914.475750504743
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolving.samedigit.r3.bin.gz",
+      "variant": "evolving",
+      "design": "samedigit",
+      "repeat": 3,
+      "delta_ticks": 5365.4694669395685,
+      "ci95": [
+        5210.280781081587,
+        5519.352823948604
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolvingoop.bit255.r1.bin.gz",
+      "variant": "evolvingoop",
+      "design": "bit255",
+      "repeat": 1,
+      "delta_ticks": 826.079617760377,
+      "ci95": [
+        652.3605719076004,
+        990.9938741240999
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolvingoop.bit255.r2.bin.gz",
+      "variant": "evolvingoop",
+      "design": "bit255",
+      "repeat": 2,
+      "delta_ticks": 638.6237478230614,
+      "ci95": [
+        519.1517666992731,
+        751.075485581276
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolvingoop.bit255.r3.bin.gz",
+      "variant": "evolvingoop",
+      "design": "bit255",
+      "repeat": 3,
+      "delta_ticks": 366.40081205265597,
+      "ci95": [
+        219.0137358140142,
+        507.5114191762928
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolvingoop.diffdigit.r1.bin.gz",
+      "variant": "evolvingoop",
+      "design": "diffdigit",
+      "repeat": 1,
+      "delta_ticks": 248293.49050471932,
+      "ci95": [
+        245970.14972283825,
+        250541.3090548827
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolvingoop.diffdigit.r2.bin.gz",
+      "variant": "evolvingoop",
+      "design": "diffdigit",
+      "repeat": 2,
+      "delta_ticks": 244074.69212787505,
+      "ci95": [
+        241755.03195210337,
+        246186.13990038654
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolvingoop.diffdigit.r3.bin.gz",
+      "variant": "evolvingoop",
+      "design": "diffdigit",
+      "repeat": 3,
+      "delta_ticks": 248707.764687835,
+      "ci95": [
+        246383.33835492123,
+        250901.18444401634
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolvingoop.same.r1.bin.gz",
+      "variant": "evolvingoop",
+      "design": "same",
+      "repeat": 1,
+      "delta_ticks": 156.90243541263044,
+      "ci95": [
+        11.699488620617194,
+        302.8689067608967
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolvingoop.same.r2.bin.gz",
+      "variant": "evolvingoop",
+      "design": "same",
+      "repeat": 2,
+      "delta_ticks": -51.59138468443416,
+      "ci95": [
+        -193.25853627630278,
+        86.05585823244179
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolvingoop.same.r3.bin.gz",
+      "variant": "evolvingoop",
+      "design": "same",
+      "repeat": 3,
+      "delta_ticks": -62.0004572046455,
+      "ci95": [
+        -201.20327950331264,
+        80.89699315810566
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56970
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolvingoop.samedigit.r1.bin.gz",
+      "variant": "evolvingoop",
+      "design": "samedigit",
+      "repeat": 1,
+      "delta_ticks": 3082.629159159027,
+      "ci95": [
+        2753.641244750016,
+        3440.040933467884
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolvingoop.samedigit.r2.bin.gz",
+      "variant": "evolvingoop",
+      "design": "samedigit",
+      "repeat": 2,
+      "delta_ticks": 3654.364566190634,
+      "ci95": [
+        3518.777044087881,
+        3779.155837751535
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/evolvingoop.samedigit.r3.bin.gz",
+      "variant": "evolvingoop",
+      "design": "samedigit",
+      "repeat": 3,
+      "delta_ticks": 3883.739250886254,
+      "ci95": [
+        3726.0610273183324,
+        4040.140716181125
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/inplace.bit255.r1.bin.gz",
+      "variant": "inplace",
+      "design": "bit255",
+      "repeat": 1,
+      "delta_ticks": 1168.2390686387662,
+      "ci95": [
+        1032.0882606195578,
+        1310.1939815395745
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/inplace.bit255.r2.bin.gz",
+      "variant": "inplace",
+      "design": "bit255",
+      "repeat": 2,
+      "delta_ticks": 1110.7681654547341,
+      "ci95": [
+        981.6351597844739,
+        1235.1343578880944
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/inplace.bit255.r3.bin.gz",
+      "variant": "inplace",
+      "design": "bit255",
+      "repeat": 3,
+      "delta_ticks": 1026.3595286824275,
+      "ci95": [
+        880.978980040981,
+        1166.4759767654934
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/inplace.diffdigit.r1.bin.gz",
+      "variant": "inplace",
+      "design": "diffdigit",
+      "repeat": 1,
+      "delta_ticks": 245906.83651405363,
+      "ci95": [
+        243590.99094031742,
+        248203.69651318484
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/inplace.diffdigit.r2.bin.gz",
+      "variant": "inplace",
+      "design": "diffdigit",
+      "repeat": 2,
+      "delta_ticks": 243274.3410674252,
+      "ci95": [
+        240867.55316275675,
+        245544.79295312008
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/inplace.diffdigit.r3.bin.gz",
+      "variant": "inplace",
+      "design": "diffdigit",
+      "repeat": 3,
+      "delta_ticks": 243790.49300537305,
+      "ci95": [
+        241484.65580272238,
+        245998.25541296662
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/inplace.same.r1.bin.gz",
+      "variant": "inplace",
+      "design": "same",
+      "repeat": 1,
+      "delta_ticks": -72.652562166797,
+      "ci95": [
+        -185.2964651519782,
+        40.12091759519535
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/inplace.same.r2.bin.gz",
+      "variant": "inplace",
+      "design": "same",
+      "repeat": 2,
+      "delta_ticks": 96.19095245259814,
+      "ci95": [
+        -62.35633929133765,
+        245.91181151865163
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/inplace.same.r3.bin.gz",
+      "variant": "inplace",
+      "design": "same",
+      "repeat": 3,
+      "delta_ticks": -94.73083029850386,
+      "ci95": [
+        -206.15386536475853,
+        23.100604293629214
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/inplace.samedigit.r1.bin.gz",
+      "variant": "inplace",
+      "design": "samedigit",
+      "repeat": 1,
+      "delta_ticks": 71619.38543429715,
+      "ci95": [
+        70916.70184057276,
+        72296.56054373739
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/inplace.samedigit.r2.bin.gz",
+      "variant": "inplace",
+      "design": "samedigit",
+      "repeat": 2,
+      "delta_ticks": 73361.06208312092,
+      "ci95": [
+        72688.18024825385,
+        74004.6456325645
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/inplace.samedigit.r3.bin.gz",
+      "variant": "inplace",
+      "design": "samedigit",
+      "repeat": 3,
+      "delta_ticks": 73081.21834995784,
+      "ci95": [
+        72374.54564036711,
+        73710.4228528458
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/nop.bit255.r1.bin.gz",
+      "variant": "nop",
+      "design": "bit255",
+      "repeat": 1,
+      "delta_ticks": 3448.1331859286875,
+      "ci95": [
+        3306.715142996126,
+        3572.5965454294987
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/nop.bit255.r2.bin.gz",
+      "variant": "nop",
+      "design": "bit255",
+      "repeat": 2,
+      "delta_ticks": 3511.077105792938,
+      "ci95": [
+        3340.667499702383,
+        3677.9918574532667
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/nop.bit255.r3.bin.gz",
+      "variant": "nop",
+      "design": "bit255",
+      "repeat": 3,
+      "delta_ticks": 3210.6608720000368,
+      "ci95": [
+        3075.283070325467,
+        3340.842232226353
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/nop.diffdigit.r1.bin.gz",
+      "variant": "nop",
+      "design": "diffdigit",
+      "repeat": 1,
+      "delta_ticks": 241584.37831352744,
+      "ci95": [
+        239251.8192505002,
+        243865.14729828248
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/nop.diffdigit.r2.bin.gz",
+      "variant": "nop",
+      "design": "diffdigit",
+      "repeat": 2,
+      "delta_ticks": 242642.0063866719,
+      "ci95": [
+        240285.63181471627,
+        244800.10465697895
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/nop.diffdigit.r3.bin.gz",
+      "variant": "nop",
+      "design": "diffdigit",
+      "repeat": 3,
+      "delta_ticks": 242199.0618238072,
+      "ci95": [
+        239926.6404927778,
+        244447.43343385227
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/nop.same.r1.bin.gz",
+      "variant": "nop",
+      "design": "same",
+      "repeat": 1,
+      "delta_ticks": 73.2184728384018,
+      "ci95": [
+        -52.75921659544692,
+        196.73997305672373
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/nop.same.r2.bin.gz",
+      "variant": "nop",
+      "design": "same",
+      "repeat": 2,
+      "delta_ticks": -27.761108585866168,
+      "ci95": [
+        -157.87948146020645,
+        95.80638603219397
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/nop.same.r3.bin.gz",
+      "variant": "nop",
+      "design": "same",
+      "repeat": 3,
+      "delta_ticks": -112.31660843384452,
+      "ci95": [
+        -247.64888958040393,
+        22.565146635210777
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56970
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/nop.samedigit.r1.bin.gz",
+      "variant": "nop",
+      "design": "samedigit",
+      "repeat": 1,
+      "delta_ticks": 238014.76942872792,
+      "ci95": [
+        235727.47450485022,
+        240249.74569642753
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/nop.samedigit.r2.bin.gz",
+      "variant": "nop",
+      "design": "samedigit",
+      "repeat": 2,
+      "delta_ticks": 235875.1293119958,
+      "ci95": [
+        233566.8298085796,
+        238130.3363687277
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/nop.samedigit.r3.bin.gz",
+      "variant": "nop",
+      "design": "samedigit",
+      "repeat": 3,
+      "delta_ticks": 242974.40284809214,
+      "ci95": [
+        240677.22340902477,
+        245100.792099342
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/orig.bit255.r1.bin.gz",
+      "variant": "orig",
+      "design": "bit255",
+      "repeat": 1,
+      "delta_ticks": 1164.6440835229587,
+      "ci95": [
+        1015.4493183972081,
+        1319.968333925103
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/orig.bit255.r2.bin.gz",
+      "variant": "orig",
+      "design": "bit255",
+      "repeat": 2,
+      "delta_ticks": 1236.3061552983709,
+      "ci95": [
+        1119.6212873821903,
+        1348.3810424196881
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/orig.bit255.r3.bin.gz",
+      "variant": "orig",
+      "design": "bit255",
+      "repeat": 3,
+      "delta_ticks": 1134.8324299911037,
+      "ci95": [
+        1012.0569232875656,
+        1259.6845420744269
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/orig.diffdigit.r1.bin.gz",
+      "variant": "orig",
+      "design": "diffdigit",
+      "repeat": 1,
+      "delta_ticks": 246211.04535336932,
+      "ci95": [
+        243907.11698049874,
+        248383.82164713964
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/orig.diffdigit.r2.bin.gz",
+      "variant": "orig",
+      "design": "diffdigit",
+      "repeat": 2,
+      "delta_ticks": 252627.570563528,
+      "ci95": [
+        250302.9334868323,
+        254816.43668184662
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/orig.diffdigit.r3.bin.gz",
+      "variant": "orig",
+      "design": "diffdigit",
+      "repeat": 3,
+      "delta_ticks": 246398.3029217252,
+      "ci95": [
+        244072.53453230465,
+        248641.32795302875
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/orig.same.r1.bin.gz",
+      "variant": "orig",
+      "design": "same",
+      "repeat": 1,
+      "delta_ticks": 77.54454602533951,
+      "ci95": [
+        -64.88646404369501,
+        224.00960801346807
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/orig.same.r2.bin.gz",
+      "variant": "orig",
+      "design": "same",
+      "repeat": 2,
+      "delta_ticks": -106.97982930997387,
+      "ci95": [
+        -229.31056178565487,
+        27.31236713309186
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/orig.same.r3.bin.gz",
+      "variant": "orig",
+      "design": "same",
+      "repeat": 3,
+      "delta_ticks": 40.20217517227866,
+      "ci95": [
+        -123.06413987813866,
+        211.34761259006333
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/orig.samedigit.r1.bin.gz",
+      "variant": "orig",
+      "design": "samedigit",
+      "repeat": 1,
+      "delta_ticks": 71710.56313857785,
+      "ci95": [
+        71020.49711308218,
+        72359.62482166625
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/orig.samedigit.r2.bin.gz",
+      "variant": "orig",
+      "design": "samedigit",
+      "repeat": 2,
+      "delta_ticks": 70794.69702683087,
+      "ci95": [
+        70109.17809464064,
+        71465.81499267134
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/ablation/orig.samedigit.r3.bin.gz",
+      "variant": "orig",
+      "design": "samedigit",
+      "repeat": 3,
+      "delta_ticks": 71498.75233047642,
+      "ci95": [
+        70805.57070271554,
+        72173.49961392721
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/repeats/4-3-0.bit255.r1.bin.gz",
+      "variant": "committed",
+      "design": "bit255",
+      "repeat": 1,
+      "delta_ticks": 1145.8877085184213,
+      "ci95": [
+        1013.7434546103701,
+        1268.3569443032784
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/repeats/4-3-0.bit255.r2.bin.gz",
+      "variant": "committed",
+      "design": "bit255",
+      "repeat": 2,
+      "delta_ticks": 1101.412350449711,
+      "ci95": [
+        993.335080526938,
+        1206.139601927163
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/repeats/4-3-0.bit255.r3.bin.gz",
+      "variant": "committed",
+      "design": "bit255",
+      "repeat": 3,
+      "delta_ticks": 1030.3157868259586,
+      "ci95": [
+        930.0732027086545,
+        1132.2234006193348
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/repeats/4-3-0.diffdigit.r1.bin.gz",
+      "variant": "committed",
+      "design": "diffdigit",
+      "repeat": 1,
+      "delta_ticks": 246399.01647347515,
+      "ci95": [
+        243986.91014634026,
+        248533.8322864989
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56970
+    },
+    {
+      "file": "results/raw/matrixssl/repeats/4-3-0.diffdigit.r2.bin.gz",
+      "variant": "committed",
+      "design": "diffdigit",
+      "repeat": 2,
+      "delta_ticks": 242941.10256724805,
+      "ci95": [
+        240537.91602244644,
+        245234.0033639558
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/repeats/4-3-0.diffdigit.r3.bin.gz",
+      "variant": "committed",
+      "design": "diffdigit",
+      "repeat": 3,
+      "delta_ticks": 250111.02233180637,
+      "ci95": [
+        247890.64998117613,
+        252297.68388775105
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/repeats/4-3-0.same.r1.bin.gz",
+      "variant": "committed",
+      "design": "same",
+      "repeat": 1,
+      "delta_ticks": -106.43751906137913,
+      "ci95": [
+        -226.71634461208015,
+        21.69239987377655
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/repeats/4-3-0.same.r2.bin.gz",
+      "variant": "committed",
+      "design": "same",
+      "repeat": 2,
+      "delta_ticks": 2.5703385109081864,
+      "ci95": [
+        -144.44507033573464,
+        148.22756107255117
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56969
+    },
+    {
+      "file": "results/raw/matrixssl/repeats/4-3-0.same.r3.bin.gz",
+      "variant": "committed",
+      "design": "same",
+      "repeat": 3,
+      "delta_ticks": -100.92572110169567,
+      "ci95": [
+        -220.3339954600786,
+        20.09825569850509
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/repeats/4-3-0.samedigit.r1.bin.gz",
+      "variant": "committed",
+      "design": "samedigit",
+      "repeat": 1,
+      "delta_ticks": 71993.5362211098,
+      "ci95": [
+        71324.4934397371,
+        72645.44306369082
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/repeats/4-3-0.samedigit.r2.bin.gz",
+      "variant": "committed",
+      "design": "samedigit",
+      "repeat": 2,
+      "delta_ticks": 70307.85099618183,
+      "ci95": [
+        69600.13998492928,
+        70982.00133573616
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    },
+    {
+      "file": "results/raw/matrixssl/repeats/4-3-0.samedigit.r3.bin.gz",
+      "variant": "committed",
+      "design": "samedigit",
+      "repeat": 3,
+      "delta_ticks": 72519.90388080222,
+      "ci95": [
+        71855.12596096529,
+        73161.29068863539
+      ],
+      "records": 59967,
+      "cropped_sample_size": 56968
+    }
+  ]
+}

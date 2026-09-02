@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import sys
 import tomllib
@@ -113,6 +114,7 @@ def _analyser_reach_split(corpus: list, tiers: dict) -> dict:
             "analyser_scored_names": scored,
             # The two ways the scored set and the recall-eligible set differ.
             "analyser_scored_not_eligible": len([n for n in scored if n not in eligible]),
+            "analyser_scored_eligible": len([n for n in scored if n in eligible]),
             "eligible_no_analyser": len([n for n in sorted(eligible) if not reach.get(n)])}
 
 
@@ -543,6 +545,7 @@ def as_tex(report: dict) -> str:
     emit("nRecallImageRecovery", c["recall_eligible_image_recovery"])
     emit("nBlindspotPairs", c["analyser_scored_pairs"])
     emit("nBlindspotTierC", c["analyser_scored_not_eligible"])
+    emit("nBlindspotEligible", c["analyser_scored_eligible"])
     emit("nEligibleNoAnalyser", c["eligible_no_analyser"])
 
     cen = report["census"]
@@ -666,6 +669,7 @@ def as_tex(report: dict) -> str:
         e2e = g["results"]["end_to_end_coeff_to_bit_Os"]
         codegen = g["results"]["codegen"]["udiv_in_coeff_to_bit"]
         dud = g["results"].get("dudect_on_aarch64", {})
+        out.append(tex_macro("gravHostShort", "Graviton3"))
         out.append(tex_macro("gravHost", "AWS Graviton3 (Neoverse\\,V1)"))
         # The one aarch64 build cell, named from its committed textprint path. It is
         # outside the digest-pinning discipline (an unpinned host compiler, a textprint
@@ -723,6 +727,16 @@ def as_tex(report: dict) -> str:
         # The aarch64 control is reported as a permutation p and a counter-resolution
         # fact, not as a tau: on this counter a coeff_to_bit call is a handful of ticks,
         # so a per-call tau is not a meaningful effect size (see the JSON note).
+        # The spread behind the end-to-end delta is the min and max over the repeats
+        # the harness runs (measure_arm.py), not a confidence interval, and it is printed
+        # as a range beside the point estimate; no null exists for this estimator.
+        if e2e.get("delta_ci_ticks"):
+            out.append(tex_macro("gravDeltaRangeLo", f"{e2e['delta_ci_ticks'][0]:.3f}"))
+            out.append(tex_macro("gravDeltaRangeHi", f"{e2e['delta_ci_ticks'][1]:.3f}"))
+        _ma = REPO / "pairs" / "kyberslash" / "graviton" / "measure_arm.py"
+        _mr2 = re.search(r"for _ in range\((\d+)\)", _ma.read_text()) if _ma.exists() else None
+        if _mr2:
+            emit("gravDeltaRepeats", int(_mr2.group(1)))
         vp = dud.get("verdict_permutation", {})
         if vp.get("p_value") is not None:
             out.append(tex_macro("gravDudectP", f"{vp['p_value']:.2f}"))
@@ -756,6 +770,18 @@ def as_tex(report: dict) -> str:
                 val = {"notsupported": "not supported",
                        "notavailable": "not available"}.get(str(h[key]), str(h[key]))
                 out.append(tex_macro(macro, val.replace("_", "\\_")))
+        # Which core the acquisitions pin to, and what kind: a hybrid part has dividers
+        # of two designs, so the core type is part of the host index, not a detail.
+        if h.get("pinned_core_type"):
+            out.append(tex_macro("acqCoreType", str(h["pinned_core_type"])))
+        if h.get("pinned_cpu") is not None:
+            out.append(tex_macro("acqPinnedCpu", str(h["pinned_cpu"])))
+        if h.get("hybrid") is not None:
+            out.append(tex_macro("acqPartKind", "hybrid" if h["hybrid"] else "uniform"))
+        _fk = h.get("frequency_khz") or {}
+        if _fk.get("scaling_min") and _fk.get("scaling_max"):
+            out.append(tex_macro("acqFreqMinGHz", f"{_fk['scaling_min'] / 1e6:.1f}"))
+            out.append(tex_macro("acqFreqMaxGHz", f"{_fk['scaling_max'] / 1e6:.1f}"))
         if all(h.get(k) is not None for k in ("cpu_family", "cpu_model_num", "cpu_stepping")):
             out.append(tex_macro(
                 "acqCpuid",
@@ -999,6 +1025,49 @@ def as_tex(report: dict) -> str:
         pcs = xr.get("per_call_magnitude_sensitivity")
         if pcs and pcs.get("mean_ticks_at_max_n") is not None:
             out.append(tex_macro("hostPerCallTicks", f"{abs(pcs['mean_ticks_at_max_n']):.2f}"))
+    # The turbo-off companion of the x86 record, acquired by the user with the core clock
+    # held by the platform's no_turbo switch. The macros exist so the prose can print the
+    # two conditions side by side; while the record is absent they expand to NA and the
+    # table row to nothing, and regen refuses a record that does not say turbo disabled.
+    xto = REPO / "results" / "kyberslash_x86_idiv_turbooff.json"
+    _tf = {"hostIdivSpreadTurboOff": None, "hostStepTicksTurboOff": None,
+           "hostNoiseFloorTurboOff": None, "hostPerCallTicksTurboOff": None,
+           "hostPerCallTTurboOff": None, "hostPerCallRecipTicksTurboOff": None,
+           "hostPerCallRecipTTurboOff": None, "hostPipelinedCallTicksTurboOff": None,
+           "hostDeltaTicksTurboOff": None, "hostDeltaPercentTurboOff": None,
+           "hostTscGHzTurboOff": None}
+    _row = ""
+    if xto.exists():
+        _xd = json.loads(xto.read_text())
+        if str(_xd.get("host", {}).get("turbo")) != "disabled":
+            raise SystemExit("regen: the turbo-off companion record does not say turbo disabled")
+        _x = _xd["results"]
+        _st = _x["kyberslash_operand_range_step"]
+        _tf["hostIdivSpreadTurboOff"] = f"{_x['idiv_latency_operand_dependent']['spread_ticks']:.3f}"
+        _tf["hostStepTicksTurboOff"] = f"{abs(_st['step_ticks']):.3f}"
+        _tf["hostNoiseFloorTurboOff"] = f"{_st['noise_floor_ticks']:.2f}"
+        _ps = _x.get("per_call_magnitude_sensitivity", {})
+        if _ps.get("mean_ticks_at_max_n") is not None:
+            _tf["hostPerCallTicksTurboOff"] = f"{abs(_ps['mean_ticks_at_max_n']):.2f}"
+            _tf["hostPerCallTTurboOff"] = f"{_ps.get('by_n', {}).get('n_4000000_t', 0):.0f}"
+        _ab = _x.get("per_call_reciprocal_ablation", {}).get("by_n", {})
+        if _ab.get("recip_n_4000000_mean_ticks") is not None:
+            _tf["hostPerCallRecipTicksTurboOff"] = f"{abs(_ab['recip_n_4000000_mean_ticks']):.2f}"
+            _tf["hostPerCallRecipTTurboOff"] = f"{_ab['recip_n_4000000_t']:.0f}"
+        _xe2 = _x.get("end_to_end_coeff_to_bit_Os", {})
+        if _xe2.get("low_coeffs_ticks_per_call"):
+            _tf["hostPipelinedCallTicksTurboOff"] = f"{_xe2['low_coeffs_ticks_per_call']:.1f}"
+            _tf["hostDeltaTicksTurboOff"] = f"{abs(_xe2['secret_dependent_delta_ticks']):.3f}"
+            _tf["hostDeltaPercentTurboOff"] = f"{_xe2['delta_percent_of_call']:.2f}" + chr(92) + "%"
+        if _x.get("tsc_ghz"):
+            _tf["hostTscGHzTurboOff"] = f"{_x['tsc_ghz']:.2f}"
+        _row = (r"\acqHost{}, turbo off & " + str(_tf["hostIdivSpreadTurboOff"]) + " & "
+                + str(_tf["hostStepTicksTurboOff"]) + " & " + str(_tf["hostDeltaTicksTurboOff"])
+                + " & " + str(_tf["hostDeltaPercentTurboOff"]) + " & "
+                + str(_tf["hostNoiseFloorTurboOff"]) + r" \\")
+    for _k, _v in _tf.items():
+        out.append(tex_macro(_k, _v if _v is not None else chr(92) + "NA"))
+    out.append("\\newcommand{\\hostTurboOffRow}{" + _row + "}")
     # Permutation-null verdicts: the budget each run supplies its own null from, and
     # the p-values the paper quotes for the nonce arms.
     pm = REPO / "results" / "dudect_permutation.json"
@@ -1564,6 +1633,27 @@ def as_tex(report: dict) -> str:
         out.append(tex_macro("mxLatticeInfoLo", str(min(_i))))
         out.append(tex_macro("mxLatticeInfoHi", str(max(_i))))
         out.append(tex_macro("mxKeyBits", str(_mr["key_bits"])))
+    # The error-tolerant attack's budget, bounded from the measured signal and noise
+    # (results/matrixssl_budget_bound.json); an estimate, printed as one.
+    mbp = REPO / "results" / "matrixssl_budget_bound.json"
+    if mbp.exists():
+        _mb = json.loads(mbp.read_text())
+        _m, _b = _mb["measured"], _mb["bound"]
+
+        def _sci(x):
+            e = int(math.floor(math.log10(x)))
+            return f"{x / 10 ** e:.0f}" + chr(92) + "times10^{" + str(e) + "}"
+        out.append(tex_macro("mxBudgetSnr", f"{_m['snr']:.2f}"))
+        out.append(tex_macro("mxBudgetSignalTicks", f"{_m['signal_ticks']:,.0f}"))
+        out.append(tex_macro("mxBudgetNoiseTicks", f"{_m['noise_sd_ticks']:,.0f}"))
+        out.append(tex_macro("mxBudgetOracleErr", f"{_b['oracle_error']:.2f}"))
+        out.append(tex_macro("mxBudgetSigsOneRound", _sci(_b["rounds"]["1"]["signatures"])))
+        out.append(tex_macro("mxBudgetSigsTwoRounds", _sci(_b["rounds"]["2"]["signatures"])))
+        out.append(tex_macro("mxBudgetRawUsable", _sci(_b["raw_signatures_for_ladderleak_low"])))
+        _la = _mb["ladderleak_anchor"]
+        out.append(tex_macro("mxBudgetLadderleakLo", "2^{" + str(_la["signatures_log2_low"]) + "}"))
+        out.append(tex_macro("mxBudgetLadderleakHi", "2^{" + str(_la["signatures_log2_high"]) + "}"))
+        out.append(tex_macro("mxBudgetLadderleakBits", str(_la["group_bits"])))
         # The depth accounting that actually decides the sweep: credited against
         # observed leading-zero depth in the fastest ninety, at the headline budget.
         _dep = _mr.get("depth", {}).get("100000") or {}
@@ -1650,6 +1740,14 @@ def as_tex(report: dict) -> str:
         if "255" in pc and "193" in pc:
             a, b = (abs(pc[k]["delta_vs_256"]) for k in ("255", "193"))
             out.append(tex_macro("icDeltaSpreadPercent", f"{abs(b - a) / b * 100:.1f}\\%"))
+        # The counter, named, and the spread as instructions and as ticks: 1% of 53,157 is
+        # a few hundred instructions, a few tens of ticks, against a 72,000-tick difference.
+        _icd = json.loads(icp.read_text())
+        out.append(tex_macro("icCounter", str(_icd.get("method", "")).split(" ")[0]))
+        if "255" in pc and "193" in pc and _icd.get("instructions_per_tick"):
+            _sp = abs(abs(pc["193"]["delta_vs_256"]) - abs(pc["255"]["delta_vs_256"]))
+            out.append(tex_macro("icDeltaSpreadInstr", f"{_sp:,.0f}"))
+            out.append(tex_macro("icDeltaSpreadTicks", f"{_sp / _icd['instructions_per_tick']:.0f}"))
         if "192" in pc:
             out.append(tex_macro("icPercentDigitShort",
                                  f"{abs(pc['192']['percent_vs_256']):.0f}\\%"))

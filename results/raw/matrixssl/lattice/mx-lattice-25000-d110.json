@@ -3,7 +3,7 @@
  "trace_sha256": "1b3f703c33635adb8c2ec1684cb1f0397ce26c51a9805a6be1632233666d8c26",
  "signatures_in_trace": 25000,
  "budget": 25000,
- "attack": "pairs/minerva/vendor/attack/attack.py (timing-ordered, error-tolerant), params: {\"dimension\": 110, \"betas\": [15, 20, 30, 40, 45, 48, 51, 53, 55, 58, 60], \"attack\": {\"type\": \"full\", \"skip\": 50, \"start\": 3000, \"step\": 200, \"num\": 7000, \"seed\": null}}",
+ "attack": "pairs/minerva/vendor/attack/attack.py (timing-ordered, no error tolerance), params: {\"dimension\": 110, \"betas\": [15, 20, 30, 40, 45, 48, 51, 53, 55, 58, 60], \"attack\": {\"type\": \"full\", \"skip\": 50, \"start\": 3000, \"step\": 200, \"num\": 7000, \"seed\": null}}",
  "curve": "secp256r1",
  "hash": "sha256",
  "image": "localhost/ct-toolchain/minerva-recover:1",

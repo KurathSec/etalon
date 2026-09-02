@@ -320,7 +320,9 @@ analysers (now I1 to I3) to a single question the instrument is built to answer,
 deployed constant-time fix actually holds. Pointed at three real Minerva remediations, it
 finds three outcomes. libgcrypt fixed the leak upstream of the primitive an analyser can be
 pointed at. wolfSSL's fix holds, over a deployed leak its own dummy-operation balancing had
-already reduced to 0.03%. MatrixSSL (CVE-2019-13629) added a constant-time scalar
+already reduced to 0.03%. (Corrected 2026-09-02 UTC: that grade was withdrawn the same day it
+was written; wolfSSL is not graded, its build configuration is unrecorded and nothing was
+retained, see `results/fix_verification.json`.) MatrixSSL (CVE-2019-13629) added a constant-time scalar
 multiplication by default, "in response to the Minerva attack," that still sets its loop
 bound from the secret nonce's digit count: the fix is incomplete, its residual measurable
 (dudect tau 0.551 pre-fix to 0.123 fixed, same-length control clean) and present through the
@@ -946,7 +948,73 @@ observations is three claims, not quantities: the wolfSSL case, the key-ordered 
 on the pre-fix trace, and the aarch64 run that predates the harness correction; the paper
 names them under "What is still not recomputable".
 
+Corrected 2026-09-02 (UTC): the sentence above used to be current and now counts one claim
+too many. The key-ordered lattice run was superseded on 2026-08-27 by nine timing-ordered
+attempts on the fixed build, all recorded (`results/matrixssl_recovery.json`), so two
+claims rest on uncommitted observations, the wolfSSL readings and the aarch64 run; and the
+paper's paragraph is now titled "What is not recomputable".
+
 Two generators refuse to write a result that is not there: the containment one fails if the
 library's call and the corrected one differ by more than two per cent, and the instruction one
 fails if the implied retire rate exceeds what a core can reach. Either would have caught the
 original defect.
+
+## The fifteenth review, and the cycle that followed
+
+All dates UTC. A fourteen-section external review arrived after round 14. Its plan was
+approved on 2026-08-27 with four decisions taken then: a declarative title, Table 2's
+build/analyse/verify columns filled for all thirty-seven tools with citations, disclosure
+held, and five measurements run (E1, E2, E12, E14, E15) with the rest deferred by choice.
+The structural half (numbering, definitions, tables, background, references) landed as
+`20cae10`.
+
+**Five measurements.** E15: the permutation null now shuffles within the three declared
+acquisition batches, read from a sidecar the adapter writes; re-deciding every committed
+arm moved no verdict. E1: the KyberSlash patched arm was not upstream's fix but an
+equivalent reciprocal; it is now upstream's `dda29cc` form, verified exact over the signed
+range, and its re-acquired dudect arm reads p = 0.16 where the old arm's 0.02 had been the
+paper's one named borderline row (PR-4 amendment 5). E14: `results/host.json` records the
+frequency range during acquisition. E12: the 0.55-tick per-call effect on the acquisition
+host has the high-magnitude class faster, and the identical design over the fix's reciprocal
+multiply leaves 0.08 ticks, so it is the arrangement amplified by a longer instruction and
+not operand-magnitude latency; at the granularity an attack consumes, one 256-coefficient
+polynomial, 400,000 pairs resolve nothing to 1.93 ticks of a 1,116-tick call
+(`results/kyberslash_x86_idiv.json`). E2: nine timing-ordered lattice attempts on the fixed
+MatrixSSL build, 25,000 to 100,000 signatures at lattice dimensions 90 to 130, recover no
+key. The reason is depth of ordering, not budget: the ladder is monotone at about 2,300
+ticks per leading zero, the fastest ninety of 100,000 are 94 per cent genuinely short, but
+the attack's rank model credits them with about eleven leading zeros where the timing
+order supplies about six. Traces taken on an idle host select at 5.6 per cent contamination
+against 28.9 on the committed trace, so host load, not the residual, had produced the
+earlier figure (`results/matrixssl_recovery.json`, checked by GEN-2; the 50,000 and
+100,000 signature traces and keys are committed).
+
+**Four audit rounds, 39, 9, 9 and 1 findings.** Round two's blocking finding was
+forensically real: the method section said the MatrixSSL repeat dumps carry 56,968 to
+56,970 records because non-positive deltas are dropped at write time. All three hold the
+full 59,967, the first byte-identical to the committed single dump, and no delta was ever
+dropped; the smaller figure is the effect estimator's post-95-per-cent-crop sample size.
+The record's field is now `cropped_sample_size` beside `records`, and two retired phrases
+fail the build if the story returns. Round three's nine findings were all siblings of round
+two's at sites a per-site fix had not reached, so it was swept by class, and it fixed a
+generator defect this cycle had introduced: reading a coefficient from a C source mid-block
+made the provenance table credit fourteen host macros to that source. Round four returned
+one finding, the audit correcting its own round-one wording. Commits `b960235`, `6dc4965`,
+`445a5d9`, `8c5b694`.
+
+**A polish pass, and a skill.** Two passes over the prose removed self-reference about the
+document, corrective narrative about earlier drafts, defensive writing, machine register
+and non-structural redundancy: 2,842 words, 650 from the submission body and 2,192 from
+the appendices. Three over-cuts were restored by reading the result: a limitation that
+survived only in an eprint-only file, the definition of a term the abstract still used, and
+a rewrite whose relative clause could attach to the wrong noun. Every gate the passes broke
+traced to a rewrite and none to a cut, which is why the general skill written from it,
+`paper-polish`, cuts and repairs only. A modest `\emergencystretch` in the preamble now
+absorbs the line-break shifts prose edits cause.
+
+**State on 2026-09-02.** `paper_check` clean with the content inside the twenty-page cap,
+`selfcheck` 21 of 21, the tests 19 of 19, `namecheck` clean. Seven commits ahead of
+`origin/main`, unpushed. Open: the blind panel has not been re-run on the rebuilt paper
+since round 14; and `paper/` is gitignored, so every prose change since 2026-08-25 exists
+only in the working tree, with snapshots under `cache/revision/`, which is a decision
+still to take.

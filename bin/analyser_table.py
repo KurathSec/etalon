@@ -88,6 +88,20 @@ def build():
             r["year"] = int(str(r["year"]).strip()[:4])
         except (TypeError, ValueError):
             r["year"] = None
+    # The year column is the cited document's year where the row cites one, the
+    # inventory's own field otherwise: the inventory dates STAnalyzer 2017 while the
+    # thesis it cites is 2020, and leaves two rows blank that their entries date.
+    _bib = REPO / "paper" / "tches" / "refs.bib"
+    _years = {}
+    if _bib.exists():
+        for m in re.finditer(r"@\w+\{\s*([^,\s]+)\s*,(.*?)(?=\n@|\Z)", _bib.read_text(), re.S):
+            y = re.search(r"\byear\s*=\s*[{\"]?(\d{4})", m.group(2))
+            if y:
+                _years[m.group(1)] = int(y.group(1))
+    for r in kept:
+        _k = (mech.get(r["slug"], {}).get("cite") or "").split(",")[0]
+        if _k and _years.get(_k):
+            r["year"] = _years[_k]
     kept.sort(key=lambda r: (r["year"] or 9999, r["title"].lower()))
 
     for r in kept:
@@ -236,7 +250,12 @@ def main() -> int:
         f"budget cell means the tool's own documentation corroborates it. Soundness: "
         f"\\Sfull{{}} sound, \\Spart{{}} sound with restrictions, \\Snone{{}} no "
         f"guarantee, \\Sother{{}} guarantees a different property. Scoring: \\Scored{{}} "
-        f"scored here, \\Adapter{{}} adapter built but not scored per pair.}}\n"
+        f"scored here, \\Adapter{{}} adapter built but not scored per pair. Yr is the year of the "
+        f"document the row cites, the inventory's own where it cites none; Lvl is the level "
+        f"analysed, B binary, I intermediate representation, S source, T trace; under Detects, "
+        f"b is a secret-dependent branch, a a secret-indexed address, v a variable-latency "
+        f"instruction; Bud is the budget a clean verdict is conditional on, $n$ a sample size, "
+        f"cov a coverage, path a path bound.}}\n"
         "\\label{tab:analysers}\n\\setlength{\\tabcolsep}{3pt}\n"
         "\\begin{tabular}{@{}lrclcccllc@{}}\n\\toprule\n"
         " & & & & \\multicolumn{3}{c}{Detects} & & & \\\\\n\\cmidrule(lr){5-7}\n"

@@ -110,7 +110,8 @@ def build() -> dict:
                    "by commit, run inside localhost/ct-toolchain/minerva-recover:1 by "
                    "pairs/matrixssl-minerva/recover/recover.py. It sorts every signature by "
                    "elapsed time and assigns each rank a leading-zero bound, so it is "
-                   "timing-ordered and error-tolerant by construction."),
+                   "timing-ordered but tolerates no misclassification: a rank-derived bound scales "
+                   "each lattice row with no slack, no subset retry and no outlier rejection."),
         "host": ("the acquisition host; every trace was taken with nothing else running, "
                  "which matters: a trace taken under load selects far worse"),
         "key_bits": KEY_BITS,

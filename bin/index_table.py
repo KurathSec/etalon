@@ -78,7 +78,7 @@ def main() -> int:
         ("I1 build cell", "(vendor, version, opt, triple)",
          f"division emitted in {leaking} of {cells}, and the {len(vendors)} compilers "
          f"disagree about which",
-         f"{cells}/{cells} \\texttt{{x86\\_64}} cells rebuilt to digest", "\\ref{sec:toolchain}",
+         f"{cells} pinned \\texttt{{x86\\_64}} cells", "\\ref{sec:toolchain}",
          f"{ks_tier}, emission measured here"),
         ("I2 host", "micro\\-architecture",
          "divider with no step resolvable at \\hostNoiseFloor{} tick in a serial chain, "
@@ -90,8 +90,9 @@ def main() -> int:
          f"{applicable} applicable of {rows_total} rows", "\\ref{sec:blindspots}",
          "A/B/C: " + "/".join(str(by_tier.get(t, 0)) for t in "ABC")
          + " pairs; recall over A and B"),
-        ("I4 fix site and facet", "$(s, f, \\mathcal{A}, B)$",
-         "closed, incomplete, and outside the domain",
+        ("I4 fix site and facet", "$(s, f, \\mathcal{A}, B, h)$",
+         ", ".join(fv["libraries"][l]["site_closure"]
+                   for l in ("libgcrypt", "matrixssl", "wolfssl")),
          f"{built} built, {retained} yielding a retained measurement, "
          f"of {len(cand)} examined", "\\ref{sec:fixes}",
          f"{lg_tier} (libgcrypt, by recovery); the one fix-site label measured here (MatrixSSL)"),
@@ -110,8 +111,8 @@ def main() -> int:
         "\\begin{table}[t]\n\\centering\\footnotesize\n\\renewcommand{\\arraystretch}{0.95}\n"
         "\\caption{The four indices, what each ranges over, what moved when it did, the "
         "denominator each figure is out of, the section that obtains it, and the evidence "
-        "tier it rests on. The rebuild column for the "
-        f"build cell is BIN-1, {b1['binaries_checked']:,} \\texttt{{x86\\_64}} binaries reproduced "
+        "tier it rests on. Every build cell is rebuilt on demand by BIN-1, "
+        f"{b1['binaries_checked']:,} \\texttt{{x86\\_64}} binaries reproduced "
         f"to their recorded \\texttt{{.text}} digest with {b1.get('discrepancies', 0)} discrepancies; "
         "the one aarch64 cell is outside that discipline (\\Cref{sec:toolchain}).}\n"
         "\\label{tab:indices}\n"

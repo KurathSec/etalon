@@ -15,6 +15,11 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent.parent
 OUT = REPO / "results" / "kyberslash_x86_idiv.json"
+# A companion record (the turbo-off re-run) is written elsewhere and carries a host block
+# captured at run time, because results/host.json is the record of the corpus acquisitions
+# and says turbo enabled. KS_X86_EXPECT_TURBO refuses a run whose host does not match.
+if os.environ.get("KS_X86_OUT"):
+    OUT = pathlib.Path(os.environ["KS_X86_OUT"])
 
 def build(src, extra, libs=()):
     exe = HERE / (Path(src).stem)
@@ -50,6 +55,22 @@ def idiv_count_source(opt):
     # div at all, so a count of 0 means the compiler removed the division here.
     return len(re.findall(r"\b(?:i?div)[bwlq]?\s", d))
 
+def _host_block():
+    """The committed host record, or a fresh capture for a companion record."""
+    if not os.environ.get("KS_X86_OUT"):
+        return json.loads((REPO / "results" / "host.json").read_text())
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("host_facts", REPO / "bin" / "host_facts.py")
+    hf = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(hf)
+    h = hf.capture()
+    want = os.environ.get("KS_X86_EXPECT_TURBO")
+    if want and h.get("turbo") != want:
+        raise SystemExit(f"measure.py: this host reports turbo {h.get('turbo')!r}, "
+                         f"the run expects {want!r}; not writing {OUT}")
+    return h
+
+
 def main():
     lat = run(build("idiv_lat_x86.c", ["-O2"]))
     rng = run(build("ks_range_x86.c", ["-O2"]))
@@ -84,7 +105,7 @@ def main():
     doc = {
         "finding": "kyberslash-x86-leak-presence",
         "measured_utc": os.environ.get("MEASURE_UTC", ""),
-        "host": json.loads((REPO / "results" / "host.json").read_text()),
+        "host": _host_block(),
         "regenerable": "on this x86 host: taskset -c 2 python3 pairs/kyberslash/x86/measure.py. "
                        "Unlike the Graviton measurement this is not architecture-locked.",
         "results": {

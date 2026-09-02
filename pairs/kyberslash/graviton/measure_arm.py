@@ -64,7 +64,7 @@ def main():
     delta_mean = statistics.mean(deltas)
     doc = {
         "finding": "kyberslash-graviton-microarch",
-        "measured_utc": "2026-08-24",
+        "measured_utc": "2026-08-25",
         "host": {"cpu": "AWS Graviton3 (Neoverse-V1)", "cpuid_part": "0x41:0xd40",
                  "counter_ghz": rng.get("counter_ghz"),
                  "note": "Rented c7g.xlarge, aarch64. Counter is cntvct_el0 (fixed rate, "
@@ -111,7 +111,7 @@ def main():
                 "noise_floor_ticks": rng.get("noise_floor"),
             },
             "end_to_end_coeff_to_bit_Os": {
-                "note": "Two-class over the real coeff_to_bit, min-of-11 batches, 10 repeats. "
+                "note": "Two-class over the real coeff_to_bit, min-of-9 batches, 10 repeats. "
                         "Low class = coeff in [0,832] (quotient 0), high = [1664,3328] (quotient "
                         ">= 1). The operand-magnitude delta a full reduction call carries.",
                 "low_coeffs_ticks_per_call": low,

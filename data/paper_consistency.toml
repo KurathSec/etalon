@@ -763,3 +763,152 @@ retired_in = "bin/dudect_permute.py docstring, round 3 of this cycle"
 why = """No committed dump dropped a delta: every corpus and MatrixSSL dump holds exactly
 59,967 records (19,989 x 3), as the sidecars record. The 56,968 figure is a 95% crop, not a
 dropped-delta remainder."""
+
+# ---- sixteenth review: retired wordings, each corrected at its source ----
+[[retired]]
+phrase = "error-tolerant by construction"
+retired_in = "results/matrixssl_recovery.json and recover.py literals, the sixteenth review"
+why = """The vendored Minerva attack sorts by elapsed time and bakes a rank-derived leading-zero
+bound into every lattice row with no slack, no subset retry and no outlier rejection, so it
+tolerates no misclassification. A budget bound for an error-tolerant attack is recorded instead
+(results/matrixssl_budget_bound.json) and the row stays incomplete."""
+
+[[retired]]
+phrase = "timing-ordered and error-tolerant"
+retired_in = "recover.py docstring, the sixteenth review"
+why = "the two-adjective spelling of the same false framing; the instrument is timing-ordered but not error-tolerant"
+
+[[retired]]
+phrase = "there is no hardware division"
+retired_in = "sec/intro.tex, the sixteenth review"
+why = """The Cortex-A7 implements UDIV and SDIV. The software routine the published attack timed
+comes from the 32-bit build target's ISA baseline, which is the build-cell index acting at a
+third target, not a property of the core."""
+
+[[retired]]
+phrase = "from the remote vantage"
+retired_in = "sec/index.tex, the sixteenth review"
+why = """The published attacks do not share a vantage: KyberSlash and the ladder are local, and
+Minerva's library signatures were collected by a local C program on a laptop (eprint 2020/728).
+Only the MAC comparison is a remote attack."""
+
+[[retired]]
+phrase = "neither carries an"
+retired_in = "sec/index.tex Definition 2, the sixteenth review"
+why = "Leak(b,h) is now an explicit abbreviation for exists n Leak(b,h,n); the arity overload is gone"
+
+[[retired]]
+phrase = "of a full call"
+retired_in = "shared/front.tex, the sixteenth review"
+why = "the call is the 2.05-tick coeff_to_bit call amortised over a batch, not a decapsulation; name it"
+
+[[retired]]
+phrase = "into a full call"
+retired_in = "sec/f3-microarch.tex, the sixteenth review"
+why = "same as 'of a full call'"
+
+[[retired]]
+phrase = "in a full call"
+retired_in = "sec/intro.tex, the sixteenth review"
+why = "same as 'of a full call'"
+
+[[retired]]
+phrase = "minimum cycles"
+retired_in = "sec/fixes.tex, the sixteenth review"
+why = "the libgcrypt probe reads rdtscp; its figures are TSC ticks and the record's key name is a misnomer"
+
+[[retired]]
+phrase = "libgcrypt: the same patch"
+retired_in = "sec/fixes.tex paragraph heading, the sixteenth review"
+why = "the measured claim is scoped to 1.8.4 against 1.8.5; the heading now names the release"
+
+[[retired]]
+phrase = "an ablation build we did not make"
+retired_in = "sec/fixes.tex, the sixteenth review"
+why = "the mechanism sentence is stated as a source-level hypothesis in the register the wolfSSL case uses; the ablation is planned"
+
+[[retired]]
+phrase = "closed where a tool looks"
+retired_in = "sec/conclusion.tex, the sixteenth review"
+why = "the opposite of the finding: libgcrypt is closed along the deployed path and unchanged at the primitive a tool drives"
+
+[[retired]]
+phrase = "yields a declared boundary"
+retired_in = "sec/conclusion.tex, the sixteenth review"
+why = "wolfSSL is not graded; the boundary account moved to the eprint with the attempt"
+
+[[retired]]
+phrase = "outside the method's domain"
+retired_in = "sec/fixes.tex, the sixteenth review"
+why = "the wolfSSL paragraph moved to the eprint as an attempted reproduction; the body keeps one sentence"
+
+[[retired]]
+phrase = "recovery fails on both arms"
+retired_in = "sec/fixes.tex table row, the sixteenth review"
+why = "the wolfSSL row now reads not graded with a pointer to the recorded attempt"
+
+[[retired]]
+phrase = "the admission rule is not met"
+retired_in = "shared/front.tex and sec/intro.tex, the sixteenth review"
+allow_in = ["sec/ep-limits.tex"]
+why = "the abstract and introduction say 'wolfSSL is not graded'; the rule is named where the attempt is recorded"
+
+[[retired]]
+phrase = "a boundary of the method rather than a property of the patch"
+retired_in = "sec/intro.tex, the sixteenth review"
+allow_in = ["sec/ep-limits.tex"]
+why = "stated once, beside the recorded attempt"
+
+[[forbidden]]
+phrase = "tier-C"
+in_files = ["shared/front.tex"]
+why = "a term defined in section 3 must not carry the abstract"
+
+[[forbidden]]
+phrase = "fix-site"
+in_files = ["shared/front.tex"]
+why = "a term defined in section 3 must not carry the abstract"
+
+[[once]]
+phrase = "witnesses the existential"
+why = "the soundness assumption linking the modelled host set to real hosts is stated once, in section 3"
+
+[[once]]
+phrase = "discriminates nothing"
+why = "the per-call design's verdict on its own arrangement is reconciled once, in section 7"
+
+[[once]]
+phrase = "point estimate with no null"
+why = "the min-of-batches estimator's status is stated once, in section 5"
+
+[[once]]
+phrase = "not a property of a core"
+why = "the Cortex-A7 routine as a build-target effect is stated once, in section 5"
+
+[[once]]
+phrase = "do the equivalent per run"
+why = "the RTLF contrast is stated once, in section 7"
+
+[[once]]
+phrase = "where the index bites"
+why = "section 7's evaluation size and shape is stated once"
+
+[[once]]
+phrase = "knowledge of what they planted"
+why = "the SCOUT-CT proximity and the difference are stated once, in section 2"
+
+[[once]]
+phrase = "names the intended design"
+why = "libgcrypt's relocated outcome as Minerva's own mitigation is stated once, in section 8"
+
+[[once]]
+phrase = "cannot account for"
+why = "the instruction-spread arithmetic is stated once, in section 9"
+
+[[once]]
+phrase = "build configuration is unrecorded"
+why = "the wolfSSL attempt's missing configuration is stated once"
+
+[[once]]
+phrase = "a tick is coarser than the core cycle"
+why = "the tick-to-cycle caveat lives in section 6 only"

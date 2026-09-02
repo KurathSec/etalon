@@ -143,7 +143,7 @@
         "4-3-0-open": "eec42aa",
         "4-6-0-open": "effeb14"
       },
-      "source_commits_note": "The mirror commit each tag archive was cut from, read from the '@version' stamp the build system carries in common.mk of each tree, so it is verifiable from the sources themselves rather than from a repository that may move.",
+      "source_commits_note": "The mirror commit each tag archive was cut from, read from the '@version' stamp the build system carries in common.mk of each tree, so it is verifiable from the sources themselves rather than from a repository that may move. Corrected 2026-09-02: the full commit ids and their Software Heritage archival are recorded beside these stamps (source_commits_full, source_commits_software_heritage); the stamps match their first seven hex digits.",
       "exploitability_note": "The leading-zero ladder is monotonic and steep (on the committed 25,000-signature 4-3-0 trace, median signing time falls about 2,600 ticks for the first leading zero and about 14,100 by the sixth, results/exploit_budget_matrixssl.json leading_zero_ladder; an earlier revision of this note quoted 2700 and 19700, the ladder of the mislabelled 4.2.1 pre-fix trace withdrawn in the exploitability field above, corrected 2026-08-27), so the leak is real and ordered. An earlier revision of this note went on to say that what it lacks is enough separation for a rank-based selection to deliver a clean short-nonce set; that was a property of the committed 25,000-signature trace's acquisition, not of the residual, since the quiet-host traces select at 5.6% contamination (corrected 2026-08-27). What the residual lacks is depth of ordering: the timing order supplies about six leading zeros in the fastest ninety where the attack's rank model credits about eleven (results/matrixssl_recovery.json depth).",
       "deterministic_cross_check": {
         "conclusion": "ALGORITHMIC, not microarchitectural: classes with an identical digit count and therefore an identical loop bound execute different numbers of instructions. See pairs/matrixssl-minerva/evidence/instruction_counts.json.",
@@ -363,7 +363,36 @@
         "dump_sha256_note": "Digests of the dumps every design in this block was computed from. Replaced 2026-08-26 when the corpus re-acquired this case on a corrected harness: the earlier dumps were taken with a zeroed curve `a` coefficient where the library passes NULL, so they timed a different curve. STAT-1 refuses a dump whose bytes do not match its digest, which is what caught the replacement."
       },
       "site_closure": "incomplete",
-      "site_closure_basis": "Definition 4, tab:closure row 4: delta at s is resolvable within the design's measurements on the acquisition host (mx430_bit255v256, every acquisition's interval excluding zero) and no threshold under the attack model is shown to exceed it, nine timing-ordered lattice attempts on the fixed build recovering no key (results/matrixssl_recovery.json)."
+      "site_closure_basis": "Definition 4, tab:closure row 4: delta at s is resolvable within the design's measurements on the acquisition host (mx430_bit255v256, every acquisition's interval excluding zero) and no threshold under the attack model is shown to exceed it, nine timing-ordered lattice attempts on the fixed build recovering no key (results/matrixssl_recovery.json).",
+      "source_commits_full": {
+        "4-2-1-open": "91fd0f130294629fe6f17078c5306af42ca6cfa5",
+        "4-3-0-open": "eec42aa814dca8285457cc808a150347b3ac8c00",
+        "4-6-0-open": "effeb14219ab9b9560ddf0ea56f939a1aa8f1d71"
+      },
+      "source_commits_software_heritage": {
+        "checked_utc": "2026-09-02",
+        "origin": "https://github.com/BlobbyBob/matrixssl",
+        "origin_last_full_visit": "2025-05-30",
+        "origin_snapshot": "c5496384a515ac17b4116a64b814fe9e3f9d1eab",
+        "revisions": {
+          "4-2-1-open": {
+            "archived": true,
+            "date": "2019-06-20T12:58:47+03:00",
+            "message": "MatrixSSL 4.2.1"
+          },
+          "4-3-0-open": {
+            "archived": true,
+            "date": "2020-07-31T13:31:27+03:00",
+            "message": "MatrixSSL 4.3.0"
+          },
+          "4-6-0-open": {
+            "archived": true,
+            "date": "2022-12-29T11:25:01+02:00",
+            "message": "MatrixSSL 4.6.0"
+          }
+        },
+        "method": "the three tag refs were resolved to full commit ids through the GitHub API of the archived mirror (still present, last pushed 2023-08-28), and each id was looked up at archive.softwareheritage.org/api/1/revision/<id>/; the origin itself is archived with a full visit. This corroborates that the trees built here are the ones the mirror carried at those tags; it does not supply a vendor checksum, which does not exist."
+      }
     }
   },
   "cross_cutting": "The corpus's reproduction pairs detect because they are amplified (40x per-bit work); these deployed leaks in shipped configurations are 0.03% to sub-percent, at or below a fast host's timing floor. That gap between a tool benchmark and a real attacker is itself a measured result, and it is why recovery certification, not a tool verdict, is the label.",

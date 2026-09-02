@@ -119,6 +119,12 @@ resolves the timed call to about seven ticks and 99 distinct values in 400000 me
   0.05; the lowest is 0.11. The prediction is neither confirmed nor falsified, since its
   subject was rebuilt: it is recorded here as an observation that changed under a change of
   build, and the paper prints the observed floor rather than the row it used to name.
+- **The four MatrixSSL site designs were never registered.** The same, 255-against-256,
+  193-against-256 and 192-against-256 designs that locate the fix's residual in the leading-zero
+  phase were chosen after the first acquisition and outside every registration (PR-1 to PR-4
+  and their amendments). They are exploratory, and the paper says so once. Recorded here on
+  2026-09-02 as a disclosed deviation rather than registered after the fact; a registration
+  written after the result is a credential, not a prediction.
 - **From PR-3, the calibration artifact.** `results/dudect_calibration.json` and
   `bin/dudect_calibrate.py` remain committed as the record of the retired rule. They are not
   read by any verdict.

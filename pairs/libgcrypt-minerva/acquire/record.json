@@ -26,7 +26,7 @@
     "note": "This is the analyser-independent ground truth and the reason the pair is tier A and recall-eligible: the fix in 1.8.5's ECDSA signing removes the exploitable nonce-bit-length leak, so the same lattice attack that recovers the 1.8.4 key fails on 1.8.5."
   },
   "primitive_timing": {
-    "probe": "acquire/ecmul_timing_probe.c, rdtscp minimum cycles for gcry_mpi_ec_mul over a short vs a full secure-memory scalar, one core",
+    "probe": "acquire/ecmul_timing_probe.c, rdtscp minimum rdtscp ticks (the key name says cycles; the probe reads rdtscp, corrected 2026-09-02) for gcry_mpi_ec_mul over a short vs a full secure-memory scalar, one core",
     "min_cycles_short_vs_full_1_8_4": [827140, 1700254],
     "min_cycles_short_vs_full_1_8_5": [814618, 1736264],
     "interpretation": "The public scalar-multiplication primitive's time depends on the scalar bit-length in BOTH versions (the short scalar is multiplied in roughly half the cycles): it is unchanged across the patch. 1.8.5's fix lives in the internal ECDSA signing path, where the nonce is a secure-memory MPI whose scalar multiplication is clamped to the field bit-length, which the public gcry_mpi_ec_mul does not reach. A timing test pointed at the primitive therefore cannot discriminate the two builds; the end-to-end recovery, which exercises real signing, is what discriminates them. This is why the pair is scored by recovery, not by a per-arm analyser verdict, and it is recorded rather than turned into a tool row that would report a property of the public API rather than of the deployed fix."

@@ -13,7 +13,7 @@ or failure at each budget as a bounded observation under (A, B, h).
 WHAT IT RUNS
 The vendored upstream Minerva attack (pairs/minerva/vendor/attack/attack.py,
 MIT, pinned by commit) inside the pinned recovery image. That attack is already
-timing-ordered and error-tolerant: it sorts the signatures by elapsed time and
+timing-ordered but tolerates no misclassification: it sorts the signatures by elapsed time and
 assigns each rank a leading-zero bound from the geometric profile. The trace
 format is the one bin/matrixssl_trace.sh writes (header `<pubkey> <msg>`, rows
 `r,s,cycles`), which is attack.py's own input format. The private key is
@@ -89,7 +89,7 @@ def recover_from(trace: pathlib.Path, curve: str = "secp256r1", hash: str = "sha
         "trace_sha256": hashlib.sha256(trace.read_bytes()).hexdigest(),
         "signatures_in_trace": len(lines) - 1,
         "budget": len(rows),
-        "attack": "pairs/minerva/vendor/attack/attack.py (timing-ordered, error-tolerant), "
+        "attack": "pairs/minerva/vendor/attack/attack.py (timing-ordered, no error tolerance), "
                   "params: " + json.dumps({"dimension": p.get("dimension"), "betas": p.get("betas"),
                                            "attack": p.get("attack")}),
         "curve": curve, "hash": hash,

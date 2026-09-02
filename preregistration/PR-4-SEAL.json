@@ -4,8 +4,8 @@
   "_gates": "Sealed before the corpus-wide re-decision under the permutation rule is reported as final. The deviations recorded here are past events, disclosed, not new observations: PR-3's band was applied before being retired, its prediction C7 was falsified by a harness fix, and PR-2's registered five-pair detection curve remains unrun. Predictions C8, C9 and C10 govern observations that are fixed here regardless of outcome.",
   "_gates_note": "_gates is kept as sealed. Its statement that PR-2's registered five-pair detection curve remains unrun described the file at seal time and is superseded: the curve has since been run and discharged, as _amended and the rewritten entry in PR-4-permutation-verdict.md record.",
   "PR-4-permutation-verdict.md": {
-    "bytes": 10885,
-    "sha256": "464b60be49c5f66314c3bf793f8674232c66103a020f7bea9b5b08c9906b7194"
+    "bytes": 11409,
+    "sha256": "82a25322087675d1dfdef88cbe6b27151dd74ef26a2742d551a402399efa70f8"
   },
   "_amended": "2026-08-25: the PR-2 detection-curve deviation is discharged and the entry rewritten to record the result, including one falsified registered expectation. The digest below covers the amended text; the pre-amendment digest is kept beside it so the change is visible rather than silent.",
   "_digest_before_amendment": "febc55634b38c0df0c17c5b5eb9b6d8992779fe050431285b8506597f7ec7040",
@@ -16,5 +16,7 @@
   "_amended_4": "2026-08-27, fourth amendment: the permutation null's batch structure was inferred (nine blocks) where three were run; re-decided within the declared three, no verdict moved. Digest chained; previous under _digest_before_amendment_4.",
   "_digest_before_amendment_4": "5cb7ada8b9aa6106b7abec104e2981c8de036404608050d96c46b8f630618437",
   "_amended_5": "2026-08-27, fifth amendment: C9's named borderline row disappeared when the patched KyberSlash arm was re-acquired under upstream's own fix; no declined arm now sits below 0.05. Digest chained; previous under _digest_before_amendment_5.",
-  "_digest_before_amendment_5": "483695e43a9a4b0fe418f44c30846387130e781d75cfb438ccdcd489a8900754"
+  "_digest_before_amendment_5": "483695e43a9a4b0fe418f44c30846387130e781d75cfb438ccdcd489a8900754",
+  "_amended_6": "2026-09-02, sixth amendment: the four MatrixSSL site designs are recorded as unregistered and exploratory. Digest chained; previous under _digest_before_amendment_6.",
+  "_digest_before_amendment_6": "464b60be49c5f66314c3bf793f8674232c66103a020f7bea9b5b08c9906b7194"
 }

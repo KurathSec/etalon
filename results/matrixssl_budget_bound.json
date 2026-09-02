@@ -1,0 +1,97 @@
+{
+  "finding": "an error-tolerant attack on the MatrixSSL residual is bounded, from the measured per-bit signal and noise, at budgets astronomically past the ones tried; the site outcome stays incomplete with a quantified bound",
+  "why": "The nine timing-ordered lattice attempts on the fixed build recover nothing, and\nthe instrument they use tolerates no misclassification. A reviewer asked what an\nerror-tolerant attack would need, so that the site-closure outcome incomplete\ncarries a security consequence rather than a bare measurement. This script runs\nno attack. It bounds the budget such an attack would need from the measured\nper-bit signal and noise, and prints the bound as an estimate beside the\nassumptions it rests on.",
+  "method": "From the committed one-bit dump of the first fixed release, under the same\n95th-percentile crop the site estimator uses: the class difference, which is the\nper-bit signal; the pooled standard deviation, which is the per-measurement\nnoise; their ratio, the signal-to-noise ratio; and the minimum detectable effect\nthe paper prints, as a cross-check. From the committed exploit-budget records:\nhow pure the timing order is at its top ranks, and how small a fraction of a\ntrace those ranks are. Then the Bleichenbacher accounting. A single-shot\nthreshold oracle at that ratio errs with probability Phi of minus half the\nratio. Its bias is one minus twice that error, times two over pi, the bias of a\nperfect one-bit oracle. Each round of sum reduction squares the bias, so r\nrounds take it to the power two to the r. The samples the attack needs scale as\na constant over the bias squared, and the constant is carried explicitly. The\nusable fraction converts samples into raw signatures, because the purity holds\nonly over the top ranks of a trace.",
+  "reading": "The bound is an estimate, not a measurement, and it is astronomically past the\nbudgets tried: at one round of reduction the attack needs about half a million\nsignatures, at the two rounds a 256-bit group realistically needs about three\nhundred billion, and delivering the usable samples the published Fourier attack\nneeded on a smaller group would take about six hundred billion raw signatures,\nbecause the purity the order supplies holds over the fastest ninety of a\nhundred thousand. So the residual is incomplete with a quantified bound, and it\ndoes not move to attenuated: Definition 5 decides residual exploitability by a\nrecovery, and a bound is not one.",
+  "assumptions": [
+    "the two classes are Gaussian with equal variance, so a midpoint threshold errs with probability Phi(-SNR/2)",
+    "the oracle is single-shot: one signature, one guess, no repeated measurement of the same nonce",
+    "a perfect one-bit oracle has bias 2/pi, and a noisy one scales it by one minus twice its error",
+    "each Bleichenbacher sum-reduction round squares the bias, and a 256-bit group needs at least two",
+    "the samples needed scale as c over the bias squared, with c = 1 and the FFT's time and memory ignored",
+    "the usable fraction is the top ninety of a hundred thousand, where the measured purity holds",
+    "the noise is this host's under the site design, and the bound is host-conditional like every timing figure here",
+    "this is a feasibility bound under the published attack's information model, not a demonstrated recovery"
+  ],
+  "label": "estimate",
+  "generator": "bin/matrixssl_budget_bound.py --write",
+  "dump": "results/raw/matrixssl/repeats/4-3-0.bit255.r1.bin.gz",
+  "crop_pct": 95.0,
+  "measured": {
+    "cropped_sample_size": 56968,
+    "n_class0": 28696,
+    "n_class1": 28272,
+    "signal_ticks": 1145.8877085184213,
+    "noise_sd_ticks": 7910.410589050914,
+    "snr": 0.14485818348095433,
+    "se_ticks": 66.28613708319519,
+    "mde_ticks": 185.70626181808947
+  },
+  "purity_by_rank": {
+    "50000": {
+      "auc": 0.6143,
+      "top_90": {
+        "frac_short": 0.9444,
+        "frac_contaminated_full_length": 0.0556,
+        "mean_leading_zeros": 5.667
+      },
+      "top_200": {
+        "frac_short": 0.95,
+        "frac_contaminated_full_length": 0.05,
+        "mean_leading_zeros": 5.13
+      },
+      "top_500": {
+        "frac_short": 0.928,
+        "frac_contaminated_full_length": 0.072,
+        "mean_leading_zeros": 4.22
+      }
+    },
+    "100000": {
+      "auc": 0.6235,
+      "top_90": {
+        "frac_short": 0.9444,
+        "frac_contaminated_full_length": 0.0556,
+        "mean_leading_zeros": 6.356
+      },
+      "top_200": {
+        "frac_short": 0.94,
+        "frac_contaminated_full_length": 0.06,
+        "mean_leading_zeros": 5.59
+      },
+      "top_500": {
+        "frac_short": 0.948,
+        "frac_contaminated_full_length": 0.052,
+        "mean_leading_zeros": 4.684
+      }
+    }
+  },
+  "bound": {
+    "oracle_error": 0.47113021686296935,
+    "bias_single_shot": 0.03675814953799578,
+    "constant_c": 1.0,
+    "rounds": {
+      "1": {
+        "bias": 0.001351161557457659,
+        "signatures": 547753.8504926676
+      },
+      "2": {
+        "bias": 1.825637554351407e-06,
+        "signatures": 300034280729.5437
+      },
+      "3": {
+        "bias": 3.332952479858187e-12,
+        "signatures": 9.002056961289463e+22
+      }
+    },
+    "usable_fraction": 0.0009,
+    "raw_signatures_for_ladderleak_low": 596523235555.5555
+  },
+  "ladderleak_anchor": {
+    "group_bits": 192,
+    "signatures_log2_low": 29,
+    "signatures_log2_high": 43,
+    "cite": "ladderleak"
+  },
+  "key_bits": 256,
+  "lattice_attempts": 9
+}

@@ -89,13 +89,14 @@ def main() -> int:
          "clean and leak on one binary, both correct",
          f"{applicable} applicable of {rows_total} rows", "\\ref{sec:blindspots}",
          "A/B/C: " + "/".join(str(by_tier.get(t, 0)) for t in "ABC")
-         + " pairs; recall over A and B"),
+         + " pairs; recall-eligible: A and B; no recall printed"),
         ("I4 fix site and facet", "$(s, f, \\mathcal{A}, B, h)$",
          ", ".join(fv["libraries"][l]["site_closure"]
                    for l in ("libgcrypt", "matrixssl", "wolfssl")),
          f"{built} built, {retained} yielding a retained measurement, "
          f"of {len(cand)} examined", "\\ref{sec:fixes}",
-         f"{lg_tier} (libgcrypt, by recovery); the one fix-site label measured here (MatrixSSL)"),
+         f"corpus pair {lg_tier} (libgcrypt, by recovery); fix-site label by inspection "
+         "(libgcrypt) and by measurement (MatrixSSL)"),
     ]
     for r in rows:
         for cell in r:

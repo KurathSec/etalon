@@ -121,5 +121,40 @@
       "elapsed_s": 305.4,
       "outcome": "not recovered"
     }
-  ]
+  ],
+  "prefix_control": {
+    "finding": "run on the committed 6,000-signature pre-fix trace, the identical timing-ordered pipeline recovers nothing at any of the three dimensions either, so this control does not corroborate the pipeline at that budget; the pre-fix key was recovered only key-ordered, on an uncommitted trace, and the depth-of-ordering reading rests on the selector figures, not on a positive control",
+    "attempts_total": 3,
+    "recovered": 0,
+    "budget_signatures": 6000,
+    "attempts": [
+      {
+        "record": "results/raw/matrixssl/lattice-prefix/mx-lattice-prefix-6000-d90.json",
+        "trace": "pairs/matrixssl-minerva/evidence/trace-4-2-1.csv.z",
+        "trace_sha256": "9126509b4e66edd2a2c8f59c5dcdc4795c7c47fbd28b3280c12e5c95a024941f",
+        "budget_signatures": 6000,
+        "lattice_dimension": 90,
+        "elapsed_s": 56.9,
+        "outcome": "not recovered"
+      },
+      {
+        "record": "results/raw/matrixssl/lattice-prefix/mx-lattice-prefix-6000-d110.json",
+        "trace": "pairs/matrixssl-minerva/evidence/trace-4-2-1.csv.z",
+        "trace_sha256": "9126509b4e66edd2a2c8f59c5dcdc4795c7c47fbd28b3280c12e5c95a024941f",
+        "budget_signatures": 6000,
+        "lattice_dimension": 110,
+        "elapsed_s": 77.1,
+        "outcome": "not recovered"
+      },
+      {
+        "record": "results/raw/matrixssl/lattice-prefix/mx-lattice-prefix-6000-d130.json",
+        "trace": "pairs/matrixssl-minerva/evidence/trace-4-2-1.csv.z",
+        "trace_sha256": "9126509b4e66edd2a2c8f59c5dcdc4795c7c47fbd28b3280c12e5c95a024941f",
+        "budget_signatures": 6000,
+        "lattice_dimension": 130,
+        "elapsed_s": 91.7,
+        "outcome": "not recovered"
+      }
+    ]
+  }
 }

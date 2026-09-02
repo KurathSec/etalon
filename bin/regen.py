@@ -651,7 +651,11 @@ def as_tex(report: dict) -> str:
     # can name e.g. dudect missed while varlat and binsec detected KyberSlash.
     outcome_word = {"detected": "detected", "missed": "missed",
                     "non_discriminating": "non-discriminating",
-                    "budget_exhausted": "inconclusive", "error": "errored"}
+                    "budget_exhausted": "inconclusive", "error": "errored",
+                    # A tier-C miss by a host-bound tool is not scored against a label
+                    # certified on another host (bin/score.py adjudicate); the table
+                    # prints the verdict, clean, and its dagger note says the rest.
+                    "unadjudicated": "clean"}
     for r in recall_doc.get("tier_c_detections", []):
         pair_key = "".join(ch for ch in r["pair"] if ch.isalpha())
         out.append(tex_macro(f"{pair_key}{r['tool'].capitalize()}",
@@ -957,6 +961,9 @@ def as_tex(report: dict) -> str:
                                  "faster" if sens["mean_ticks_at_max_n"] < 0 else "slower"))
             out.append(tex_macro("hostPerCallT",
                                  f"{sens.get('by_n', {}).get('n_4000000_t', 0):.0f}"))
+            # The design's size, so the verdict states its n as the checklist requires.
+            _ns = [int(k.split("_")[1]) for k in sens.get("by_n", {}) if k.endswith("_t")]
+            out.append(tex_macro("hostPerCallPairs", f"{max(_ns):,}" if _ns else chr(92) + "NA"))
             out.append(tex_macro("hostPerCallMde",
                                  f"{sens.get('by_n', {}).get('n_4000000_mde_ticks', 0):.3f}"))
         poly = xr.get("per_polynomial_two_class", {}).get("by_n", {})
@@ -1228,6 +1235,13 @@ def as_tex(report: dict) -> str:
             out.append(tex_macro("nSurveyTriagedOnly",
                                  str(sum(1 for v in st.values()
                                          if not v.get("measured")))))
+            # The candidates by name, so the reader can see which five were considered
+            # and which two were not built (a referee could not reconstruct the five).
+            _short = lambda k: k.split(" ")[0].replace("++", "\\texttt{++}")
+            out.append(tex_macro("surveyMeasuredNames",
+                                 ", ".join(_short(k) for k, v in st.items() if v.get("measured"))))
+            out.append(tex_macro("surveyTriagedNames",
+                                 " and ".join(_short(k) for k, v in st.items() if not v.get("measured"))))
             # Built and measured is not the same as retained: wolfSSL's arms were
             # built and timed, and no tree, binary or sample survives (retained =
             # false in the record), so the paper says so beside the measured count.
@@ -1468,6 +1482,9 @@ def as_tex(report: dict) -> str:
             out.append(tex_macro("mxRepSameDigitMeanEffect", f"{_sd['mean_effect_ticks']:,.0f}"))
             out.append(tex_macro("mxRepSameDigitLo", f"{_sd['min_effect_ticks']:,.0f}"))
             out.append(tex_macro("mxRepSameDigitHi", f"{_sd['max_effect_ticks']:,.0f}"))
+            # The per-zero cost the sixty-three-zero design implies, the cross-check a
+            # referee asked for against the one-bit figure.
+            out.append(tex_macro("mxPerZeroFromSameDigit", f"{_sd['mean_effect_ticks'] / 63:,.0f}"))
         # The effect estimator's post-crop sample size, NOT a record count: the repeat
         # dumps each hold the full corpus budget and matrixssl_report.py crops to its top
         # 95 per cent before the bootstrap, so this is smaller than the acquisition.
@@ -1734,6 +1751,85 @@ def as_tex(report: dict) -> str:
             out.append(tex_macro(_n, chr(92) + "NA"))
         emit("mxAblRepeats", None)
         emit("mxAblVariants", None)
+
+    # The permutation family's composition and the MDE's calibration to the test
+    # actually applied (results/dudect_permutation.json). The printed MDE uses the
+    # single Welch multiplier; the verdict is a maximum over crops against a
+    # permutation null whose critical value is larger, so the printed figure is a
+    # lower bound by the factor (p95 + z_power) / (z_0.975 + z_power) on each arm.
+    dpp = REPO / "results" / "dudect_permutation.json"
+    if dpp.exists():
+        _dp = json.loads(dpp.read_text())
+        _rows = _dp.get("rows", [])
+        _paths = [str(r.get("path", "")) for r in _rows]
+        _pairs = {Path(x).name.split("_")[0] for x in _paths
+                  if not Path(x).name.startswith(("_sentinel", "certified-fiat"))}
+        emit("permFamilyPairs", len(_pairs))
+        emit("permFamilyNegatives", len({Path(x).name.split("_")[0] for x in _paths
+                                         if Path(x).name.startswith("certified-fiat")}))
+        emit("permFamilySentinels", len({Path(x).name.split("_")[0] for x in _paths
+                                         if Path(x).name.startswith("_sentinel")}))
+        _z = 1.959964 + 0.841621
+        _f = [(r["null_max_abs_t_p95"] + 0.841621) / _z for r in _rows
+              if r.get("null_max_abs_t_p95") is not None]
+        out.append(tex_macro("mdePermFactorLo", f"{min(_f):.2f}" if _f else chr(92) + "NA"))
+        out.append(tex_macro("mdePermFactorHi", f"{max(_f):.2f}" if _f else chr(92) + "NA"))
+    else:
+        for _n in ("permFamilyPairs", "permFamilyNegatives", "permFamilySentinels"):
+            emit(_n, None)
+        out.append(tex_macro("mdePermFactorLo", chr(92) + "NA"))
+        out.append(tex_macro("mdePermFactorHi", chr(92) + "NA"))
+    # The libgcrypt probe's constants, read from its source as the other script-sourced
+    # macros are: the short scalar's bit length and the calls each minimum is over.
+    _probe = REPO / "pairs" / "libgcrypt-minerva" / "acquire" / "ecmul_timing_probe.c"
+    if _probe.exists():
+        _ps = _probe.read_text()
+        _m1 = re.search(r"unsigned nb = cls \? 256 : (\d+);", _ps)
+        _m2 = re.search(r"for \(int r = 0; r < (\d+); r\+\+\)", _ps)
+        out.append(tex_macro("lgProbeShortBits", _m1.group(1) if _m1 else chr(92) + "NA"))
+        out.append(tex_macro("lgProbeReps", f"{int(_m2.group(1)):,}" if _m2 else chr(92) + "NA"))
+    # The cold-clone run time of bin/verify_all.sh, from the record its timing wrote.
+    _vt = REPO / "results" / "verify_all_timing.json"
+    if _vt.exists():
+        _v = json.loads(_vt.read_text())
+        out.append(tex_macro("verifyAllMinutes", str(int(round(_v["wall_seconds"] / 60)))))
+    else:
+        out.append(tex_macro("verifyAllMinutes", chr(92) + "NA"))
+
+    # The pre-fix lattice control (results/matrixssl_recovery.json, prefix_control).
+    _mrp = REPO / "results" / "matrixssl_recovery.json"
+    _pc = json.loads(_mrp.read_text()).get("prefix_control") if _mrp.exists() else None
+    if _pc:
+        emit("mxPrefixAttempts", int(_pc["attempts_total"]))
+        emit("mxPrefixRecovered", int(_pc["recovered"]))
+        out.append(tex_macro("mxPrefixBudget", f"{_pc['budget_signatures']:,}" if _pc.get("budget_signatures") else chr(92) + "NA"))
+    else:
+        emit("mxPrefixAttempts", None)
+        emit("mxPrefixRecovered", None)
+        out.append(tex_macro("mxPrefixBudget", chr(92) + "NA"))
+
+    # The per-call controls (results/kyberslash_x86_magnitude_control.json): the
+    # same-operand offset the harness carries, the original contrast rerun in the same
+    # binary, and the two within-range splits; the net figure subtracts the offset.
+    mcp = REPO / "results" / "kyberslash_x86_magnitude_control.json"
+    _mc_names = ("hostCtlSameTicks", "hostCtlSameT", "hostCtlLowHighTicks", "hostCtlLowHighT",
+                 "hostCtlLowSplitTicks", "hostCtlHighSplitTicks", "hostCtlNetLowHighTicks",
+                 "hostCtlNetLowHighSign", "hostCtlPairs")
+    if mcp.exists():
+        _mc = json.loads(mcp.read_text())["summary"]
+        out.append(tex_macro("hostCtlSameTicks", f"{abs(_mc['same']['mean_ticks']):.2f}"))
+        out.append(tex_macro("hostCtlSameT", f"{_mc['same']['t']:.0f}"))
+        out.append(tex_macro("hostCtlLowHighTicks", f"{abs(_mc['lowhigh']['mean_ticks']):.2f}"))
+        out.append(tex_macro("hostCtlLowHighT", f"{_mc['lowhigh']['t']:.1f}"))
+        out.append(tex_macro("hostCtlLowSplitTicks", f"{abs(_mc['lowsplit']['mean_ticks']):.2f}"))
+        out.append(tex_macro("hostCtlHighSplitTicks", f"{abs(_mc['highsplit']['mean_ticks']):.2f}"))
+        _net = _mc["lowhigh"]["mean_ticks"] - _mc["same"]["mean_ticks"]
+        out.append(tex_macro("hostCtlNetLowHighTicks", f"{abs(_net):.2f}"))
+        out.append(tex_macro("hostCtlNetLowHighSign", "slower" if _net > 0 else "faster"))
+        out.append(tex_macro("hostCtlPairs", f"{json.loads(mcp.read_text())['design']['pairs']:,}"))
+    else:
+        for _n in _mc_names:
+            out.append(tex_macro(_n, chr(92) + "NA"))
 
     # What the original authors report their recovery needs, beside ours (S8). Read
     # from the committed record so the comparison cannot drift from its source.

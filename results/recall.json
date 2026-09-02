@@ -131,7 +131,7 @@
     {
       "tool": "dudect",
       "pair": "kyberslash",
-      "outcome": "missed"
+      "outcome": "unadjudicated"
     },
     {
       "tool": "varlat",
@@ -348,7 +348,7 @@
         "hmac-timing(tier A)",
         "hqc-reject(tier C)"
       ],
-      "missed": [
+      "unadjudicated": [
         "kyberslash(tier C)"
       ]
     },

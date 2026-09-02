@@ -1137,4 +1137,53 @@ detection-curve sweep now names the two factors where the sign scatters instead 
 listing only the four where it holds. Gates after the pass: `paper_check` clean at twenty
 pages, `namecheck` clean. The blind panel is a workflow too and was not run.
 
-**In flight.** The turbo-off run (X1) waits on the author, as does the push.
+**The blind panel, round 15, and the revision against it.** With the author's go-ahead the
+panel workflow ran once on the rendered submission: major revision from all three referees
+(round 14 was major, major, minor), five blocking items and ten important, with the editor
+noting that most of what is required is scoping and carrying committed evidence into the
+text rather than new measurement. Every item was verified against the artifact before it was
+acted on, and everything below was done by hand. Decided with the author: the kyberslash
+dudect cell is rescored from "missed" to unadjudicated (a tier-C miss by a host-bound tool
+against a label certified on a host we did not measure; `bin/score.py adjudicate`, nothing
+numeric moves), and the two cheap experiments the referees named were run.
+
+The same-operand control (`pairs/kyberslash/x86/magnitude_control.c`, four runs of one
+binary, four million paired calls each) settles the x86 per-call account: with the same
+operand in both classes the paired design reads 0.40 ticks at a t of twenty, the harness's
+own offset; the original low-against-high contrast rerun in that binary reads 0.06 against
+the 0.55 the committed record holds for another binary; net of the offset the larger
+dividend is slower by about 0.3 ticks, a small rising dependence the latency chain does not
+show, an order of magnitude below the call. The paper's "arrangement" account was a
+hypothesis and is now a measurement, with the sign corrected: net of the offset the larger
+operand is slower, not faster. The pre-fix lattice control (`bin/matrixssl_prefix_control.sh`)
+ran the identical pipeline on the committed 6,000-signature 4.2.1 trace at dimensions 90,
+110 and 130: not recovered at any, so it does not corroborate the pipeline at that budget,
+and the paper says so; the pre-fix key was recovered only key-ordered on an uncommitted
+trace, and the depth-of-ordering reading rests on the selector figures.
+
+In the text: the abstract now says which arm arithmetic settles and which site closure does,
+that the step the published attack used was resolved on neither measured host, that the
+bound puts an error-tolerant recovery between about 5e5 and 3e11 signatures above every
+budget run here, and that the formulation grades two cases and declines the third; the
+attack model's four elements and the MDE formula are in the body; the oracle paragraph no
+longer contradicts itself (the patched-arm failure admits a pair and certifies nothing, the
+patched arm's label is the site closure, named per tier-A pair); a corpus table generated
+from the manifests (`bin/corpus_table.py`) lists the nine pairs with library, identifier,
+class, tier, provenance, recovery, amplification, patched-arm closure and where verification
+reruns; every denominator the referees could not reconstruct has its composition (the 22-arm
+family, the 60-row grid, the 140 binaries, the 16 in-context combinations from the eight
+cells locked at the time, the five remediations by name, the ten re-acquired arms); the MDE
+is stated as a lower bound against the permutation critical value, with the factor printed
+(1.18 to 1.51) and the bootstrap's unrescaled subsample stated; the governor is printed; the
+harness's bit setting is stated (bit 255 cleared, bit 254 set: a single-zero class), with the
+per-zero cross-check 71,607/63; the pre-fix routine's skipped doubling is reconciled with the
+ladder step; the whole-signature AUC is defined and reconciled with the one-bit contrast;
+the Graviton witness is scoped as a serial-chain point estimate that is not a Leak verdict
+under either definition, and its unretained dudect dump is marked where quoted; the
+Geimer et al. sentence and the "everywhere we measured" falsifier are corrected; the
+`verify_all` run time is recorded (`results/verify_all_timing.json`, about nineteen minutes)
+and printed. To hold the twenty-page cap with the corpus table in, the analyser inventory
+(37 tools) and the prior-evaluations table moved to the eprint version with their counts
+kept in the body, and fourteen paragraphs were tightened; Figure 4 sits at 0.44 of the line
+width and Figure 3's panels are sized to their printed width with their titles in the
+caption. Two items stay with the author: the anonymised artifact link, and the turbo-off run.

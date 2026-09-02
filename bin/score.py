@@ -185,6 +185,23 @@ def decide(vuln_status: str, patched_status: str) -> str:
     return "missed"
 
 
+def adjudicate(outcome: str, tier: str | None, technique: str | None) -> str:
+    """Apply the site-local adjudication rule to a tier-C miss by a host-bound tool.
+
+    A statistical timing tool's verdict is a proposition about the host and budget
+    it ran on. A tier-C pair's label was certified by a published exploit on a host
+    this artifact did not measure, so a clean reading here does not contradict that
+    label and cannot be scored against it as a miss: it is unadjudicated, the same
+    status Section 6.1 gives a flag away from the certified site. Added 2026-09-02
+    after the fifteenth panel round; nothing numeric moves, because tier C enters
+    no denominator, but the table no longer calls a verdict the paper says is
+    correct a miss.
+    """
+    if outcome == "missed" and tier == "C" and technique == "statistical":
+        return "unadjudicated"
+    return outcome
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", action="store_true")
@@ -233,7 +250,7 @@ def main() -> int:
                 continue
             if not r.get("applicable") or v is None or pt is None:
                 continue
-            want = decide(v, pt)
+            want = adjudicate(decide(v, pt), r.get("tier"), tools.get(r["tool"], {}).get("technique"))
             if want != r.get("outcome"):
                 changed.append((r["tool"], r["pair"], r["outcome"], want))
                 r["outcome"] = want
@@ -323,7 +340,7 @@ def main() -> int:
             if committed_row is not None:
                 row["arms_run"] = run_arms
                 row["arms_reused_from_committed_row"] = [x for x in ("vulnerable", "patched") if x not in run_arms]
-            outcome = decide(vuln["status"], patch["status"])
+            outcome = adjudicate(decide(vuln["status"], patch["status"]), tier, tool.get("technique"))
             row.update({"applicable": True, "outcome": outcome,
                         "vulnerable_status": vuln["status"],
                         "patched_status": patch["status"],

@@ -217,21 +217,21 @@ def fig_graviton():
     ys = [lat["dividend_1"], lat["dividend_3000"], lat["dividend_8000"],
           lat["dividend_1e6"], lat["dividend_4e9"]]
 
-    fig, a = plt.subplots(figsize=(2.6, 1.2))
+    fig, a = plt.subplots(figsize=(1.75, 1.1))
     shade_kyber_range(a, at="top")
     a.plot(xs, ys, "-o", color=TEAL, ms=3.5, lw=1.3, zorder=3)
     a.set_xscale("log")
     a.set_xlabel("dividend magnitude", fontsize=7.5)
     a.set_ylabel("counter ticks / div", fontsize=7.5)
     a.tick_params(labelsize=6.5)
-    a.set_title("Neoverse-V1: udiv latency vs dividend", fontsize=7.5)
+    a.set_title("")
     # Both panels of the figure are in counter ticks, and each carries the pipelined
     # per-call difference read from the same record the paper's macros come from, so
     # the figure and the six-number table cannot disagree. The percentage is not
     # retyped: it is the record's own delta_percent_of_call.
     annotate_pipelined(a, e2e, at="bottom", pct_fmt="+.1f")
     fig.tight_layout(pad=0.3)
-    a.text(0.01, 0.98, "(a)", transform=a.transAxes, ha="left", va="top", fontsize=8)
+    a.text(0.01, 0.98, "(a)", transform=a.transAxes, ha="left", va="top", fontsize=8, fontweight="bold")
     fig.savefig(FIG / "fig-graviton.pdf")
     plt.close(fig)
 
@@ -245,7 +245,7 @@ def fig_x86_idiv():
     ys = [lat["dividend_1"], lat["dividend_3000"], lat["dividend_8000"],
           lat["dividend_1e6"], lat["dividend_4e9"]]
 
-    fig, (a, b) = plt.subplots(1, 2, figsize=(2.9, 1.2),
+    fig, (a, b) = plt.subplots(1, 2, figsize=(1.95, 1.1),
                                gridspec_kw={"width_ratios": [1.45, 1], "wspace": 0.75})
     shade_kyber_range(a, at="bottom")
     a.plot(xs, ys, "-o", color=TEAL, ms=3.5, lw=1.3, zorder=3)
@@ -253,7 +253,7 @@ def fig_x86_idiv():
     a.set_xlabel("dividend magnitude", fontsize=7.5)
     a.set_ylabel("counter ticks / div", fontsize=7.5)
     a.tick_params(labelsize=6.5)
-    a.set_title("x86: idiv latency vs dividend", fontsize=7.5)
+    a.set_title("")
     # Headroom so the annotation does not sit on the curve's peak.
     a.set_ylim(min(ys) - (max(ys) - min(ys)) * 0.1, max(ys) + (max(ys) - min(ys)) * 0.55)
     annotate_pipelined(a, e2e, at="top", pct_fmt="+.2f")
@@ -275,11 +275,11 @@ def fig_x86_idiv():
     b.set_ylim(-lim, lim)
     b.tick_params(labelsize=6.5)
     b.set_ylabel("paired step (ticks)", fontsize=7.5)
-    b.set_title("step at the boundary", fontsize=7.5)
+    b.set_title("")
     b.annotate(f"{abs(signed_step):.3f}\n$\\pm${noise:.3f}", xy=(0, signed_step),
                xytext=(0.12, lim * 0.5), fontsize=6.5, color=INK, ha="left")
     fig.tight_layout(pad=0.3)
-    a.text(0.01, 0.98, "(b)", transform=a.transAxes, ha="left", va="top", fontsize=8)
+    a.text(0.01, 0.98, "(b)", transform=a.transAxes, ha="left", va="top", fontsize=8, fontweight="bold")
     fig.savefig(FIG / "fig-x86-idiv.pdf")
     plt.close(fig)
 

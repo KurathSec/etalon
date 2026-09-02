@@ -1,0 +1,139 @@
+{
+  "finding": "on the acquisition host the per-call low-against-high difference is mostly the harness's: with the same operand in both classes the paired design reads about 0.40 ticks at a t of twenty, the original contrast reads about 0.06 ticks in this binary against 0.55 in the committed one, and net of the same-operand offset the larger dividend is slower by about 0.3 ticks, an order of magnitude below the call and absorbed when pipelined",
+  "why": "The per-call low-against-high design on the acquisition host resolves a difference\nof about half a tick with the high class faster, which a rising operand latency\ncannot produce, and the paper attributed it to the harness's arrangement of the\ntwo classes, amplified by a longer instruction. That was a hypothesis. A referee\nasked for the control that decides it: the same design with the divider fed the\nsame operand in both classes, so that an arrangement effect would remain and an\noperand effect could not.",
+  "method": "Four runs of one program, magnitude_control.c, in one session on one core, each\nfour million paired calls with the order within each pair randomised, as\nmagnitude_sensitivity.c does. same: both calls of a pair divide the same operand.\nlowsplit: two classes inside the quotient-zero range. highsplit: two classes\ninside the high range. lowhigh: the original contrast, rerun beside the controls\nso the four figures share one host state. Each reports the paired mean difference\nin ticks, the t statistic and the minimum detectable effect at every budget.",
+  "generator": "pairs/kyberslash/x86/magnitude_control.py (a measurement on the acquisition host; not regenerable elsewhere)",
+  "measured_utc": "2026-09-02",
+  "host": {
+    "_comment": "The x86 acquisition host, captured from this machine by bin/host_facts.py so every host fact in the paper is regenerable rather than typed.",
+    "cpu_model": "Intel Core Ultra 9 285H",
+    "microarch_basis": "CPUID family 6, model 197, stepping 2",
+    "cpu_family": 6,
+    "cpu_model_num": 197,
+    "cpu_stepping": 2,
+    "microcode": "0x11b",
+    "hybrid": true,
+    "pinned_cpu": 2,
+    "pinned_core_type": "performance",
+    "doitm": "not read: /dev/cpu/N/msr requires elevated privileges, not taken here",
+    "smt": "notsupported",
+    "turbo": "enabled",
+    "governor": "performance",
+    "frequency_khz": {
+      "scaling_min": 400000,
+      "scaling_max": 5400000,
+      "cpuinfo_max": 5400000
+    },
+    "_frequency_sample_khz": {
+      "cur_min": 400000,
+      "cur_median": 908332,
+      "cur_max": 5400000,
+      "samples": 40,
+      "note": "sampled at capture time on the pinned core, idle; not pinned; varies between captures by design and is not compared by --check"
+    },
+    "kernel": "7.1.8-200.fc44.x86_64",
+    "machine": "x86_64"
+  },
+  "design": {
+    "same": "both calls of a pair divide the same operand drawn from [0, 3329)",
+    "lowsplit": "[0,416) against [416,833), both quotient zero",
+    "highsplit": "[1664,2496) against [2496,3329)",
+    "lowhigh": "[0,833) against [1664,3329), the original contrast",
+    "pairs": 4000000,
+    "order": "randomised within each pair",
+    "counter": "rdtscp"
+  },
+  "results": {
+    "same": {
+      "n_50000_t": 1.4731,
+      "n_50000_mean_ticks": -0.79524,
+      "n_50000_mde_ticks": 1.511543,
+      "n_200000_t": 3.8689,
+      "n_200000_mean_ticks": -0.54201,
+      "n_200000_mde_ticks": 0.392265,
+      "n_800000_t": 8.4015,
+      "n_800000_mean_ticks": -0.452155,
+      "n_800000_mde_ticks": 0.150691,
+      "n_2000000_t": 11.6135,
+      "n_2000000_mean_ticks": -0.429191,
+      "n_2000000_mde_ticks": 0.103477,
+      "n_4000000_t": 20.1225,
+      "n_4000000_mean_ticks": -0.397937,
+      "n_4000000_mde_ticks": 0.055372
+    },
+    "lowsplit": {
+      "n_50000_t": 12.5684,
+      "n_50000_mean_ticks": -0.1424,
+      "n_50000_mde_ticks": 0.031724,
+      "n_200000_t": 3.3604,
+      "n_200000_mean_ticks": -0.19568,
+      "n_200000_mde_ticks": 0.163046,
+      "n_800000_t": 2.3735,
+      "n_800000_mean_ticks": -0.319315,
+      "n_800000_mde_ticks": 0.376687,
+      "n_2000000_t": 4.2518,
+      "n_2000000_mean_ticks": -0.234567,
+      "n_2000000_mde_ticks": 0.154471,
+      "n_4000000_t": 7.373,
+      "n_4000000_mean_ticks": -0.20788,
+      "n_4000000_mde_ticks": 0.078946
+    },
+    "highsplit": {
+      "n_50000_t": 0.9145,
+      "n_50000_mean_ticks": 0.20088,
+      "n_50000_mde_ticks": 0.615069,
+      "n_200000_t": 0.4885,
+      "n_200000_mean_ticks": 0.03134,
+      "n_200000_mde_ticks": 0.179619,
+      "n_800000_t": 0.1981,
+      "n_800000_mean_ticks": -0.0063,
+      "n_800000_mde_ticks": 0.089038,
+      "n_2000000_t": 2.9885,
+      "n_2000000_mean_ticks": -0.046901,
+      "n_2000000_mde_ticks": 0.043942,
+      "n_4000000_t": 0.8509,
+      "n_4000000_mean_ticks": -0.027573,
+      "n_4000000_mde_ticks": 0.090735
+    },
+    "lowhigh": {
+      "n_50000_t": 0.5565,
+      "n_50000_mean_ticks": 0.05204,
+      "n_50000_mde_ticks": 0.261832,
+      "n_200000_t": 0.386,
+      "n_200000_mean_ticks": 0.02539,
+      "n_200000_mde_ticks": 0.184193,
+      "n_800000_t": 0.55,
+      "n_800000_mean_ticks": 0.022013,
+      "n_800000_mde_ticks": 0.112062,
+      "n_2000000_t": 0.1631,
+      "n_2000000_mean_ticks": -0.003311,
+      "n_2000000_mde_ticks": 0.056853,
+      "n_4000000_t": 2.5147,
+      "n_4000000_mean_ticks": -0.0576,
+      "n_4000000_mde_ticks": 0.064134
+    }
+  },
+  "summary": {
+    "same": {
+      "mean_ticks": -0.397937,
+      "t": 20.1225,
+      "mde_ticks": 0.055372
+    },
+    "lowsplit": {
+      "mean_ticks": -0.20788,
+      "t": 7.373,
+      "mde_ticks": 0.078946
+    },
+    "highsplit": {
+      "mean_ticks": -0.027573,
+      "t": 0.8509,
+      "mde_ticks": 0.090735
+    },
+    "lowhigh": {
+      "mean_ticks": -0.0576,
+      "t": 2.5147,
+      "mde_ticks": 0.064134
+    }
+  },
+  "reading": "The same-operand run is the control that decides the account. Its two calls divide the same value, so any difference is the harness's own: it reads about 0.40 ticks, the second-timed class faster, at a t of twenty. The original low-against-high contrast, rerun in this binary, reads about 0.06 ticks against the 0.55 the committed record holds for the same design in another binary, so the raw per-call figure belongs to the binary's arrangement of the two classes and not to the divider. Net of the same-operand offset, the classes differ by about 0.3 ticks with the larger dividend slower, and the splits inside the low and high ranges by about 0.2 and 0.4: a small rising dependence the latency chain does not show, an order of magnitude below the call, and absorbed when the division is pipelined."
+}

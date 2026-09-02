@@ -46,6 +46,7 @@ import sys
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 ATTEMPTS = REPO / "results" / "raw" / "matrixssl" / "lattice"
+PREFIX = REPO / "results" / "raw" / "matrixssl" / "lattice-prefix"
 OUT = REPO / "results" / "matrixssl_recovery.json"
 KEY_BITS = 256
 
@@ -99,6 +100,21 @@ def build() -> dict:
             }
     attempts.sort(key=lambda a: (a["budget_signatures"], a["lattice_dimension"] or 0))
     recovered = [a for a in attempts if a["outcome"] == "recovered"]
+    # The positive control a referee asked for: the identical pipeline on the committed
+    # 6,000-signature PRE-FIX trace at the same three dimensions. It recovers nothing there
+    # either, so it does not corroborate the pipeline at that budget; the reading rests
+    # on the selector figures, and the paper says so.
+    prefix = []
+    for f in sorted(glob.glob(str(PREFIX / "*.json"))):
+        d = json.loads(pathlib.Path(f).read_text())
+        try:
+            dim = json.loads(str(d["attack"]).split("params: ", 1)[1])["dimension"]
+        except (KeyError, IndexError, ValueError):
+            dim = None
+        prefix.append({"record": str(pathlib.Path(f).relative_to(REPO)), "trace": d["trace"],
+                       "trace_sha256": d["trace_sha256"], "budget_signatures": int(d["budget"]),
+                       "lattice_dimension": dim, "elapsed_s": d["elapsed_s"], "outcome": d["outcome"]})
+    prefix.sort(key=lambda a: a["lattice_dimension"] or 0)
     return {
         "finding": ("the deployed MatrixSSL fix's residual is orderable but the published "
                     "attack does not convert it at any budget or lattice dimension tried"),
@@ -130,6 +146,18 @@ def build() -> dict:
                     "the timing orders this leak, not about the number of signatures, and is "
                     "reported as one."),
         "attempts": attempts,
+        "prefix_control": {
+            "finding": ("run on the committed 6,000-signature pre-fix trace, the identical "
+                        "timing-ordered pipeline recovers nothing at any of the three "
+                        "dimensions either, so this control does not corroborate the pipeline "
+                        "at that budget; the pre-fix key was recovered only key-ordered, on an "
+                        "uncommitted trace, and the depth-of-ordering reading rests on the "
+                        "selector figures, not on a positive control"),
+            "attempts_total": len(prefix),
+            "recovered": sum(1 for a in prefix if a["outcome"] == "recovered"),
+            "budget_signatures": prefix[0]["budget_signatures"] if prefix else None,
+            "attempts": prefix,
+        },
     }
 
 
@@ -148,7 +176,7 @@ def main() -> int:
             print("matrixssl_recovery: no committed record", file=sys.stderr)
             return 1
         old = json.loads(OUT.read_text())
-        bad = [k for k in ("attempts_total", "recovered", "attempts", "key_bits")
+        bad = [k for k in ("attempts_total", "recovered", "attempts", "key_bits", "prefix_control")
                if old.get(k) != doc[k]]
         if bad:
             print("matrixssl_recovery: " + ", ".join(bad) + " differ from committed",

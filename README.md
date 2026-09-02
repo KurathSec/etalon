@@ -1091,5 +1091,27 @@ weighting from what a reading of the code suggested. The same-day rebuild of the
 code gives 71,335 ticks on the sixty-three-zero design against 71,607 committed. The paper's
 hedge is replaced by the measurement and its wording retired.
 
-**In flight.** The turbo-off run (X1) waits on the author. Then the presentation polish
-(Phase D) and the closing audit round, blind panel, memory and run sheet (Phase E).
+**The presentation polish (Phase D).** By hand, section by section, under one mechanical rule
+from the presentation assessment (kept at `cache/revision/presentation-assessment.md`): no
+sentence over twenty-five words carrying more than one number, no appositive between a
+subject and its verb, every term glossed or avoided at first use, cut and repair only, no
+new claim, every bound kept. Each section's edits are a script under `cache/revision/`
+(`polish-front.py` to `polish-rest.py`) whose every replacement asserts the text it replaces,
+so the pass is replayable against the snapshot `cache/revision/polish4-baseline`. The
+structural items went with it: the glossary moved from section 3 to the introduction and
+now renders on page 3 beside the terms' first uses; the tick is defined in section 1; section
+3 and section 6 open with what they deliver rather than a pointer; Figure 3's panels are
+labelled and its caption reads by panel; Figure 4 grew from 0.30 to 0.62 of the line width
+and its caption lost the sentences the body already carried; Table 6's design and
+recall-refusal sentences moved from its caption into the text; I4's heading joins the "the
+status is indexed by" frame and points at one section. The abstract lost its undefined
+terms. The introduction's I1 paragraph was also wrong after the new cells ("clang only at
+optimisation level zero") and now names `-Oz`. Two of the checker's own rules bit during the
+pass, a retired wording ("of the call,") and a once-only phrase reworded by accident, and
+both were restored rather than argued with. Body words by `pdftotext` before the references:
+12,658 before the pass, 12,878 after the repairs, 12,770 after cutting the duplicated
+related-work summary, the site-local adjudication sentence, the census sentence and the
+label-kinds recap; the page gate holds at twenty pages with `paper_check` clean.
+
+**In flight.** The turbo-off run (X1) waits on the author. Then the closing audit round,
+blind panel, memory and run sheet (Phase E).

@@ -231,6 +231,7 @@ def fig_graviton():
     # retyped: it is the record's own delta_percent_of_call.
     annotate_pipelined(a, e2e, at="bottom", pct_fmt="+.1f")
     fig.tight_layout(pad=0.3)
+    a.text(0.01, 0.98, "(a)", transform=a.transAxes, ha="left", va="top", fontsize=8)
     fig.savefig(FIG / "fig-graviton.pdf")
     plt.close(fig)
 
@@ -278,6 +279,7 @@ def fig_x86_idiv():
     b.annotate(f"{abs(signed_step):.3f}\n$\\pm${noise:.3f}", xy=(0, signed_step),
                xytext=(0.12, lim * 0.5), fontsize=6.5, color=INK, ha="left")
     fig.tight_layout(pad=0.3)
+    a.text(0.01, 0.98, "(b)", transform=a.transAxes, ha="left", va="top", fontsize=8)
     fig.savefig(FIG / "fig-x86-idiv.pdf")
     plt.close(fig)
 

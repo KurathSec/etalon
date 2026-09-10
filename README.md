@@ -36,7 +36,9 @@ with its `n`.
 sh bin/verify_all.sh        # or: make verify-all
 ```
 
-runs every gate in order and prints one line per gate: `bin/verify.py` (the recovery
+runs every gate in order and prints one line per gate: `bin/export.py --profile anon
+--check` (the anonymous archive's residue scan, which refuses to hand over a tree where the
+project name survives outside the files declared to carry it), `bin/verify.py` (the recovery
 oracle, ORC-1/ORC-2 on every recall-eligible pair), `bin/selfcheck.py` (every control),
 `python3 -m pytest -q` (the tests, which plant defects and assert the gates see them),
 `bin/paper_check.py` (the manuscript rules, skipped when the untracked paper tree is

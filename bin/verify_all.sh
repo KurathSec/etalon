@@ -50,6 +50,17 @@ refusal() {
 }
 
 cd "$REPO"
+# The tracked-file controls (ANON-1 here, the residue scan below) read `git ls-files`, so
+# a file that is written but not yet staged is not scanned by either. That is not a
+# failure, work in progress is normal, but it is worth saying out loud: a new file went
+# to CI unscanned once because the local run had preceded the `git add`.
+untracked=$(git ls-files --others --exclude-standard 2>/dev/null | head -20)
+if [ -n "$untracked" ]; then
+  printf 'NOTE  %-12s %s\n' untracked \
+    "$(printf '%s\n' "$untracked" | wc -l | tr -d ' ') file(s) not staged, so the tracked-file gates did not scan them:"
+  printf '        %s\n' $untracked
+fi
+gate anon      "$PY" bin/export.py --profile anon --check
 gate oracle    "$PY" bin/verify.py
 gate controls  "$PY" bin/selfcheck.py
 gate tests     "$PY" -m pytest -q

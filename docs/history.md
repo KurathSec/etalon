@@ -1,11 +1,13 @@
-# etalon: the dated record
+# The dated record
 
 This is the append-only record of how the artifact and its manuscript were built: what each
 review round found, what was measured in answer, and what earlier entries got wrong. It was
 the README's status section until 2026-09-10 UTC, when it had grown past a thousand lines and
 was moved here so that the README describes the artifact rather than its history. Nothing was
 rewritten in the move; the one edit is the first heading below, which read `## Status` in the
-README and now says what it is.
+README and now says what it is. This file does not name the project, because control ANON-1
+confines that name to the five files `data/identity.toml` declares, and the README is the one
+of them a reader starts from.
 
 All dates are UTC. Entries are in the order they were written, so later ones correct earlier
 ones and say so; a claim quoted from here should be read with the corrections that follow it.

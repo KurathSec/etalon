@@ -26,6 +26,14 @@
     "note": "sampled at capture time on the pinned core, idle; not pinned; varies between captures by design and is not compared by --check"
   },
   "kernel": "7.1.8-200.fc44.x86_64",
+  "_drift_since_acquisition": {
+    "kernel": {
+      "acquired_under": "7.1.8-200.fc44.x86_64",
+      "now": "7.1.12-200.fc44.x86_64",
+      "noticed_utc": "2026-09-10",
+      "note": "A distribution kernel upgrade on the acquisition machine, after every committed dump was acquired. The kernel field above is the one the measurements were taken under and is what the paper prints, so it is not re-captured. bin/host_facts.py --check excuses this field only while this host reads exactly the value here; a further change fails the control."
+    }
+  },
   "machine": "x86_64",
   "microarch": "Arrow Lake"
 }

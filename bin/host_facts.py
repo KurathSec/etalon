@@ -18,6 +18,13 @@ cannot otherwise check them:
     is outside the DOITM guarantee regardless, which is why the division measurements
     do not rest on this bit.
 
+A fact recorded here is the one the measurements were acquired under, not a
+description of the machine today. When the machine drifts afterwards, a distribution
+kernel upgrade for instance, the acquisition value stays and the change is stated in
+_drift_since_acquisition, because re-capturing would attribute committed dumps to a
+configuration they never ran on. --check excuses exactly the drift stated there and
+nothing else.
+
 Usage: bin/host_facts.py [--check]
   --check re-captures and reports whether the committed file still matches this host.
 """
@@ -187,6 +194,19 @@ def main() -> int:
         # the same idle host by design.
         drift = {k: (old.get(k), v) for k, v in fresh.items()
                  if not k.startswith("_") and old.get(k) != v}
+        # A fact can change on the acquisition machine long after the measurements
+        # were taken: this one's kernel was upgraded by the distribution on
+        # 2026-09-10, every committed dump having been acquired before it.
+        # Re-capturing the record would put a kernel against dumps that never ran
+        # on it, and the paper prints that field, so the acquisition value stays
+        # and the change is stated in _drift_since_acquisition. A field is excused
+        # only while this host still reads exactly what that block says it now
+        # reads, so a further change fails the control again.
+        recorded = old.get("_drift_since_acquisition", {})
+        drift = {k: v for k, v in drift.items()
+                 if not (isinstance(recorded.get(k), dict)
+                         and recorded[k].get("now") == v[1]
+                         and recorded[k].get("acquired_under") == v[0])}
         if "cpu_model" in drift and old.get("cpu_model"):
             # Not drift: this is not the acquisition host at all. Exit 2 so a
             # caller can tell "the record no longer matches its host" (exit 1)
